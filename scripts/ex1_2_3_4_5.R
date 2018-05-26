@@ -10,7 +10,7 @@
 
 # adjust path or setwd
 source('header.R')
-ex = 'ex3' # change according to ex number
+ex = 'ex1' # change according to ex number
 ex_dir = file.path(data_dir,ex)
 
 # load data
