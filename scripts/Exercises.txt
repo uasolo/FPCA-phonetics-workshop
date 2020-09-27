@@ -1,0 +1,99 @@
+##### 1D series
+
+- ex1
+2 categories: PEAK, NO_PEAK
+All 100 curves between time 0 and 2. 
+Shapes: Large peak common to all curves, followed by a smaller peak only for PEAK category.
+Note: some samples are missing.
+PC1 taking all the variance
+
+- ex2
+As ex1, but the first peak varies independently of Category.
+PC1 takes 2/3 of the var, PC2 1/3
+PC1 explains variation of the first peak, PC2 the second
+So lm is: s2 ~ Category
+Note that Category explains 98% of the var of s2, nothing to do with the var explained by PC2 within FPCA
+Check what happens to s1 ~ Category.
+
+- ex3
+As ex2, but first peak now goes down when second peak (PEAK) goes up.
+This is captured by PC1, which is back to explaining most of the var.
+A residual of correction term is left to PC2, hard to interpret (artifact? non linearity?)
+
+- ex4
+Narrow vs. wide peak. 
+Note the shape of PC1 !!
+
+- ex5
+Early vs. late peak.
+Note the shape of the mean!
+Note the shape of PC1 !!
+
+- ex6
+global mean varies randomly,
+up vs. down small peak (small wrt global mean variation)
+Not how global mean variation captures all attention of PC1.
+The interesting variation of Category is captured by PC2
+explaining 0.5% of the var!!
+PC1 explains 99.4% of var, but s1 ~ Category R2 = 0.4%
+PC2 explains 0.5% of var, but s2 ~ Category R2 = 99%
+
+Try remove global mean from the signal before the analysis.
+
+- ex7
+
+A case where FPCA fails miserably! 
+Category is early/late peak, but 5 classes shift the peak position.
+Homework: why it fails? Examine PC shapes and scores.
+Whould GAMMs succeed? why?
+How to overcome the problem with FPCA, if at all possible?
+
+
+##### 2D series
+
+- ex 1
+
+Trajectory representation in the (y1, y2) plane.
+Why is it a straight line? Because (select one and justify):
+a) we are using only one score, hence all curves are proportional to each other
+b) because y1 and y2 are in this case proportional
+c) both a and b.
+
+- ex 2
+
+Finally fun with trajectories that actually go around in circular paths.
+Try to justify the shape and the counter/clock-wise direction of each of the two category EMMmeans curves.
+
+
+###### Land series
+
+- ex 0
+
+Practice with the basic formula for time distorsion, langmark reg,
+duration reconstruction.
+Three toy datasets of 3 alignments each (no curves!)
+
+- ex 1
+
+early/late peak, curves are identical in physical time,
+a landmark is positioned before/after the peak 
+
+1D analysis, compare w/o landmark reg
+2D analysis, justify shape of mean_logvel,
+reason about the shape of PC1 y and logvel
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
