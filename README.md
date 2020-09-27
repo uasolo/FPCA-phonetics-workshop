@@ -1,9 +1,5 @@
-# Workshop on Functional PCA for Phonetics and Prosody
-This repository contains didactic material for a workshop on Functional PCA for phonetics and prosody that I provide on request.
-This material is not suitable for autonomous study, rather it is there to support the workshop activities. 
+# Modelling time-varying features of speech: tools and methods
+This repository contains didactic material for a course on Functional PCA and Generalised Additive Models (GAMs).
 
 ## Installation and prerequisites
-Please follow the instructions in scripts/INSTALL.txt, otherwise you will encounter unpleasant surprises :)
-
-
-
+Please open scripts/header.R and manually modify home_dir. The scripts only depend on packages fda (recent version like 5.1.5.1) and tidyverse. 
