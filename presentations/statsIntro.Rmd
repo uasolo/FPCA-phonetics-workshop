@@ -1,0 +1,424 @@
+---
+title: "A cursory view on linear models"
+author: "Michele Gubian"
+date: "9/10/2020"
+output: html_document
+# fig_width: 2
+# fig_height: 1.5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+library(lme4)
+library(emmeans)
+library(MASS)
+
+```
+# Ordinary linear models
+
+## The simplest model
+
+Let us (pretend to) have data from an EMA experiment. A speaker pronounces vowels.
+
+* $x_i$ is the position of tongue dorsum in the $x$ direction of the sagittal plane
+
+* $y_i$ is the corresponding F2
+
+* $i$ is the running index
+
+
+
+```{r echo = FALSE}
+nSamp <- 50
+x <- runif(nSamp, min = 30, max = 60)
+y <-  900 + (x-30) * (1100/30) + rnorm(nSamp, 0, 50)
+D <- tibble(x=x, y=y)
+D %>% sample_n(10)
+
+```
+
+```{r}
+ggplot(D) +
+  aes(x, y) +
+  geom_point()
+```
+
+A linear model has the form:
+$$
+y_i = \beta_0 + \beta_1 x_i + \epsilon_i
+$$
+
+* The data are the $x_i$ and the $y_i$
+* The linear relationship linking the data is $y_i = \beta_0 + \beta_1 x_i$
+* $\epsilon_i$ allows for unknown effects, preserving linearity
+  + this is a strong hypothesis on the way  **unknown** or **not understood** interact with the known ones $x$ and $y$
+* **Modelling** means to find suitable, credible values for $\beta_0$ and $\beta_1$
+* **Interpreting** the model means to consider the role of $\beta_0$ and $\beta_1$
+  + e.g. for a unit increase in $x$ we have a variation of $\beta_1$ in $y$ (in the appropriate units)
+
+## What about Gaussianity? 
+
+* What is Gaussian in a linear model?
+* Does linearity imply Gaussianity?
+
+```{r}
+ggplot(D) +
+  aes(x) +
+  geom_density()
+
+```
+
+```{r}
+ggplot(D) +
+  aes(y) +
+  geom_density()
+
+```
+
+* What is Gaussian is $\epsilon$
+* $\epsilon_i$ are $N(0, \sigma^2)$ and *independent from each other* and have the same distribution (i.i.d.)
+  - this is usually unreasonable, yet of great utitlity in simplifying calculations
+  - keep an eye on independence, as this will be violated by GAMMs
+* As a consequence, $y_i \sim N(\beta_0 + \beta_1 x_i, \sigma^2)$
+* and the estimates of $\beta_0$ and $\beta_1$ are Gaussian too
+  - This allows to build confidence intervals for them
+
+* Does linearity imply Gaussianity?
+  - No
+  - The estimation of $\beta_0$ and $\beta_1$ does not require Gaussianity
+  - We like Gaussianity because it allows to build confidence intervals for $\beta_0$ and $\beta_1$
+
+## Linear models in R
+  
+So let's do this in R:
+
+```{r}
+lm1 <- lm(y ~ x, data = D)
+summary(lm1)
+```
+
+* The *real* formula is $y_i = \beta_0 + \beta_1 x_i + \epsilon_i$
+* y ~ x is the so-called "R formula" notation, NOT an equation
+* Residuals are the estimated $\epsilon_i$
+* (Intercept) is $\beta_0$, x is (confusingly) $\beta_1$
+* p-values are there thanks to the Gaussianity hypothesis on $\epsilon_i$
+* R-squared measures how much of the variance of  $y_i$ is explained by $y_i = \beta_0 + \beta_1 x_i$
+  - will come back to this with LMER
+
+The linear model looks like this:
+```{r echo = FALSE}
+ggplot(D) +
+  aes(x, y) +
+  geom_point() +
+  geom_smooth(method='lm', formula= y~x, color = 'red')
+```
+... and it looks like a line,  hence the term "linear". In fact:
+
+* $\beta_0$ is the intercept of the line on the $y$ axis
+* $\beta_1$ is the line slope
+
+However:
+
+* The terms intercept and slope are used also in settings where they are more confusing than helpful
+  - e.g. with factors (see below)
+
+Check if the assumptions on $\epsilon$ are sensible:
+```{r}
+op <- par(mfrow=c(2,2))
+plot(lm1)
+par(op)
+```
+
+## Causality
+
+Remember that a linear model detects correlation, not causation. 
+
+E.g. take the previous data and model it `the wrong way around'
+```{r}
+lm1inv <- lm(x ~ y, data = D)
+lm1inv %>% summary
+```
+## Non-linear relationships
+
+What if the relation between $x$ and $y$ is non-linear? Can we still use a linear model?
+
+```{r echo = FALSE}
+nSamp <- 50
+x <- runif(nSamp, min = -3, max = 3)
+y <-  4 + x + 3 * x^3 + rnorm(nSamp, 0, 0.5)
+D <- tibble(x=x, y=y)
+ggplot(D) +
+  aes(x, y) +
+  geom_point()
+```
+
+Yes, e.g.:
+
+$$
+y_i = \beta_0 + \beta_1 x_i + \beta_2 x_i^2 + \beta_3 x_i^3 + \epsilon_i
+$$
+is linear in the $\beta$'s, i.e. the $\beta$'s only appear in sums or in multiplications with known quantities (the $x_i$'s)
+```{r}
+lm2 <- lm(y ~ x + I(x^2) + I(x^3), data = D)
+summary(lm2)
+```
+
+Note that this is 'kind of' a GAM. 
+
+The basic idea of GAM is to be able to determine automatically how many terms like $\beta_2 x_i^2$ to include in the model, as opposed to guess or try.
+
+## Model selection
+
+The previous data set could have been modelled also by:
+$$
+y_i = \beta_0 + \beta_1 x_i +  \beta_3 x_i^3 + \epsilon_i
+$$
+How to decide in general what's the best model? 
+
+* **Model selection** is basically finding the simplest model consistent with
+a set of data
+* There are automated procedures based on information criteria
+```{r}
+step(lm2)
+```
+
+* But it is not always advisable to blindly rely on those procedures
+  + e.g. you may have good reasons to keep a predictor based on previous solid evidence
+  + or end up with too many variables just because you have a lot of data, which would hinder interpretability
+
+## Factors
+
+Example: 
+
+* $x_i$ is the vowel, e.g. /a/, /i/, /o/, /u/
+
+* $y_i$ is the corresponding F2
+
+Now $x$ is a categorical variable, or factor. How do we make it into a number?
+
+```{r}
+D <- tibble(x = gl(4, 50, labels = c('a', 'i', 'o', 'u')))
+D %<>% mutate(y = case_when(
+  x == "a" ~ 1200,
+  x == "i" ~ 2300,
+  x == "o" ~ 930,
+  x == "u" ~ 900) + rnorm(n(), 0, 100))
+
+lm3 <- lm(y ~ x, data = D)
+summary(lm3)
+```
+
+The real equation looks like:
+$$
+y_i = \beta_{/a/} + \beta_{/i/} I(x_i = /i/) +  \beta_{/o/} I(x_i = /o/) +  \beta_{/u/} I(x_i = /u/) + \epsilon_i
+$$
+
+* lm() created indicator (or dummy) variables, i.e. taking values 0 or 1 on a logical statement
+* they are 3, i.e. one minus the number of categories (factor levels)
+* The intercept models the fourth left-out level, here /a/
+  - if we had 4 indicators + intercept the equation would not be identifiable
+  - R picks the first level in alphabetic order as intercept
+  
+Typical questions you want to answer using a factorial experiment 
+
+* What's the expected (mean) F2 frequency for /i/?
+* Are the F2 values of /o/ and /u/ distinguishable? 
+
+Can we answer these questions from the summary?
+
+* What's the expected (mean) F2 frequency for /i/?
+  - $\beta_{/a/} + \beta_{/i/}$, i.e. Estimate of (Intercept) + Estimate of xi 
+* Are the F2 values of /o/ and /u/ distinguishable (significantly different)? 
+  - we cannot tell from the summary
+  - we can only answer this question on pairs /a/ vs. another vowel
+  - for the other pairs we need to compute post tests, or use contrasts
+* Fortunately, all this mess is taken care of by the emmeans package
+
+```{r}
+emmeans(lm3, pairwise ~ x)
+```
+
+## Interactions between factors
+
+Let's add gender to the vowels example
+
+
+```{r echo=FALSE, message=FALSE}
+D <- expand_grid(x = c('a', 'i', 'o', 'u'), g = c('M', 'F'))
+D %<>% mutate(y = case_when(
+  x == "a" & g == 'M' ~ 1200,
+  x == "i" & g == 'M' ~ 2300,
+  x == "o" & g == 'M' ~ 930,
+  x == "u" & g == 'M' ~ 900,
+  x == "a" & g == 'F' ~ 1400,
+  x == "i" & g == 'F' ~ 2950,
+  x == "o" & g == 'F' ~ 970,
+  x == "u" & g == 'F' ~ 950)) %>%
+  group_by(x, g) %>%
+  group_modify(~ {.x$y + rnorm(50, 0, 50) %>% enframe(name = NULL, value = "y")})
+
+```
+
+
+
+```{r}
+D %>% sample_n(2)
+lm4 <- lm(y ~ x + g, data = D)
+summary(lm4)
+```
+
+```{r}
+emmeans(lm4, pairwise ~ g | x)
+```
+* The gender factor adds the same quantity to any vowel
+* Conversely, the /i/ factor adds the same quantity to male and female
+* What if e.g. females' /i/ has an even higher value than the one obtained adding the respective /i/ and female effects?
+
+```{r}
+lm4.1 <- lm(y ~ x * g, data = D)
+summary(lm4.1)
+emmeans(lm4.1, pairwise ~ g | x)
+```
+
+
+
+# Linear Mixed Effects Models
+
+Let's have many subjects pronounce a vowel many times with or witout a certain condition $x$
+We measure F1 in the middle of each vowel.
+
+* $x = 0$ condition absent, $x = 1$ condition present
+* $y$ is F1
+
+
+```{r echo = FALSE}
+set.seed(40)
+nSubjects <- 20
+D <- expand_grid(x = 0:1 %>% as.logical(), z = seq_len(nSubjects) %>% as.factor())
+y0 <- 500
+y1 <- 15
+z.sd <- 100
+zMean <- rnorm(nSubjects, 0, z.sd)
+y.sd <- 50
+D %<>% mutate(y = y0 + x * y1 + zMean[z]) %>%
+  group_by(x, z) %>%
+  group_modify(~ {.x$y + rnorm(15, 0, y.sd) %>% enframe(name = NULL, value = "y")})
+```
+
+```{r}
+ggplot(D) + aes(x, y, color = x) + geom_boxplot() + theme(legend.position="top")
+lm(y ~ x, data = D) %>% summary
+```
+
+Actually the data look like this when taking subjects ($z$) into account:
+```{r}
+ggplot(D) + aes(z, y, color = x) + geom_boxplot() + theme(legend.position="top")
+```
+How can we take this into account in a linear model?
+```{r eval = FALSE}
+lm(y ~ x + z, data = D)
+```
+This means that we have one indicator variable per subject, $z_1, z_2$, etc. But each new experiment will have different subjects, so $z_1$ does not mean anything in general. 
+
+In other words, knowing something about subjects 1 to 20 does not tell us anything about subject 21, as there are no constraints on them.
+
+We want to **add structure to the noise**, i.e.
+
+* there are two sources of noise
+* one is the particular way subjects differ from one another
+* another is the particular way each utterance is produced
+* with all this, we want to preserve linearity
+
+The maths goes like this:
+
+
+$$
+y_{i, j} = \beta_0 + \beta_1 x_{i, j} + u_i + \epsilon_{i, j} \\
+u_i \sim N(0, \sigma_u) \\
+\epsilon_{i, j} \sim N(0, \sigma) \\
+u_i,  \epsilon_{i, j} \; \text{ indipendent of each other}
+$$
+where $i$ is the subject index, $j$ is the utterance index within $i$. 
+
+
+In R with package lme4:
+```{r}
+lmer1 <- lmer(y ~ x + (1|z), data = D) 
+summary(lmer1)
+emmeans(lmer1, pairwise ~ x)
+```
+
+
+## More structure on noise: random slopes
+
+We want add the following information to the random component of the model:
+
+* different subjects have a global level that varies
+  - i.e.  random intercept, we've got it already, that's $u_i$
+* different subjects perform the contrast $x$ differently, i.e. some more, some less on average
+  - that's called a random slope (which is not a helpful name)
+* possibly, random intercepts and slopes are correlated
+  - e.g. the higher than average a subject is, the less prominently s/he produces the contrast $x$
+  
+(I omit the maths as it requires matrices)
+
+```{r echo = FALSE}
+set.seed(30)
+nSubjects <- 20
+D <- expand_grid(x = 0:1 %>% as.logical(), z = seq_len(nSubjects) %>% as.factor())
+y0 <- 500
+y1 <- 15
+z.sd <- 100
+zx.sd <- 15
+zx.cor <- -0.8
+zMean <- mvrnorm(nSubjects, c(0,0), matrix(c(z.sd^2, zx.cor *z.sd* zx.sd, zx.cor *z.sd* zx.sd, zx.sd^2 ), nrow = 2)) %>%
+  as.data.frame
+D <- cbind(D, rbind(zMean, zMean)) %>% as_tibble()
+
+y.sd <- 50
+D %<>% mutate(y = y0 + x * y1 + V1 + V2 * x) %>%
+  group_by(x, z) %>%
+  group_modify(~ {.x$y + rnorm(15, 0, y.sd) %>% enframe(name = NULL, value = "y")})
+
+```
+
+```{r}
+ggplot(D) + aes(z, y, color = x) + geom_boxplot() + theme(legend.position="top")
+```
+```{r}
+lmer1 <- lmer(y ~ x + (x|z), data = D) 
+lmer1 %>% summary
+emmeans(lmer1, pairwise ~ x)
+
+```
+
+## Inspecting random effects
+
+Just like you can look (plot) the residuals in a lm, you can look at the random intercepts and slopes:
+
+```{r}
+lmer1.ranef <- lmer1 %>% ranef() %>% .$z %>% as_tibble() %>% rownames_to_column("Subject")
+ggplot(lmer1.ranef) +
+  aes(`(Intercept)`, xTRUE, label = Subject) +
+  geom_text() +
+  xlab("Random intercept") +
+  ylab("random slope")
+```
+
+## Proportion of explained variance ($R^2$)
+
+There is no straightforward way to get $R^2$ like for lm(). 
+An estimate has been proposed, **Pseudo-R-squared**, which allows to get info on proportion of variance explained by fixed and random factors.
+
+* Marginal $R^2$: proportion of variance explained by fixed effects
+* Conditional $R^2$: proportion of variance explained by fixed and random effects combined
+  - i.e. all except $\epsilon$
+
+```{r warning=FALSE}
+library(MuMIn)
+r.squaredGLMM(lmer1)
+```
+
+E.g. useful to have an idea of how large is the inter-subject variation compared to the general (fixed) effect under investigation.
