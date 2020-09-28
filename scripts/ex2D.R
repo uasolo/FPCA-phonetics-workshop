@@ -22,7 +22,8 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20)) %>%
   facet_grid(DIM ~ .) +
   geom_line() +
   theme_light() +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
 
 # smoothing
 
@@ -162,7 +163,8 @@ ggplot(PCscores) +
   aes(x = s1, y = s2, color = Category) +
   geom_point() +
   theme_light() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16),
+        legend.position = "bottom")
 
 
 
@@ -209,7 +211,9 @@ ggplot(EMMcurves %>% pivot_longer(cols = starts_with("y"), names_to = "DIM", val
   geom_line() +
   facet_grid(DIM ~ .) +
   theme_light() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16),
+        legend.position = "bottom"
+        )
 
 
 # Trajectory representation
@@ -217,7 +221,8 @@ ggplot(EMMcurves) +
   aes(x = y1, y = y2, group = Category, color = Category) +
   geom_path(size = 1, arrow = arrow(length = unit(0.5, "cm"), type = "closed")) +
   theme_light() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16),
+        legend.position = "bottom")
 
 
 

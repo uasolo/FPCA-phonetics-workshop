@@ -5,7 +5,7 @@
 
 # adjust path or setwd
 source('header.R')
-ex <- 1 # change according to ex number
+ex <- 5 # change according to ex number
 
 # load data
 
@@ -20,7 +20,8 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   theme_light() +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
 
 # smoothing
 
@@ -142,7 +143,8 @@ ggplot(PCscores) +
   aes(x = s1, y = s2, color = Category) +
   geom_point() +
   theme_light() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16),
+        legend.position = "bottom")
 
 
 
@@ -187,4 +189,5 @@ ggplot(EMMcurves) +
   aes(time, y, color = Category, group = Category) +
   geom_line() +
   theme_light() +
-  theme(text = element_text(size = 16))
+  theme(text = element_text(size = 16),
+        legend.position = "bottom")

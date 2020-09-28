@@ -7,7 +7,7 @@ library(abind)
 
 
 # set your own home directory here:
-home_dir = "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop-master"
+home_dir = "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop"
 data_dir = file.path(home_dir,'data')
 scripts_dir =  file.path(home_dir,'scripts')
 plots_dir =  file.path(home_dir,'plots')
