@@ -28,7 +28,7 @@ For simplicity:
 
 
 ```{r echo=FALSE, message=FALSE}
-home_dir <- "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop-master"
+home_dir <- "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop"
 data_dir <- file.path(home_dir,'data')
 ex <- 1 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
@@ -72,7 +72,7 @@ where:
 * Use **regularisation** and **Cross-Validation** to determine complexity (how many functions) and smoothness 
 * **Interpret shapes**, not coefficients
 
-[Slides by Simon Wood](https://people.maths.bris.ac.uk/~sw15190/mgcv/tampere/smooth-toolbox.pdf)
+[Slides by Simon Wood](https://www.maths.ed.ac.uk/~swood34/talks/Beijing15.pdf)
 
 The model looks like:
 
