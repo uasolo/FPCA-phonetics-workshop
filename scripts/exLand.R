@@ -5,7 +5,6 @@
 
 # adjust path or setwd
 source('header.R')
-library(abind)
 ex = 1 # change according to ex number
 
 # load data

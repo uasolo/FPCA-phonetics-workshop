@@ -2,6 +2,9 @@ library(fda)
 packageVersion('fda')
 # ‘5.1.5.1’
 library(tidyverse)
+library(emmeans)
+library(abind)
+
 
 # set your own home directory here:
 home_dir = "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop-master"
