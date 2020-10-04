@@ -32,7 +32,7 @@ Note the shape of PC1 !!
 - ex6
 global mean varies randomly,
 up vs. down small peak (small wrt global mean variation)
-Not how global mean variation captures all attention of PC1.
+Note how global mean variation captures all attention of PC1.
 The interesting variation of Category is captured by PC2
 explaining 0.5% of the var!!
 PC1 explains 99.4% of var, but s1 ~ Category R2 = 0.4%

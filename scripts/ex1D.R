@@ -5,7 +5,7 @@
 
 # adjust path or setwd
 source('header.R')
-ex <- 5 # change according to ex number
+ex <- 1 # change according to ex number
 
 # load data
 
