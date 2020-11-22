@@ -97,9 +97,9 @@ PCdurations <- expand_grid(PC = 1:2,
                            Interval = seq_len(Nsegments)) %>% # n_segments = n_landmarks -1
   group_by(PC, fractionOfStDev, Interval) %>%
   summarise(# linear combination of spline coefs of mean + score * PC curve
-            value = (y_pcafd$meanfd$coefs[,1,2] + # mean of dimension 2, i.e. logvel
+            value = ((y_pcafd$meanfd$coefs[,1,2] + # mean of dimension 2, i.e. logvel
                        fractionOfStDev * sdScores[PC] * # PC score
-                       y_pcafd$harmonics$coefs[,PC, 2] * # PC curve  of dimension 2, i.e. logvel
+                       y_pcafd$harmonics$coefs[,PC, 2]) * # PC curve  of dimension 2, i.e. logvel
                        (1/w2) * # undo the dimension weighting
                        (-1)) %>% # see reverse logvel formula
               fd(coef = ., basisobj = y_pcafd$meanfd$basis) %>% # make it a fd object
@@ -129,3 +129,53 @@ ggplot(PCdurations) +
         legend.position = "bottom") 
 
 
+# aux function: reconstruct durations given fpcaObj, PC, dimension, scores and time samples,
+# landmarks and lograte_scale
+# lograte_dimension should point to the dim of fpcaObj corresponding to log rate
+# scores is a vector whose indices are PC indices
+# lograte_scale is the scale factor that was applied to the lograte curves
+# prior to constructing the milti-dim fd object (if applied) (in ex2D.R it is called w2)
+# land is the vector of registered landmarks, typically from reg$land
+# Returns a vector of durations
+reconstructDuration <- function(fpcaObj, scores, lograte_dimension, tx, land, lograte_scale = 1) {
+  # reconstruct h(t)
+  h_fd <- reconstructCoef(fpcaObj, scores, lograte_dimension) %>% 
+    `*`(-1/lograte_scale) %>%
+    fd(coef = ., basisobj = fpcaObj$meanfd$basis) %>%
+    eval.fd(tx, .) %>%
+    as.numeric %>%
+    exp %>%
+    smooth.basis(tx, ., fdParObj) %>%
+    .$fd
+  # compute durations integrating h(t) between pairs of adjacent landmarks
+  sapply(1:(length(land)-1), function (Interval) {
+    defint.fd(h_fd, c(land[Interval],land[Interval+1]))
+  }, simplify = TRUE)
+}
+
+# Plot emmeans-based durations
+# Using emm from ex2D.R
+
+EMMdur <- emm$emmeans %>%
+  as_tibble %>%
+  group_by(Category) %>%
+  summarise(Interval = 1:(length(reg$land)-1),
+            duration = reconstructDuration(y_pcafd, emmean, 2, tx, reg$land, w2)
+            )
+            
+ggplot(EMMdur) +
+  aes(x = Category %>% factor(labels = ""), y = duration, color = Category) + 
+  geom_bar(stat="identity", fill = 'white') +
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 5,
+            position = position_stack(vjust = 0.5), show.legend = FALSE) +
+  ylab("Duration") +
+  xlab("") +
+  coord_flip() + 
+  theme_light() +
+  theme(text = element_text(size = 18),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank(),
+        legend.position = "bottom") 
+
+            

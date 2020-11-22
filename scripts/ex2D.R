@@ -179,32 +179,37 @@ lm1 %>% summary
 # get estimated marginal means for each level of Category
 emm <- emmeans::emmeans(lm1, pairwise ~ Category)
 
+
+# aux function: reconstruct spline coef given fpcaObj, PC, dimension and scores.
+# multi-D version (not general for 1D and multi-D)
+# scores is a vector whose indices are PC indices
+# Used internally in reconstructCurve() and reconstructDurations()
+reconstructCoef <- function(fpcaObj, scores, dimension) {
+  fpcaObj$meanfd$coefs[, 1, dimension] + 
+     sapply(seq_along(scores), function(PCidx) {
+       scores[PCidx] * fpcaObj$harmonics$coefs[, PCidx, dimension]
+     }) %>% apply(1, sum)
+}
+
 # aux function: reconstruct a curve given fpcaObj, PC, dimension, scores and time samples
 # multi-D version (not general for 1D and multi-D)
 # scores is a vector whose indices are PC indices
 reconstructCurve <- function(fpcaObj, scores, dimension, tx) {
-  (fpcaObj$meanfd$coefs[, 1, dimension] + 
-    sapply(seq_along(scores), function(PCidx) {
-      scores[PCidx] * fpcaObj$harmonics$coefs[, PCidx, dimension]
-    }) %>% apply(1, sum)) %>% 
+  reconstructCoef(fpcaObj, scores, dimension) %>% 
     fd(coef = ., basisobj = fpcaObj$meanfd$basis) %>%
     eval.fd(tx, .) %>% 
     as.numeric
 }
 
 
-
-
-EMMcurves <- PCscores %>%
-  distinct_at(vars(Category)) %>%
-  inner_join(emm$emmeans %>% as_tibble %>% select(Category, emmean)) %>%
+EMMcurves <- emm$emmeans %>%
+  as_tibble %>%
   group_by(Category) %>%
   summarise(time = tx,
             # linear combination of spline coefs of mean + score * PC curve
-            y1 = reconstructCurve(y_pcafd, c(emmean, 0), 1, tx),
-            y2 = reconstructCurve(y_pcafd, c(emmean, 0), 2, tx)
-            ) 
-  
+            y1 = reconstructCurve(y_pcafd, emmean, 1, tx),
+            y2 = reconstructCurve(y_pcafd, emmean, 2, tx)
+  ) 
 
 ggplot(EMMcurves %>% pivot_longer(cols = starts_with("y"), names_to = "DIM", values_to = "y")) +
   aes(time, y, color = Category, group = Category) +
