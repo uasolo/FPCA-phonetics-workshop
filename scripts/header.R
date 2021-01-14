@@ -4,12 +4,13 @@ packageVersion('fda')
 library(tidyverse)
 library(emmeans)
 library(abind)
+library(funr)
 
 
-# set your own home directory here:
-home_dir = "C:/Users/Michele/Dropbox/scambio_temp/work/Munich/Graz2020/FPCA-phonetics-workshop"
+
+scripts_dir = funr::get_script_path() 
+home_dir = file.path(scripts_dir, "..") # or set your own home directory here
 data_dir = file.path(home_dir,'data')
-scripts_dir =  file.path(home_dir,'scripts')
 plots_dir =  file.path(home_dir,'plots')
 dir.create(plots_dir, showWarnings = FALSE)
 
