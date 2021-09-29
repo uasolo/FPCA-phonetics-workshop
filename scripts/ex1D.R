@@ -178,12 +178,15 @@ EMMcurves <- PCscores %>%
   group_by(Category) %>%
   summarise(time = tx,
             # linear combination of spline coefs of mean + score * PC curve
-            y = (y_pcafd$meanfd$coefs[,1] + # mean 
+            y = (y_pcafd$meanfd$coefs[,1] + # mean
                    emmean * # PC score
                    y_pcafd$harmonics$coefs[,1]) %>% # PC curve
               fd(coef = ., basisobj = y_pcafd$meanfd$basis) %>% # make it a fd object
               eval.fd(tx, .) %>% # sample it at time = tx
               as.numeric) # otherwise you get a matrix as column (dunno why)
+
+# in alternative, use helper function from scrips/reconstructCurve.R        
+            # y = reconstructCurve(y_pcafd, emmean, tx)
 
 ggplot(EMMcurves) +
   aes(time, y, color = Category, group = Category) +

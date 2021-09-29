@@ -129,32 +129,10 @@ ggplot(PCdurations) +
         legend.position = "bottom") 
 
 
-# aux function: reconstruct durations given fpcaObj, PC, dimension, scores and time samples,
-# landmarks and lograte_scale
-# lograte_dimension should point to the dim of fpcaObj corresponding to log rate
-# scores is a vector whose indices are PC indices
-# lograte_scale is the scale factor that was applied to the lograte curves
-# prior to constructing the milti-dim fd object (if applied) (in ex2D.R it is called w2)
-# land is the vector of registered landmarks, typically from reg$land
-# Returns a vector of durations
-reconstructDuration <- function(fpcaObj, scores, lograte_dimension, tx, land, lograte_scale = 1) {
-  # reconstruct h(t)
-  h_fd <- reconstructCoef(fpcaObj, scores, lograte_dimension) %>% 
-    `*`(-1/lograte_scale) %>%
-    fd(coef = ., basisobj = fpcaObj$meanfd$basis) %>%
-    eval.fd(tx, .) %>%
-    as.numeric %>%
-    exp %>%
-    smooth.basis(tx, ., fdParObj) %>%
-    .$fd
-  # compute durations integrating h(t) between pairs of adjacent landmarks
-  sapply(1:(length(land)-1), function (Interval) {
-    defint.fd(h_fd, c(land[Interval],land[Interval+1]))
-  }, simplify = TRUE)
-}
-
 # Plot emmeans-based durations
 # Using emm from ex2D.R
+
+# use helper function reconstructDuration (sourced from scrips/reconstructCurve.R)
 
 EMMdur <- emm$emmeans %>%
   as_tibble %>%

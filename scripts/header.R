@@ -35,6 +35,7 @@ source(file.path(scripts_dir,'landmarkreg.nocurve.R'))
 # source(file.path(scripts_dir,'plot.pca.fd.corr.R'))
 # function that computes definite integrals
 source(file.path(scripts_dir,'defint.fd.R'))
+source(file.path(scripts_dir,'reconstructCurve.R'))
 
 
 
