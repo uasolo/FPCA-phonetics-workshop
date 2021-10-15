@@ -17,7 +17,7 @@ reconstructCoef <- function(fpcaObj, scores, dimension = 1) {
     fpcaObj$meanfd$coefs[, 1, dimension] + 
       sapply(seq_along(scores), function(PCidx) {
         scores[PCidx] * fpcaObj$harmonics$coefs[, PCidx, dimension]
-      })
+      }) %>% apply(1, sum)
   }
 }
 
