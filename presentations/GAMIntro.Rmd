@@ -1,7 +1,7 @@
 ---
 title: "A cursory view on Generalised Additive (Mixed) Models (GAMMs)"
 author: "Michele Gubian"
-date: "9/17/2020"
+date: "March 6, 2022"
 output: html_document
 ---
 
@@ -15,9 +15,7 @@ library(itsadug)
 
 ```
 
-# From coefficients ($\beta$'s) to shapes
-
-## A naive approach
+# A naive approach to modelling curves
 
 Suppose we have several realisations of a pitch accent in two conditions.
 For simplicity:
@@ -28,7 +26,7 @@ For simplicity:
 
 
 ```{r echo=FALSE, message=FALSE}
-home_dir <- "/homes/m.gubian/Dokumente/Courses/Graz2020/FPCA-phonetics-workshop"
+home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
 data_dir <- file.path(home_dir,'data')
 ex <- 1 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
@@ -44,7 +42,8 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
   theme(text = element_text(size = 15))
 
 ```
-We could try something like this and use lm():
+
+We could try something like this and use `lm()`:
 
 $$
 y_i = \beta_0 + \beta_{0, P} + \beta_1 t_i + \beta_{1, P} t_i +   \beta_2 t_i^2 + \beta_{2, P} t_i^2 + 
@@ -54,19 +53,25 @@ where:
 
 * $P$ indicates the PEAK category, while the default (control) level is NO_PEAK
 * instead of $x$ we have $t$ for time
-* $i$ is NOT an index for an entire curve, but for a single sample
+* $i$ is **not** an index for an entire curve, but for a single sample
 
-(You can try it at home)
+In R it would look like this:
+
+```{r echo=TRUE, eval=FALSE}
+mod <- lm(y ~ Category + time + Category:time + I(time^2) + Category:I(time^2) + I(time^3) + Category:I(time^3) , data = curves)
+```
+
+although this is quite a naive approach, see orthogonal polynomials (`poly` in R).
 
 ### Problems
 
 * We don't know where to stop with power terms
-  - but we could use model selection 
+    + but we could use model selection 
 * Pure power series are really bad at interpolating general shapes
-  - because Taylor's theorem is about approximating curves near a specific point, not globally
+    + because Taylor's theorem is about approximating curves near a specific point, not globally
 * How are we going to use the $\beta$ terms for insight and interpretation?
 
-### Solutions adopted by GAMs
+# GAMMs
 
 * Use **SPLINES** as base (polynomial) functions, because they are good for interpolating any shape
 * Use **regularisation** and **Cross-Validation** to determine complexity (how many functions) and smoothness 
@@ -83,19 +88,252 @@ where each $f()$ is a SPLINE:
 $$
 f(t) = \sum_{k=1}^K \beta_k b_k(t)
 $$
-In the GAMs lingo, the $f()$ are called **smooths**.
+In the GAMMs lingo, the $f()$ are called **smooths**. 
+In simple terms, we can imagina a smooth to be like a polynomial of unspecified degree, or in general a functional term of unspecified complexity, i.e. we do not say how many terms it should include. The GAMM machinary takes care of determining how many terms are strictly needed for our problem. 
 
-### GAMs in R
+## GAMMs in R
 
-Package **mgcv**.
+* Package `mgcv` is the most popular for GAMMs within R
+* The main command is `bam()`, equivalent to `lmer()` in `lme4`
+* The R `formula` syntax is quite different from the one used in `lme4`
+* The model specification with `bam()` has more possibilities than `lmer()`
+    + fixed and random predictors can be declaired as linear (like with `lmer()`) or as smooths, or combinations
+    + interactions between covariates (= continuous predictors) has different options based on *tensors*
+* Interaction between factors (`a * b`) **is not directly available**
+    + the user has to create their own `interaction` terms manually beforehand (more on this later)
+
+
+## Specifying fixed effects 
+
+### A single smooth
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + f(t_i) + \epsilon_i$ | `y ~ s(time)` |
+
+Note that regular smooths like `s(time)` are **centered on zero**, hence the intercept term in the equation. The model `summary()` will show two separate terms: 
+
+* `(Intercept)`, i.e. $\beta_0$
+* `s(time)`, i.e. the zero-centered function $f(t_i)$
+
+Example:
+```{r echo=FALSE, message=FALSE}
+# plot a few curves
+ex <- 2
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
+  filter(Category == "NO_PEAK") %>%
+  mutate(y = y + rnorm(n(), 0, 0.2))
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 20)) %>% mutate(curveId = factor(curveId)) ) +
+  aes(x = time, y = y, group = curveId, color = curveId) +
+  geom_line() +
+  theme_light() +
+  theme(text = element_text(size = 15), legend.position = "none")
+```
+
+
 
 ```{r}
-gam1 <- bam(y ~ Category + s(time, by = Category), data = curves)
-summary(gam1)
-
-plot_smooth(gam1, view = "time", plot_all = "Category")
-plot_diff(gam1, view = "time", comp=list(Category = c("PEAK", "NO_PEAK")))
+m1 <- bam(y ~ s(time), data = curves)
+summary(m1)
 ```
+### Reading the summary
+
+* `Parametric coefficients`: the `lm`-style fixed effects
+* `edf`: estimated degrees of freedom of smooth terms. More or less, how many coefficients you need to specify the shape of a smooth. The default max number of coefficients is `k = 10`, minus 1, as the smooth is zero-centered, so the intercept is already specified
+* `fREML`: fast restricted maximum likelihood estimation. Cannot be used to compare models with different fixed effects composition. For this you need to re-run your models in `ML` modality, see section 4.5.1 in  [Wieling's tutorial](http://martijnwieling.nl/files/GAM-tutorial-Wieling.pdf).
+* `Scale est.`: residual variance
+* `n`: number of samples
+    + number of curves? missing! (more on this later)
+
+### Plotting
+
+* Plotting is essential!
+* Make sure you know what you are plotting (see [itsadug  docs](https://cran.r-project.org/web/packages/itsadug/vignettes/overview.html)):
+    + partial effects
+    + summed effects
+    
+**Partial effects** are smooths, which are zero centered in their default mode. This means that they represent the 'shape part' of the effect, i.e. the total effect minus the intercept.
+
+Smooths are (implicitly) numbered by they order of appearance in the `summary()` output. To plot a selected smooth, two options (among many):
+
+First option: use `mgcv::plot`:
+```{r}
+plot(m1, select = 1, shade = TRUE, rug = FALSE)
+abline(h=0, col='red', lty=2)
+```
+
+Second option: extract fitting data from model, then plot it with `ggplot` or `plotfunctions::plot_error`.
+```{r}
+smooth1 <- get_modelterm(m1, select = 1)
+smooth1$time
+smooth1$fit
+smooth1$se.fit
+ggplot(smooth1) +
+  aes(x = time, y = fit) +
+  geom_line() +
+  geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "red", alpha = 0.5) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+```
+
+**Summed effects** include smooths and intercept (parametric) terms that pertain to an effect. In our case it means $\beta_0 + f(t_i)$.
+
+The easy way to plot summed effects is to use `itsadug::plot_smooth`:
+```{r}
+plot_smooth(m1, view = "time", rug = FALSE)
+```
+One could also get all the relevant values and sum them manually. In our case, get samples from the smooth $f(t_i)$ using `get_modelterm` as above, then add the value of $\beta_0$ taken form the summary (i.e. `m1$coefficients["(Intercept)"]`).
+
+**Question:** the confidence intervals are quite thin in comparison with the impression of noisy signals from the raw data plot. Why is that?
+
+
+### A fixed factor interacting with a smooth
+
+```{r echo=FALSE, message=FALSE}
+ex <- 1 
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
+nCurves <- curves %>% select(curveId) %>% n_distinct()
+curves %<>% mutate(Category = factor(Category))
+
+# plot a few curves
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  geom_line() +
+  theme_light() +
+  theme(text = element_text(size = 15))
+```
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + \beta_P + f_{NP}(t_i) + f_P(t_i) + \epsilon_i$ | `y ~ Category + s(time, by = Category)` |
+
+where $P$ indicates the PEAK category, while the default (control) level is NO_PEAK ($NP$), and $i$ is the sample (not curve) index.
+The equation is omitting the indicator functions. The explicit version is:
+$$ y_i = \beta_0 + \beta_P \cdot I(i \in P) + f_{NP}(t_i) \cdot I(i \in NP) + f_P(t_i) \cdot I(i \in P) + \epsilon_i $$
+Note the asymmetry in the conventions for the parametric and the smooth parts of the model (!!):
+
+* Parametric part: as in `lm()`, $\beta_0$ is the intercept, $\beta_P$ is the difference between level $P$ and the intercept
+* Smooths: one for each level of the fixed factor, all zero-centered
+
+**Question:** What are the summed effects for the PEAK and the NO_PEAK levels (in maths notation)?
+
+Estimate the model with `bam()`:
+```{r}
+curves %<>% mutate(Category = factor(Category)) # don't forget!
+m2 <- bam(y ~ Category + s(time, by = Category), data = curves)
+summary(m2)
+```
+**Practical tip:** all variables that need to be used as fixed or random factors (here `Category`) **must** be converted to R class `factor`, otherwise `bam` will throw an error. 
+
+**Question:** is PEAK significantly different from NO_PEAK?
+
+
+
+We can read off the `summary` output the statistical significance of parametric terms in the same way as with `lm`. In geometrical terms, we can say whether the global level of `y` (regardless of time) is different for PEAK and NO_PEAK levels. 
+
+With the model expressed as above, we **cannot** use the significance levels in the  `summary` to answer questions about the difference between smooths. A small p-value only says that the smooth is significantly different from zero, i.e. from the flat line `y = 0`. If both PEAK and NO_PEAK smooths appear with a small p-value, it means that their shapes are justified, i.e. in both cases `y` varies non-linearly with `time`. Nothing can be said about whether the way it varies for PEAK is different from the way it varies for NO_PEAK.
+
+Let's start plotting first. A look at the summed effects:
+```{r}
+plot_smooth(m2, view = "time", plot_all = "Category")
+```
+A graphical way to detect statistical differences between effects is:
+```{r}
+plot_diff(m2, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
+```
+
+### Testing for significance: binary smooths
+
+The above is one of **three** ways to specify a smooth interacting with a fixed factor with `mgcv::bam`. A second way is with so-called *binary smooths*, which allow to define smooth contrasts, i.e. they are a way to directly assess for the significance between factor levels with smooths.
+
+First we need to define **numeric variables with the meaning of a logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted in the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK. With NO_PEAK as control level:
+```{r}
+curves$IsPEAK <- (curves$Category == "PEAK") * 1
+```
+where  `* 1` is a quick way to transform the logical value inside `()` into a numeric one. The R formula and the corresponding maths form are:
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + f_0(t_i) + b_P(t_i) \cdot I(i \in P) + \epsilon_i$ | `y ~ s(time) + s(time, by = IsPEAK)` |
+
+where:
+
+* $\beta_0$ is the global intercept
+* $f_0(t_i)$ is the global, zero-centered smooth
+* $b_P(t_i)$ is **not zero-centered** binary smooth. It represents the total difference between PEAK and  NO_PEAK
+
+```{r}
+m2.bin <- bam(y ~ s(time) + s(time, by = IsPEAK), data = curves)
+summary(m2.bin)
+```
+| Maths  | R summary |
+|:---------:|:---------:|
+| $\beta_0$ | `(Intercept)` |
+| $f_0(t_i)$  | `s(time)` |
+| $b_P(t_i)$ | `s(time):IsPEAK` |
+
+Only now we are able to report about the significance of the difference between PEAK and NO_PEAK by reading off the `summary` output for `s(time):IsPEAK`.
+
+How does the difference look?
+```{r}
+get_modelterm(m2.bin, select = 2) %>%
+  ggplot() +
+  aes(x = time, y = fit) +
+  geom_line() +
+  geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "red", alpha = 0.5) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+```
+
+There is a third modality for smooths, the so-called *ordered factor difference smooth*. It allows to separate the intercept difference form the shape difference, i.e. it splits the $b_P(t_i)$ term into a constant and a zero-centered smooth. See section 4.5.3 in [Wieling's tutorial](http://martijnwieling.nl/files/GAM-tutorial-Wieling.pdf) for details. 
+
+## Two interacting covariates -- smooth surfaces
+
+Suppose we want to model the effect of trial, i.e. the shape of the curve `y(time)` does change not only according to a category (PEAK, NO_PEAK) but also along a numeric variable `trial` encoding at which point in the experiment we are. The data looks like this:
+
+```{r echo=FALSE, message=FALSE}
+ex <- 1 
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
+nCurves <- curves %>% select(curveId) %>% n_distinct()
+h1 <- -3e-3; m1 <- 1; s1 <- .5
+curves %<>% 
+  inner_join(curves %>% distinct(curveId) %>% mutate(trial = sample(n(), replace = TRUE))) %>%
+  mutate(across(c(Category, curveId), ~ factor(.x))) %>%
+  group_by(curveId) %>%
+  mutate(y = y + trial * h1 * exp(-((time-m1)/s1)**2))
+  
+
+# plot a few curves
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
+  aes(x = time, y = y, group = curveId, color = trial) +
+  geom_line() +
+  facet_grid(~ Category) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+```
+This is a case of a two-dimensional, nonlinear interaction between two covariates, `time` ($t$) and `trial` $(r)$. The default way is to use a *tensor*. 
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + \beta_P + f_{NP}(t_i, r_i) + f_P(t_i, r_i) + \epsilon_i$ | `y ~ Category + te(time, trial, by = Category)` |
+
+Each of the tensor functions $f$ is the generalisation of a complete interaction expression in `lm`:
+
+| Maths      | R notation in lm() |
+|:---------:|:----------:|
+| $\beta_1 \cdot t_i + \beta_2 \cdot r_i + \beta_3 \cdot t_i \cdot r_i$ | `time * trial` |
+
+```{r}
+m3 <- bam(y ~ Category + te(time, trial, by = Category), data = curves)
+summary(m3)
+```
+The surface plot for the PEAK and NO_PEAK conditions (summed effects) are:
+```{r warning=FALSE, message=FALSE}
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "PEAK"), color = c('white', 'blue'))
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "NO_PEAK"), color = c('white', 'blue'))
+```
+
+
 
 ### Random smooths
 
