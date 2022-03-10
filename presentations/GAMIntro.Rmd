@@ -33,11 +33,12 @@ curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
 nCurves <- curves %>% select(curveId) %>% n_distinct()
 curves %<>% mutate(Category = factor(Category))
 
-
+Category.colors <- c("slategray4", "orangered")
 # plot a few curves
 ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
+  scale_color_manual(values=Category.colors) +
   theme_light() +
   theme(text = element_text(size = 15))
 
@@ -200,6 +201,7 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   theme_light() +
+  scale_color_manual(values=Category.colors) +
   theme(text = element_text(size = 15))
 ```
 
@@ -235,7 +237,7 @@ With the model expressed as above, we **cannot** use the significance levels in 
 
 Let's start plotting first. A look at the summed effects:
 ```{r}
-plot_smooth(m2, view = "time", plot_all = "Category")
+plot_smooth(m2, view = "time", plot_all = "Category", col = Category.colors)
 ```
 A graphical way to detect statistical differences between effects is:
 ```{r}
@@ -300,7 +302,8 @@ curves %<>%
   inner_join(curves %>% distinct(curveId) %>% mutate(trial = sample(n(), replace = TRUE))) %>%
   mutate(across(c(Category, curveId), ~ factor(.x))) %>%
   group_by(curveId) %>%
-  mutate(y = y + trial * h1 * exp(-((time-m1)/s1)**2))
+  mutate(y = y + trial * h1 * exp(-((time-m1)/s1)**2)) %>%
+  ungroup()
   
 
 # plot a few curves
@@ -327,13 +330,89 @@ Each of the tensor functions $f$ is the generalisation of a complete interaction
 m3 <- bam(y ~ Category + te(time, trial, by = Category), data = curves)
 summary(m3)
 ```
-The surface plot for the PEAK and NO_PEAK conditions (summed effects) are:
-```{r warning=FALSE, message=FALSE}
-fvisgam(m3, view = c("time", "trial"), cond = list(Category = "PEAK"), color = c('white', 'blue'))
-fvisgam(m3, view = c("time", "trial"), cond = list(Category = "NO_PEAK"), color = c('white', 'blue'))
+The surface plot for the PEAK and NO_PEAK conditions and slices along `trial == 20` and `trial == 80` (all summed effects) are:
+
+```{r echo=FALSE, warning=FALSE, fig.show="hold", out.width="50%",message=FALSE}
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "NO_PEAK"), color = c('white', 'blue'), main = "NO_PEAK", print.summary = FALSE)
+abline(h=c(20, 80),lty=2,lwd=2,col="red")
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "PEAK"), color = c('white', 'blue'), main = "PEAK", print.summary = FALSE)
+abline(h=c(20, 80),lty=2,lwd=2,col="red")
+plot_smooth(m3, view = "time", plot_all = "Category", cond = list(trial = 20), col = Category.colors, lwd=2, main = "trial = 20", print.summary = FALSE)
+plot_smooth(m3, view = "time", plot_all = "Category", cond = list(trial = 80), col = Category.colors, lwd=2, main = "trial = 80", print.summary = FALSE)
+
 ```
 
+If we were using `lm` instead of `bam` we would be able to produce similar surface visualisations, but in this case pretty bad estimates:
 
+```{r}
+m3.lm <- lm(y ~ Category * time * trial, data = curves)
+ summary(m3.lm)
+```
+```{r echo=FALSE, warning=FALSE, fig.show="hold", message=FALSE}
+# construct predictions on a regular grid
+m3.lm.pred <- expand_grid(curves %>% distinct(Category, time), trial = 1:100) %>%
+  mutate(y = predict(m3.lm, .))
+ggplot(m3.lm.pred) +
+  aes(time, trial, fill = y) +
+  # stat_contour_filled(bins = 9) + 
+  geom_raster() +
+  facet_grid(~ Category) +
+  # scale_fill_brewer() +
+  scale_fill_gradient(low = 'white', high = 'blue') +
+  geom_hline(yintercept = c(20, 80), linetype = "dashed", color = "red") +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+
+m3.lm.pred %>%
+  filter(trial %in% c(20, 80)) %>%
+  ggplot() +
+  aes(time, y, color = Category) +
+  geom_line() +
+  scale_color_manual(values=Category.colors) +
+  facet_grid(~ trial, labeller = label_both) +
+  theme_light() +
+  theme(text = element_text(size = 15), legend.position = "bottom")
+  
+```
+
+The surfaces themselves are non-linear, i.e. they are not flat, because of the product term $\beta_3 \cdot t_i \cdot r_i$, but each slice along either `time` or `trial` is a line (this is called a *ruled surface*). 
+
+To test for significance differences between PEAK and NO_PEAK, we can use binary smooth surfaces as above:
+
+```{r}
+curves$IsPEAK <- (curves$Category == "PEAK") * 1
+m3.bin <- bam(y ~ te(time, trial) + te(time, trial, by = IsPEAK), data = curves)
+summary(m3.bin)
+pvisgam(m3.bin, view = c("time", "trial"), select = 2, color = c('white', 'blue'), main = "PEAK - NO_PEAK", print.summary = FALSE)
+```
+
+The difference PEAK - NO_PEAK is then significant, but the surface plot suggests that such difference does not change much along `trial`. To disentangle this, another form of tensor product is available, `ti`, which isolates the interaction:
+
+| Equation  | R formula |
+|:---------|:---------|
+| $y_i = \beta_0 + \beta_P +$ | `y ~ Category +` |
+| $f_{1, NP}(t_i) + f_{1, N}(t_i) +$  | `s(time, by = Category) +` |
+| $f_{2, NP}(r_i) + f_{2, N}(r_i) +$  | `s(trial, by = Category) +` |
+| $f_{3, NP}(t_i, r_i) + f_{3, N}(t_i, r_i) + \epsilon_i$  | `ti(time, trial, by = Category)`|
+
+
+```{r}
+m3.ti <- bam(y ~ Category + s(time, by = Category) + s(trial, by = Category) + ti(time, trial, by = Category), data = curves)
+summary(m3.ti)
+```
+
+```{r echo=FALSE, fig.show="hold", out.width="50%", warning=FALSE}
+plot_smooth(m3.ti, view = "time", plot_all = "Category", col = Category.colors, print.summary = FALSE)
+plot_smooth(m3.ti, view = "trial", plot_all = "Category", col = Category.colors, print.summary = FALSE)
+pvisgam(m3.ti, view = c("time", "trial"), select = 5, color = c('white', 'blue'), main = "ti(time,trial):CategoryNO_PEAK", print.summary = FALSE)
+pvisgam(m3.ti, view = c("time", "trial"), select = 6, color = c('white', 'blue'), main = "ti(time,trial):CategoryPEAK", print.summary = FALSE)
+
+```
+
+In this case the non-linear interaction between `time` and `trial` appears to be significant (as there is little noise in the data), though its effect is minimal, judging from the contour levels. 
+
+Another simplification of the model apparent from eye inspections is be to make the smooth over `trial` a linear term and independent of `Category`, i.e. substitute `s(trial, by = Category)` with just `trial`, or in maths notation $\beta_2 \cdot r_i$. The fact that the term is linear is suggsted by its shape and by the `edf` values of the respective smooths.
 
 ### Random smooths
 
