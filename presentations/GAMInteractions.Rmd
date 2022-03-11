@@ -1,0 +1,45 @@
+---
+title: "Interactions between factors with GAMMs"
+author: "Michele Gubian"
+date: "March 11, 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+library(mgcv)
+library(itsadug)
+library(emmeans)
+```
+
+```{r echo=FALSE, message=FALSE}
+# h(height), m(ean), s(t. dev.) of a Gaussian-like curve
+# m_h = mean of height, s_m = st. dev. of mean, etc. 
+m <- 1; s <- 1
+s_h <- 0.05; s_m <- 0.05; s_s <- 0.1
+t <- seq(0, 2, by = 0.01)
+nCurvesXCell <- 50
+params <- tribble(
+  ~Category, ~State, ~m_h, ~m_m, ~m_s,
+  "low", "START", 1, m, s,
+  "low", "TOP", 1.5, m, s,
+  "low", "TAIL", 1.2, m, s,
+  "high", "START", 3, m, s,
+  "high", "TOP", 2, m, s,
+  "high", "TAIL", 2.3, m, s,
+) %>%
+  group_by(Category, State) %>%
+  summarise(
+    h = rnorm(nCurvesXCell, m_h, s_h),
+    m = rnorm(nCurvesXCell, m_m, s_m),
+    s = rnorm(nCurvesXCell, m_s, s_s)
+  ) %>%
+  group_by(across(everything())) %>%
+  summarise(t = t,
+            y = h1 * exp(-((t-m)/s_)**2)
+            )
+
+
+```
