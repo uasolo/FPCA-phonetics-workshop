@@ -12,6 +12,7 @@ library(tidyverse)
 library(magrittr)
 library(mgcv)
 library(itsadug)
+library(emmeans)
 
 ```
 
@@ -187,6 +188,34 @@ One could also get all the relevant values and sum them manually. In our case, g
 
 **Question:** the confidence intervals are quite thin in comparison with the impression of noisy signals from the raw data plot. Why is that?
 
+### Diagnostics
+
+
+
+#### Degrees of freedom
+
+The specification of smooths `s()` has an extra argument `k` whose default value is 10. `k` indicates the maximum number of splines allowed to specify the smooth, or in other words the maximum number of parameters or degrees of freedom.
+As regular smooths are zero-centered, this means that a smooth with at most `k = 10` parameters has actually at most `k' = 9` degrees of freedom, as one is absorbed by the intercept term. The estimated degrees of freedom `edf` is an indicator for how many 'equivalent parameters' were actually utilised in the estimated smooth. When `edf` is near 1, it means that it's basically a straight line (only the slope parameter). On the contrary, when `edf` is very close to `k' = k-1` as in this case, it means that it has used up all its degrees of freedom, thus perhaps more are needed. 
+
+Let's specify a higher `k` and see the what happens to `edf` for `s(time)`:
+
+```{r}
+m1.k20 <- bam(y ~ s(time, k = 20), data = curves)
+summary(m1.k20)
+```
+`edf` has not increased much, and it's well below `k - 1 = 19`, so the limit on `k = 10` was ok.
+
+#### Residuals
+
+```{r}
+gam.check(m1)
+```
+
+* Quantile plot and histogram indicate how close to Gaussian the distribution of residuals is, i.e. how close we are to the hypothesis $\epsilon \sim N(0, \sigma)$.
+* Residuals vs. linear predictor shows whether trends are visible in the residuals -- which they shouldn't. For example, if residuals have a wider span for some values of the predicted output it means that the data are heteroscedastic, i.e. the variance of the residuals is not independent of predicted output, but it varies with it. Sometimes, especially with time series, this problem is mitigated by using a different distribution for the residuals, the so-called *scaled-t*. But often it also means that the model is ill-specified, and a different predictor structure is needed.
+* Response vs. For Gaussian residuals, Fitted Values provides a similar picture as Residuals vs. linear predictor. The difference is that the y axis reports the actual output values (`y` in the example), and not the residual errors.
+
+
 
 ### A fixed factor interacting with a smooth
 
@@ -244,9 +273,17 @@ A graphical way to detect statistical differences between effects is:
 plot_diff(m2, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
 ```
 
+### Testing for significance: `emmeans`
+
+The powerful `emmeans` function can be used on `mgcv` GAMMs as a way to test pointwise comparisons. Suppose we want to test whether PEAK and NO_PEAK differ at `time` equal 0.0, 1.0 and 2.0. We can use `emmeans` in the same way as we do with `lm` or `lmer`:
+
+```{r}
+emmeans(m2, pairwise ~ Category | time, at = list(time = 0:2))
+```
+
 ### Testing for significance: binary smooths
 
-The above is one of **three** ways to specify a smooth interacting with a fixed factor with `mgcv::bam`. A second way is with so-called *binary smooths*, which allow to define smooth contrasts, i.e. they are a way to directly assess for the significance between factor levels with smooths.
+While `emmeans` allows to test differences at specific points on the time axis (or other continuous dimensions), we need a way to assess for the significance of a smooth contrast as a whole. For the purpose, we utilise another way to specify a smooth interacting with a fixed factor with `mgcv::bam`, the so-called *binary smooths*.
 
 First we need to define **numeric variables with the meaning of a logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted in the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK. With NO_PEAK as control level:
 ```{r}
@@ -297,14 +334,15 @@ Suppose we want to model the effect of trial, i.e. the shape of the curve `y(tim
 ex <- 1 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
 nCurves <- curves %>% select(curveId) %>% n_distinct()
-h1 <- -3e-3; m1 <- 1; s1 <- .5
+h1_ <- -3e-3; m1_ <- 1; s1_ <- .5
 curves %<>% 
   inner_join(curves %>% distinct(curveId) %>% mutate(trial = sample(n(), replace = TRUE))) %>%
   mutate(across(c(Category, curveId), ~ factor(.x))) %>%
   group_by(curveId) %>%
-  mutate(y = y + trial * h1 * exp(-((time-m1)/s1)**2)) %>%
+  mutate(y = y + trial * h1_ * exp(-((time-m1_)/s1_)**2)) %>%
   ungroup()
-  
+
+rm(h1_, m1_, h1_)  
 
 # plot a few curves
 ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
