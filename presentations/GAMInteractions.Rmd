@@ -22,7 +22,7 @@ State.colors <- colorblind_pal()(8)[c(1, 2, 6)]
 ## Example
 
 Suppose we have realisations of a quantity `y` along the time axis. Each realisation has the form of a peak, and a `Category` with two levels, `low` and `high`, determines the general shape, i.e. a high/low peak. 
-Suppose we run an experiment with participants going through 3 `States`: `BEFORE`, `DURING` and `AFTER` a certain experimental condition such as imitiation, altered auditory feedback, etc.. For simplicity we will not consider subject, item, trial, or any other factor usually modelled by random terms. We have a number of hypotheses:
+Suppose we run an experiment with participants going through 3 `States`: `BEFORE`, `DURING` and `AFTER` a certain experimental condition, such as imitiation, altered auditory feedback, etc.. For simplicity we will not consider subject, item, trial, or any other factor usually modelled by random terms. We have a number of hypotheses:
 
 1. `BEFORE`: `high` curves higher than `low` curves
 2. `DURING`: `high` curves get lower than their level `BEFORE`, `low` curves get higher than their level `BEFORE`, i.e. they move towards each other
@@ -39,7 +39,7 @@ Below an illustration of the data set.
 m <- 1; s <- 1
 s_h <- 0.05; s_m <- 0.05; s_s <- 0.1
 s_e <- 0.2
-t <- seq(0, 2, by = 0.01)
+t <- seq(0, 2, by = 0.02)
 nCurvesXCell <- 50
 curves <- tribble(
   ~Category, ~State, ~m_h, ~m_m, ~m_s,
@@ -77,19 +77,10 @@ ggplot() +
   
 ```
 
-We are going to test all the hypotheses. As comparison, for each hypothesis first we will select the time midpoint `t = 1`, build a clasic model with `lm` and test with `emmeans`. Then we show how to do this on the whole curve interval by building an appropriate GAM. 
-
+We are going to test all the hypotheses. 
 ### H1: `BEFORE`: `high` curves higher than `low` curves
-Taking `t = 1` and using classic linear regression we obtain:
 
-```{r}
-mod1.lm <- lm(y ~ Category * State,
-             data = curves %>% filter(t ==1))
-emmeans(mod1.lm, pairwise ~ Category | State, at = list(State = "BEFORE"))
-```
-The difference between `high` and `low` at midpoint is significant and in the expected direction. 
-
-With GAMs first need to need to create our own interaction term, as there is no way to express something like `Category * State` directly. Then we need to introduce convenient binary smooths that represent the smooth diffeences we are testing. 
+First we need to create our own interaction term, as there is no way to express something like `Category * State` directly. Then we need to introduce convenient binary smooths that represent the smooth diffeences we are testing. 
 
 The interaction term is created as follows:
 ```{r}
@@ -99,20 +90,23 @@ curves %>% distinct(CategoryState)
 
 We then obtain smooth contrasts by creating one ordinary smooth per `State` and one corresponding binary
 smooth representing the differnece between `high` and `low` at each `State`. 
-The equation of the model is ($s =$ `State`, $c =$ `Category`, $l =$ `low`, $(B, D, A) =$ `(BEFORE, DURING, AFTER)`):
+The equation of the model is ($s =$ `State`, $c =$ `Category`, $(l, h) =$ `(low, high)`, $(B, D, A) =$ `(BEFORE, DURING, AFTER)`):
 
 $$ y_i = \beta_0 + \sum_{s \in \{D, A\}} \beta_{s_i} \cdot I(s_i = s) + 
 \sum_{s \in \{B, D, A\}} f_{s_i}(t_i) \cdot I(s_i = s) +
 \sum_{s \in \{B, D, A\}} b_{s_i, h}(t_i) \cdot I(s_i = s \cap c = h) +
 \epsilon_i
 $$
-Suppose a sample $i$ at time $t_i$ belongs to a curve of `Category` `low` ($c = l$) and `State` `BEFORE` ($s = B$). Then the the identity functions 'switch on' the following terms:
+Suppose a sample $i$ at time $t_i$ belongs to a curve of `Category` `low` ($c_i = l$) and `State` `BEFORE` ($s_i = B$). Then the the identity functions 'switch on' the following terms:
 
 $$ y_i =  \beta_0 +  f_B(t_i) + \epsilon_i $$
 while if `State == BEFORE` but `Category == high` 
 
 $$ y_i =  \beta_0 +  f_B(t_i) + b_{B, h}(t_i) + \epsilon_i $$
-and analogously for the other two states. This shows that the binary smooth $b_{B, h}(t_i)$ represents the difference between `high` and `low` for the `BEFORE` state. Remember that ordinary smooths like $f_B(t_i)$ are zero-centered, hence the whole effect is a combination of the intercept and the smooth itself. In this case, `BEFORE` is the control level for the intercept, thus only $\beta_0$ is present. On the contrary, binary terms are not zero-centered, hence $b_{B, h}(t_i)$ represents the whole difference `high - low` for the `BEFORE` `State`. 
+and analogously for the other two states. This shows that the binary smooth $b_{B, h}(t_i)$ represents the difference between `high` and `low` for the `BEFORE` state. Remember that ordinary smooths like $f_B(t_i)$ are zero-centered, hence the whole effect is a combination of the intercept and the smooth itself. In this case, `BEFORE` is the control level for the intercept, thus only $\beta_0$ is present. On the contrary, binary terms are not zero-centered, hence $b_{B, h}(t_i)$ represents the whole difference `high - low` for the `BEFORE` `State`. We have also two other binary smooth terms which are not needed for H1, but may be used for other hypotheses. Note that if we were leaving out those terms from the model we would obtain different results, and the model itself would be less clearly interpretable. 
+
+Intuitively this model setup is the application of the basic idea of binary smooths which we've seen before applied to only one difference. Here it is applied to each level of `State`. The combination of fixed terms ($\beta$) and ordinary smooths ($f$) model the effect of `State` independently of `Category`, while each of the binary smooths ($b$) model the difference `high - low` specific for each level of `State`.  
+
 
 The corresponding GAM is expressed using `mgcv` as:
 
@@ -120,7 +114,69 @@ The corresponding GAM is expressed using `mgcv` as:
 # create binary variables
 curves$IsBEFORE_high <- 1 * (curves$CategoryState == "high.BEFORE")
 curves$IsDURING_high <- 1 * (curves$CategoryState == "high.DURING")
-curves$IsAFTER_high <- 1 * (curves$CategoryState == "high.AFTER")
-mod1 <- bam(y ~ State + s(t, by = State) + s(t, by = IsBEFORE_high) + s(t, by = IsDURING_high) + + s(t, by = IsAFTER_high), data = curves)
+curves$IsAFTER_high  <- 1 * (curves$CategoryState == "high.AFTER")
+mod1 <- bam(y ~ State + s(t, by = State) + s(t, by = IsBEFORE_high) + s(t, by = IsDURING_high) + s(t, by = IsAFTER_high), data = curves)
 summary(mod1)
 ```
+
+The term `s(t):IsBEFORE_high`, i.e. $b_{B, h}(t_i)$, is significant, but we don't know if this difference term is above or below zero, or combinations thereof. If H1 is supported, then we want to see a difference curve above the zero line. 
+
+
+Let's plot the binary smooth:
+
+```{r}
+# note: get_modelterm(mod1, select = 4) does not work with combinations of binary and factor smooths (!!) 
+# I have found an ugly workaround for that, ask me if interested.
+plot(mod1, select = 4, shade = TRUE, rug = FALSE, main = expression(b[list(B, h)](t[i])), cex.main=2)
+abline(h=0, col='red', lty=2)
+```
+
+Yes $b_{B, h}(t_i)$ is clearly positive along the time axis, hence H1 is supported.
+
+
+### H2: `DURING`: `high` lower than `BEFORE`, `low` higher than `BEFORE`
+
+The setup is similar to the one before, except that now we need to model the difference `DURING - BEFORE` for each `Category` level. 
+
+$$ y_i = \beta_0 + \beta_h \cdot I(c_i = h) + 
+\sum_{c \in \{l, h\}} ( f_{c_i}(t_i) \cdot I(c_i = c) +
+ b_{c_i, D}(t_i) \cdot I(c_i = c \cap s = D) +
+ b_{c_i, A}(t_i) \cdot I(c_i = c \cap s = A) ) +
+\epsilon_i
+$$
+In this case the terms $b_{l, D}(t_i)$ and $b_{h, D}(t_i)$ represent the difference `DURING - BEFORE` for `low` and `high` respectively. We are using the convention whereby `BEFORE` is the default level, so the other binsry wmooths represent the differences  `AFTER - BEFORE`, which we do not need for H2. 
+
+The model in `mgcv` is:
+
+```{r fig.show="hold", out.width="50%"}
+# create binary variables
+curves$IsDURING_low <- 1 * (curves$CategoryState == "low.DURING")
+curves$IsAFTER_low  <- 1 * (curves$CategoryState == "low.AFTER")
+# already created:
+# curves$IsDURING_high <- 1 * (curves$CategoryState == "high.DURING")
+# curves$IsAFTER_high  <- 1 * (curves$CategoryState == "high.AFTER")
+
+mod2 <- bam(y ~ Category + s(t, by = Category) + s(t, by = IsDURING_low) + s(t, by = IsDURING_high) + s(t, by = IsAFTER_low) + s(t, by = IsAFTER_high), data = curves)
+summary(mod2)
+plot(mod2, select = 3, shade = TRUE, rug = FALSE, main = expression(b[list(l, D)](t[i])), cex.main=2)
+abline(h=0, col='red', lty=2)
+plot(mod2, select = 4, shade = TRUE, rug = FALSE, main = expression(b[list(h, D)](t[i])), cex.main=2)
+abline(h=0, col='red', lty=2)
+
+```
+
+Both binary smooths are significantly different from zero.  $b_{l, D}(t_i)$ is above zero while $b_{h, D}(t_i)$ is below zero along the time axis, which is what H2 predicts.
+
+**Important note: ** some of the binary smooths in this model are defined by the same interaction conditions from the previous model. However, their value is **not** the same, as it is the **combination** of ordinary and binary smooths that defines what they actually model. 
+
+### H3: `DURING`: `high` curves higher than `low` curves
+
+We are lucky, as this hypothesis can be tested by reusing the model we used to test H1. We are going to check and plot $b_{D, h}(t_i)$. From the `summary` above we see that the term is significant. H3 requires is to be above the zero line, as it represents the difference `high - low` for the `DURING` `State`. 
+
+```{r}
+plot(mod1, select = 5, shade = TRUE, rug = FALSE, main = expression(b[list(D, h)](t[i])), cex.main=2)
+abline(h=0, col='red', lty=2)
+```
+
+Yes, all good. 
+
