@@ -37,9 +37,9 @@ Below an illustration of the data set.
 # h(height), m(ean), s(t. dev.) of a Gaussian-like curve
 # m_h = mean of height, s_m = st. dev. of mean, etc. 
 m <- 1; s <- 1
-s_h <- 0.05; s_m <- 0.05; s_s <- 0.1
-s_e <- 0.2
-t <- seq(0, 2, by = 0.02)
+s_h <- 0.15; s_m <- 0.15; s_s <- 0.1
+s_e <- 0.5
+t <- seq(0, 2, by = 0.05)
 nCurvesXCell <- 50
 curves <- tribble(
   ~Category, ~State, ~m_h, ~m_m, ~m_s,
@@ -66,7 +66,7 @@ curves <- tribble(
   ungroup()
 
 
-curves %>% inner_join(curves %>% distinct(Category, State, trial) %>% slice_sample(n = 30)) %>%
+curves %>% inner_join(curves %>% distinct(Category, State, trial) %>% slice_sample(n = 40)) %>%
 ggplot() +
   aes(t, y, group = interaction(trial, State), color = State) +
   geom_line() +
@@ -77,7 +77,8 @@ ggplot() +
   
 ```
 
-We are going to test all the hypotheses. 
+We are going to test hypotheses H1 to H4, while H5 and H6 are left as exercise. 
+
 ### H1: `BEFORE`: `high` curves higher than `low` curves
 
 First we need to create our own interaction term, as there is no way to express something like `Category * State` directly. Then we need to introduce convenient binary smooths that represent the smooth diffeences we are testing. 
@@ -180,3 +181,90 @@ abline(h=0, col='red', lty=2)
 
 Yes, all good. 
 
+### H4 `DURING`: `high` curves move more towards `low` curves than vice versa
+
+This hypothesis requires a more complex structure of binary smooths. First let us express H4 in the form of an inequality:
+
+$$ (y\big\rvert{h, B} - y\big\rvert{h, D}) -  (y\big\rvert{l, D} - y\big\rvert{l, B}) > 0$$
+where $y\big\rvert{h, B}$ means "the predicted $y$ at  `Category` `high` and `State` `BEFORE`", and similarly for the other terms. 
+That is, we are claiming that the difference curve between two difference curves has a certain sign. 
+In order to use the mechanism of binary smooths at our advantage, we need to find a way to get just one $b$ term that models the expression on the left of the inequality above. The way we did for H1 H2 and H3 was to set base levels with ordinary $f$ smooths and then define one extra set of $b$ terms expressing differences. The $f$ terms were based on either `Category` or `State`. 
+There are two reasons why this is not enough in our case. First, with just one set of $b$ terms we will be able to express differences between levels, but not differences of differences. So we need two sets of $b$ terms with different meanings. In particular, we need the term $y\big\rvert{h, B} - y\big\rvert{h, D}$ to contain one $b$ element more than the term $y\big\rvert{l, D} - y\big\rvert{l, B}$, so that everything cancels out and only one $b$ term remains. 
+Second, there is no way to create the asymmetry in the subtractions that we need by using $f$ terms were based on either `Category` or `State`.
+
+Let's tackle the latter problem first. We have to create a new factor that brings about the asymmetry we need. Let's call it `X` and it is defined as in the picture below:
+
+```{r echo=FALSE}
+tribble(
+  ~Category, ~State, ~X, ~Xlab,
+  "low", "BEFORE", "lB_hD", "lB*union(hD)",
+  "low", "DURING", "lD_hB", "lD*union(hB)",
+  "low", "AFTER", "A", "A",
+  "high", "BEFORE", "lD_hB", "lD*union(hB)",
+  "high", "DURING", "lB_hD", "lB*union(hD)",
+  "high", "AFTER", "A", "A",
+) %>%
+  mutate(Category = factor(Category, levels = c("low", "high")),
+         State = factor(State, levels = c("BEFORE", "DURING", "AFTER"))) %>%
+  ggplot() +
+   aes(x = State, y = Category, fill = Xlab) + 
+    geom_tile() +
+  geom_text(aes(label = Xlab), size = 10, parse = TRUE, family = "courier") +
+  scale_fill_manual(values = colorblind_pal()(8)[c(3, 4, 5)]) +
+  theme_light() +
+  theme(text = element_text(size = 15), legend.position = "none")
+```
+
+where `lD`$\cup$`hB` means "either `low` and `DURING` or `high` and `BEFORE`", and similarly for the other terms.
+This new factor `X` behaves similarly to `State` in that it divides the 6 cells into 3 sets of 2, but has an asymmetry with respect to `BEFORE` and `AFTER`. 
+
+The model we are considering is the following:
+
+$$ y_i = \\ 
+\beta_0 + \\
+\beta_{lD \cup hB} \cdot I((c_i = l \cap s_i = D) \cup (c_i = h \cap s_i = B)) + \\
+\beta_{lB \cup hD} \cdot I((c_i = l \cap s_i = B) \cup (c_i = h \cap s_i = D)) + \\
+f_A(t_i) \cdot I(s_i = A) + \\
+f_{lD \cup hB}(t_i) \cdot I((c_i = l \cap s_i = D) \cup (c_i = h \cap s_i = B)) + \\
+f_{lB \cup hD}(t_i) \cdot I((c_i = l \cap s_i = B) \cup (c_i = h \cap s_i = D)) + \\
+b_h(t_i) \cdot I(c_i = h) + \\
+b_{lD \cup hB, h}(t_i) \cdot I(c_i = h \cap s_i = B) + \\
+b_{A, h}(t_i) \cdot I(c_i = h \cap s_i = A) + \\
+\epsilon_i
+$$
+
+To see why this particular set up is going to solve our problem, let's write each of the four terms in the inequality above in terms of the model (omitting the $I()$ terms and the dependency on $t_i$):
+
+Category | State | Inequality  | Model |
+|:---------:|:---------:|:---------:|:---------:|
+|high | BEFORE | $y\big\rvert{h, B}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB} + b_h + b_{lD \cup hB, h}$ |
+|high | DURING | $y\big\rvert{h, D}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD} + b_h$ |
+|low  | DURING | $y\big\rvert{l, D}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB}$ |
+|low  | BEFORE | $y\big\rvert{l, B}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD}$ |
+|high | AFTER  | - | $\beta_0  + f_A + b_h$ |
+|low  | AFTER  | - | $\beta_0  + f_A$ |
+
+By substituting the model terms in the inequality we can verify that only one term is left, $b_{lD \cup hB, h}$, which is what we wanted. This is a difference-of-differences curve that H4 claims to be positive. 
+
+Note: the model includes also terms that have to do with the `AFTER` level, which does not play any role in the inequality describing H4. However, omitting them would be an error, as the model would not be identifying each of the six `Category` by `State` cells with a unique combination of terms. As shown in the table above, also the cells with value `AFTER` are distinguished from the others.
+
+```{r}
+# create category X
+curves %<>%
+  mutate(X = case_when(
+    (Category == "low" &  State == "DURING") | (Category == "high" &  State == "BEFORE") ~ "lD_U_hB",
+    (Category == "low" &  State == "BEFORE") | (Category == "high" &  State == "DURING") ~ "lB_U_hD",
+    State == "AFTER" ~ "A"
+  )) %>%
+  mutate(X = factor(X)) # otherwise bam() "cannot find" it
+# create binary variables
+curves$is_h <-  1 * (curves$Category == "high")
+curves$Is_lD_U_hB_h <- 1 * (curves$X == "lD_U_hB" & curves$Category == "high")
+curves$Is_A_h <- 1 * (curves$X == "A" & curves$Category == "high")
+# model
+mod4 <- bam(y ~ X + s(t, by = X) + s(t, by = is_h) + s(t, by = Is_lD_U_hB_h) + s(t, by = Is_A_h),
+          data = curves)
+summary(mod4)
+plot(mod4, select = 5, shade = TRUE, rug = FALSE, main = expression(b[list(lD*union(hB), h)](t[i])), cex.main=2)
+abline(h=0, col='red', lty=2)
+```
