@@ -16,8 +16,10 @@ library(emmeans)
 library(RColorBrewer)
 library(ggthemes)
 
-State.colors <- colorblind_pal()(8)[c(1, 2, 6)]
 ```
+# The "A" problem
+Interactions between factors are common. In the example we develop in this section we deal with a 2 by 3 design, where a two-level `Category` interacts with a three-level `State`. With GAMMs implemented in the `mgcv` library there is no way to express such interaction as `Category * State`. This is by design. The "A" in GAMM stands for **additive**. This means that each effect is expressed as a sum; on the contrary, an interaction is a multiplicative effect. To be more precise, it is true that interactions between *covariates*, like time and trial, are taken care of by non-linear multi-dimensional tensor smooths. That is because the GAMM machinery is designed for modelling non-linear effects along one or more continuous variable through regularised curve or multidimensional surface fitting. But each of these uni- or multidimensional effects are then added together - that's the "A" in GAMM. So the developers of `mgcv` decided not to introduce any automatic mechanism to create factor interaction terms, hence no use of the `*` symbol in model specification. This means we need to create interaction terms ourselves, and design our own contrasts.
+
 
 ## Example
 
@@ -65,6 +67,7 @@ curves <- tribble(
             ) %>%
   ungroup()
 
+State.colors <- colorblind_pal()(8)[c(1, 2, 6)]
 
 curves %>% inner_join(curves %>% distinct(Category, State, trial) %>% slice_sample(n = 40)) %>%
 ggplot() +
@@ -90,10 +93,10 @@ curves %>% distinct(CategoryState)
 ```
 
 We then obtain smooth contrasts by creating one ordinary smooth per `State` and one corresponding binary
-smooth representing the differnece between `high` and `low` at each `State`. 
+smooth representing the difference between `high` and `low` at each `State`. 
 The equation of the model is ($s =$ `State`, $c =$ `Category`, $(l, h) =$ `(low, high)`, $(B, D, A) =$ `(BEFORE, DURING, AFTER)`):
 
-$$ y_i = \beta_0 + \sum_{s \in \{D, A\}} \beta_{s_i} \cdot I(s_i = s) + 
+$$ y_i = \beta_0 + \sum_{s \in \{D, A\}} \beta_{s_i} \cdot I(s_i = s) + \\
 \sum_{s \in \{B, D, A\}} f_{s_i}(t_i) \cdot I(s_i = s) +
 \sum_{s \in \{B, D, A\}} b_{s_i, h}(t_i) \cdot I(s_i = s \cap c = h) +
 \epsilon_i
@@ -104,9 +107,9 @@ $$ y_i =  \beta_0 +  f_B(t_i) + \epsilon_i $$
 while if `State == BEFORE` but `Category == high` 
 
 $$ y_i =  \beta_0 +  f_B(t_i) + b_{B, h}(t_i) + \epsilon_i $$
-and analogously for the other two states. This shows that the binary smooth $b_{B, h}(t_i)$ represents the difference between `high` and `low` for the `BEFORE` state. Remember that ordinary smooths like $f_B(t_i)$ are zero-centered, hence the whole effect is a combination of the intercept and the smooth itself. In this case, `BEFORE` is the control level for the intercept, thus only $\beta_0$ is present. On the contrary, binary terms are not zero-centered, hence $b_{B, h}(t_i)$ represents the whole difference `high - low` for the `BEFORE` `State`. We have also two other binary smooth terms which are not needed for H1, but may be used for other hypotheses. Note that if we were leaving out those terms from the model we would obtain different results, and the model itself would be less clearly interpretable. 
+and analogously for the other two states. This shows that the binary smooth $b_{B, h}(t_i)$ represents the difference between `high` and `low` for the `BEFORE` state. Remember that ordinary smooths like $f_B(t_i)$ are zero-centered, hence the whole effect is a combination of the intercept and the smooth itself. In this case, `BEFORE` is the control level for the intercept, thus only $\beta_0$ is present. On the contrary, binary terms are not zero-centered, hence $b_{B, h}(t_i)$ represents the whole difference `high - low` for the `BEFORE` `State`. We have also two other binary smooth terms which are not needed for H1, but may be used for other hypotheses. Note that if we were leaving out those terms from the model we would obtain different results, and the model itself would not be able to express each of the 6 combinations of `State` and `Category` with a unique set of terms - in other words, it would be the wrong model. 
 
-Intuitively this model setup is the application of the basic idea of binary smooths which we've seen before applied to only one difference. Here it is applied to each level of `State`. The combination of fixed terms ($\beta$) and ordinary smooths ($f$) model the effect of `State` independently of `Category`, while each of the binary smooths ($b$) model the difference `high - low` specific for each level of `State`.  
+Intuitively this model setup is the application of the idea of binary smooths as contrasts, already illustrated on a case with only one difference, here applied separately to each level of `State`. The combination of fixed terms ($\beta$) and ordinary smooths ($f$) models the effect of `State` independently of `Category`, while each of the binary smooths ($b$) model the difference `high - low` specific for each level of `State`.  
 
 
 The corresponding GAM is expressed using `mgcv` as:
@@ -116,6 +119,7 @@ The corresponding GAM is expressed using `mgcv` as:
 curves$IsBEFORE_high <- 1 * (curves$CategoryState == "high.BEFORE")
 curves$IsDURING_high <- 1 * (curves$CategoryState == "high.DURING")
 curves$IsAFTER_high  <- 1 * (curves$CategoryState == "high.AFTER")
+# model
 mod1 <- bam(y ~ State + s(t, by = State) + s(t, by = IsBEFORE_high) + s(t, by = IsDURING_high) + s(t, by = IsAFTER_high), data = curves)
 summary(mod1)
 ```
@@ -128,6 +132,7 @@ Let's plot the binary smooth:
 ```{r}
 # note: get_modelterm(mod1, select = 4) does not work with combinations of binary and factor smooths (!!) 
 # I have found an ugly workaround for that, ask me if interested.
+# Or even better, let me know if there is an R library that works best in this case.
 plot(mod1, select = 4, shade = TRUE, rug = FALSE, main = expression(b[list(B, h)](t[i])), cex.main=2)
 abline(h=0, col='red', lty=2)
 ```
@@ -137,15 +142,15 @@ Yes $b_{B, h}(t_i)$ is clearly positive along the time axis, hence H1 is support
 
 ### H2: `DURING`: `high` lower than `BEFORE`, `low` higher than `BEFORE`
 
-The setup is similar to the one before, except that now we need to model the difference `DURING - BEFORE` for each `Category` level. 
+The setup is similar to the one for H1, except that now we need to model the difference `DURING - BEFORE` for each `Category` level. 
 
-$$ y_i = \beta_0 + \beta_h \cdot I(c_i = h) + 
+$$ y_i = \beta_0 + \beta_h \cdot I(c_i = h) + \\
 \sum_{c \in \{l, h\}} ( f_{c_i}(t_i) \cdot I(c_i = c) +
  b_{c_i, D}(t_i) \cdot I(c_i = c \cap s = D) +
  b_{c_i, A}(t_i) \cdot I(c_i = c \cap s = A) ) +
 \epsilon_i
 $$
-In this case the terms $b_{l, D}(t_i)$ and $b_{h, D}(t_i)$ represent the difference `DURING - BEFORE` for `low` and `high` respectively. We are using the convention whereby `BEFORE` is the default level, so the other binsry wmooths represent the differences  `AFTER - BEFORE`, which we do not need for H2. 
+In this case the terms $b_{l, D}(t_i)$ and $b_{h, D}(t_i)$ represent the difference `DURING - BEFORE` for `low` and `high` respectively. We are using the convention whereby `BEFORE` is the default level, so the other binary smooths represent the differences  `AFTER - BEFORE`, which we do not need for H2. 
 
 The model in `mgcv` is:
 
@@ -153,10 +158,10 @@ The model in `mgcv` is:
 # create binary variables
 curves$IsDURING_low <- 1 * (curves$CategoryState == "low.DURING")
 curves$IsAFTER_low  <- 1 * (curves$CategoryState == "low.AFTER")
-# already created:
+# already created
 # curves$IsDURING_high <- 1 * (curves$CategoryState == "high.DURING")
 # curves$IsAFTER_high  <- 1 * (curves$CategoryState == "high.AFTER")
-
+# model
 mod2 <- bam(y ~ Category + s(t, by = Category) + s(t, by = IsDURING_low) + s(t, by = IsDURING_high) + s(t, by = IsAFTER_low) + s(t, by = IsAFTER_high), data = curves)
 summary(mod2)
 plot(mod2, select = 3, shade = TRUE, rug = FALSE, main = expression(b[list(l, D)](t[i])), cex.main=2)
@@ -168,11 +173,11 @@ abline(h=0, col='red', lty=2)
 
 Both binary smooths are significantly different from zero.  $b_{l, D}(t_i)$ is above zero while $b_{h, D}(t_i)$ is below zero along the time axis, which is what H2 predicts.
 
-**Important note: ** some of the binary smooths in this model are defined by the same interaction conditions from the previous model. However, their value is **not** the same, as it is the **combination** of ordinary and binary smooths that defines what they actually model. 
+**Important note: ** some of the binary smooths in this model are defined by the same interaction conditions from the previous model. However, their value is **not** the same, as it is the **combination** of ordinary and binary smooths that defines what they actually mean. 
 
 ### H3: `DURING`: `high` curves higher than `low` curves
 
-We are lucky, as this hypothesis can be tested by reusing the model we used to test H1. We are going to check and plot $b_{D, h}(t_i)$. From the `summary` above we see that the term is significant. H3 requires is to be above the zero line, as it represents the difference `high - low` for the `DURING` `State`. 
+We are lucky, as this hypothesis can be tested by reusing the model we used to test H1. We are going to check and plot $b_{D, h}(t_i)$. From the `summary` above we see that the term is significant. H3 requires this term to be above the zero line, as it represents the difference `high - low` for the `DURING` `State`. 
 
 ```{r}
 plot(mod1, select = 5, shade = TRUE, rug = FALSE, main = expression(b[list(D, h)](t[i])), cex.main=2)
@@ -185,11 +190,11 @@ Yes, all good.
 
 This hypothesis requires a more complex structure of binary smooths. First let us express H4 in the form of an inequality:
 
-$$ (y\big\rvert{h, B} - y\big\rvert{h, D}) -  (y\big\rvert{l, D} - y\big\rvert{l, B}) > 0$$
-where $y\big\rvert{h, B}$ means "the predicted $y$ at  `Category` `high` and `State` `BEFORE`", and similarly for the other terms. 
+$$ (y\big\rvert_{h, B} - y\big\rvert_{h, D}) -  (y\big\rvert_{l, D} - y\big\rvert_{l, B}) > 0$$
+where $y\big\rvert_{h, B}$ means "the predicted $y$ at  `Category` `high` and `State` `BEFORE`", and similarly for the other terms. 
 That is, we are claiming that the difference curve between two difference curves has a certain sign. 
 In order to use the mechanism of binary smooths at our advantage, we need to find a way to get just one $b$ term that models the expression on the left of the inequality above. The way we did for H1 H2 and H3 was to set base levels with ordinary $f$ smooths and then define one extra set of $b$ terms expressing differences. The $f$ terms were based on either `Category` or `State`. 
-There are two reasons why this is not enough in our case. First, with just one set of $b$ terms we will be able to express differences between levels, but not differences of differences. So we need two sets of $b$ terms with different meanings. In particular, we need the term $y\big\rvert{h, B} - y\big\rvert{h, D}$ to contain one $b$ element more than the term $y\big\rvert{l, D} - y\big\rvert{l, B}$, so that everything cancels out and only one $b$ term remains. 
+There are two reasons why this is not enough in our case. First, with just one set of $b$ terms we will be able to express differences between levels, but not differences of differences. So we need two sets of $b$ terms with different meanings. In particular, we need the term $y\big\rvert_{h, B} - y\big\rvert_{h, D}$ to contain one $b$ element more than the term $y\big\rvert_{l, D} - y\big\rvert_{l, B}$, so that everything cancels out and only one $b$ term remains. 
 Second, there is no way to create the asymmetry in the subtractions that we need by using $f$ terms were based on either `Category` or `State`.
 
 Let's tackle the latter problem first. We have to create a new factor that brings about the asymmetry we need. Let's call it `X` and it is defined as in the picture below:
@@ -236,17 +241,18 @@ $$
 To see why this particular set up is going to solve our problem, let's write each of the four terms in the inequality above in terms of the model (omitting the $I()$ terms and the dependency on $t_i$):
 
 Category | State | Inequality  | Model |
-|:---------:|:---------:|:---------:|:---------:|
-|high | BEFORE | $y\big\rvert{h, B}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB} + b_h + b_{lD \cup hB, h}$ |
-|high | DURING | $y\big\rvert{h, D}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD} + b_h$ |
-|low  | DURING | $y\big\rvert{l, D}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB}$ |
-|low  | BEFORE | $y\big\rvert{l, B}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD}$ |
-|high | AFTER  | - | $\beta_0  + f_A + b_h$ |
+|:---------:|:---------:|:---------:|:---------|
+|high | BEFORE | $y\big\rvert_{h, B}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB} + b_h + b_{lD \cup hB, h}$ |
+|high | DURING | $y\big\rvert_{h, D}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD} + b_h$ |
+|low  | DURING | $y\big\rvert_{l, D}$ | $\beta_0 + \beta_{lD \cup hB} + f_{lD \cup hB}$ |
+|low  | BEFORE | $y\big\rvert_{l, B}$ | $\beta_0 + \beta_{lB \cup hD} + f_{lB \cup hD}$ |
+|high | AFTER  | - | $\beta_0  + f_A + b_h + b_{A, h}$ |
 |low  | AFTER  | - | $\beta_0  + f_A$ |
 
 By substituting the model terms in the inequality we can verify that only one term is left, $b_{lD \cup hB, h}$, which is what we wanted. This is a difference-of-differences curve that H4 claims to be positive. 
+The model makes use of two types of $b$ terms, so to speak. The first type is $b_h$, which is 'switched on' when `Category` is `high`, while the second type is represented by $b_{lD \cup hB, h}$ and $b_{A, h}$, which are 'switched on' only in one `Category * State`. 
 
-Note: the model includes also terms that have to do with the `AFTER` level, which does not play any role in the inequality describing H4. However, omitting them would be an error, as the model would not be identifying each of the six `Category` by `State` cells with a unique combination of terms. As shown in the table above, also the cells with value `AFTER` are distinguished from the others.
+The model includes also terms that have to do with the `AFTER` level, which does not play any role in the inequality describing H4. However, omitting them would be an error, as the model would not be identifying each of the six `Category` by `State` cells with a unique combination of terms. As shown in the table above, also the cells with value `AFTER` are distinguished from the others.
 
 ```{r}
 # create category X
@@ -268,3 +274,5 @@ summary(mod4)
 plot(mod4, select = 5, shade = TRUE, rug = FALSE, main = expression(b[list(lD*union(hB), h)](t[i])), cex.main=2)
 abline(h=0, col='red', lty=2)
 ```
+
+Testing H4 brought two difficulties into the picture. First the need for two levels of binary smooth terms in order to express diff-of-diffs, second the need to create a new category with asymmetries in its cell composition, in order to obtain asymmetries in the signs. An example where only the first problem occurs can be found in section 4.10 of the [tutorial by Martijn Wieling](http://martijnwieling.nl/files/GAM-tutorial-Wieling.pdf).
