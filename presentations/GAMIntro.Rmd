@@ -9,11 +9,14 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(ggthemes)
 library(magrittr)
 library(mgcv)
 library(itsadug)
 library(emmeans)
-
+library(mvtnorm)
+library(clusterGeneration)
+select <- dplyr::select # conflict with MASS
 ```
 
 # A naive approach to modelling curves
@@ -99,9 +102,9 @@ In simple terms, we can imagina a smooth to be like a polynomial of unspecified 
 * The main command is `bam()`, equivalent to `lmer()` in `lme4`
 * The R `formula` syntax is quite different from the one used in `lme4`
 * The model specification with `bam()` has more possibilities than `lmer()`
-    + fixed and random predictors can be declaired as linear (like with `lmer()`) or as smooths, or combinations
+    + fixed and random predictors can be declaired as *parametric* (like with `lmer()`) or as *smooths*, or combinations
     + interactions between covariates (= continuous predictors) has different options based on *tensors*
-* Interaction between factors (`a * b`) **is not directly available**
+* Interaction between factors (`a * b`) **is not available with smooths**
     + the user has to create their own `interaction` terms manually beforehand (more on this later)
 
 
@@ -154,7 +157,7 @@ summary(m1)
     + partial effects
     + summed effects
     
-**Partial effects** are smooths, which are zero centered in their default mode. This means that they represent the 'shape part' of the effect, i.e. the total effect minus the intercept.
+**Partial effects** are smooths, which are zero centered in their default mode. This means that they represent the 'shape part' of the effect, i.e. the total effect minus the mean across the time axis (or whatever continuous variable you are using)
 
 Smooths are (implicitly) numbered by they order of appearance in the `summary()` output. To plot a selected smooth, two options (among many):
 
@@ -195,9 +198,9 @@ One could also get all the relevant values and sum them manually. In our case, g
 #### Degrees of freedom
 
 The specification of smooths `s()` has an extra argument `k` whose default value is 10. `k` indicates the maximum number of splines allowed to specify the smooth, or in other words the maximum number of parameters or degrees of freedom.
-As regular smooths are zero-centered, this means that a smooth with at most `k = 10` parameters has actually at most `k' = 9` degrees of freedom, as one is absorbed by the intercept term. The estimated degrees of freedom `edf` is an indicator for how many 'equivalent parameters' were actually utilised in the estimated smooth. When `edf` is near 1, it means that it's basically a straight line (only the slope parameter). On the contrary, when `edf` is very close to `k' = k-1` as in this case, it means that it has used up all its degrees of freedom, thus perhaps more are needed. 
+As regular smooths are zero-centered, this means that a smooth with at most `k = 10` parameters has actually at most `k' = 9` degrees of freedom, as one is absorbed by the intercept term. The estimated degrees of freedom `edf` is an indicator for how many 'equivalent parameters' were actually utilised in the estimated smooth. When `edf` is near 1, it means that it's basically a straight line (only the slope parameter), in which case we would rather remove the smooth and use an ordinary linear term. On the contrary, when `edf` is very close to `k' = k-1` as in this case, it means that it has used up all its degrees of freedom, thus perhaps more might be needed. 
 
-Let's specify a higher `k` and see the what happens to `edf` for `s(time)`:
+Let's specify a higher `k` and see what happens to `edf` for `s(time)`:
 
 ```{r}
 m1.k20 <- bam(y ~ s(time, k = 20), data = curves)
@@ -239,9 +242,9 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
 | $y_i = \beta_0 + \beta_P + f_{NP}(t_i) + f_P(t_i) + \epsilon_i$ | `y ~ Category + s(time, by = Category)` |
 
 where $P$ indicates the PEAK category, while the default (control) level is NO_PEAK ($NP$), and $i$ is the sample (not curve) index.
-The equation is omitting the indicator functions. The explicit version is:
+The equation is omitting the indicator functions. The complete version is:
 $$ y_i = \beta_0 + \beta_P \cdot I(i \in P) + f_{NP}(t_i) \cdot I(i \in NP) + f_P(t_i) \cdot I(i \in P) + \epsilon_i $$
-Note the asymmetry in the conventions for the parametric and the smooth parts of the model (!!):
+Note the asymmetry in the conventions for the parametric and the smooth parts of the model:
 
 * Parametric part: as in `lm()`, $\beta_0$ is the intercept, $\beta_P$ is the difference between level $P$ and the intercept
 * Smooths: one for each level of the fixed factor, all zero-centered
@@ -260,11 +263,11 @@ summary(m2)
 
 
 
-We can read off the `summary` output the statistical significance of parametric terms in the same way as with `lm`. In geometrical terms, we can say whether the global level of `y` (regardless of time) is different for PEAK and NO_PEAK levels. 
+We can read off the `summary` output the statistical significance of parametric terms in the same way as with `lm`. In geometrical terms, we can say whether the average level of `y` along the time axis is different for PEAK and NO_PEAK curves. 
 
-With the model expressed as above, we **cannot** use the significance levels in the  `summary` to answer questions about the difference between smooths. A small p-value only says that the smooth is significantly different from zero, i.e. from the flat line `y = 0`. If both PEAK and NO_PEAK smooths appear with a small p-value, it means that their shapes are justified, i.e. in both cases `y` varies non-linearly with `time`. Nothing can be said about whether the way it varies for PEAK is different from the way it varies for NO_PEAK.
+With the model expressed as above, we **cannot** use the significance levels in the  `summary` to answer questions about the difference between smooths. A small p-value only says that the smooth is significantly different from zero, which means that its shape is different from the flat line `y = 0`. If both PEAK and NO_PEAK smooths appear with a small p-value, it means that their shapes are not flat, i.e. in both cases `y` varies non-linearly with `time`, but nothing can be said about whether their respective shapes are similar or not.
 
-Let's start plotting first. A look at the summed effects:
+Let's plot first. A look at the summed effects:
 ```{r}
 plot_smooth(m2, view = "time", plot_all = "Category", col = Category.colors)
 ```
@@ -275,7 +278,7 @@ plot_diff(m2, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
 
 ### Testing for significance: `emmeans`
 
-The powerful `emmeans` function can be used on `mgcv` GAMMs as a way to test pointwise comparisons. Suppose we want to test whether PEAK and NO_PEAK differ at `time` equal 0.0, 1.0 and 2.0. We can use `emmeans` in the same way as we do with `lm` or `lmer`:
+The powerful `emmeans` function can be used on `mgcv` GAMMs as a way to test pointwise comparisons. Suppose we want to test whether PEAK and NO_PEAK differ at `time` equal 0.0, 1.0 and 2.0. We can use `emmeans` in the same way as we do with `lm` or `lmer`, and we will get the correction for multiple comparisons.
 
 ```{r}
 emmeans(m2, pairwise ~ Category | time, at = list(time = 0:2))
@@ -285,10 +288,18 @@ emmeans(m2, pairwise ~ Category | time, at = list(time = 0:2))
 
 While `emmeans` allows to test differences at specific points on the time axis (or other continuous dimensions), we need a way to assess for the significance of a smooth contrast as a whole. For the purpose, we utilise another way to specify a smooth interacting with a fixed factor with `mgcv::bam`, the so-called *binary smooths*.
 
-First we need to define **numeric variables with the meaning of a logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted in the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK. With NO_PEAK as control level:
+A binary smooth is a smooth that represents the difference between effects (including intercepts). We use them to model the  difference between two levels of a factor, or between more complex combinations of factor level interactions (more on this later). Once we are able to introduce such a term in the model, we obtain two things:
+
+1. we can assess the statistical significance of the  difference between a pair of levels of interest by reading it off the model `summary`
+2. we can plot such difference and interpret it
+
+In order to define a convenient binary smooth set up with `mgcv`, 
+first we need to define **numeric variables with the meaning of a logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted by the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK, with NO_PEAK as control level:
+
 ```{r}
 curves$IsPEAK <- (curves$Category == "PEAK") * 1
 ```
+
 where  `* 1` is a quick way to transform the logical value inside `()` into a numeric one. The R formula and the corresponding maths form are:
 
 | Equation  | R formula |
@@ -299,7 +310,7 @@ where:
 
 * $\beta_0$ is the global intercept
 * $f_0(t_i)$ is the global, zero-centered smooth
-* $b_P(t_i)$ is **not zero-centered** binary smooth. It represents the total difference between PEAK and  NO_PEAK
+* $b_P(t_i)$ is the **not zero-centered** binary smooth. It represents the total difference between PEAK and  NO_PEAK
 
 ```{r}
 m2.bin <- bam(y ~ s(time) + s(time, by = IsPEAK), data = curves)
@@ -328,7 +339,7 @@ There is a third modality for smooths, the so-called *ordered factor difference 
 
 ## Two interacting covariates -- smooth surfaces
 
-Suppose we want to model the effect of trial, i.e. the shape of the curve `y(time)` does change not only according to a category (PEAK, NO_PEAK) but also along a numeric variable `trial` encoding at which point in the experiment we are. The data looks like this:
+Suppose we want to model the effect of trial, i.e. the shape of the curve `y(time)` does change not only according to a category (PEAK, NO_PEAK) but also along a numeric variable `trial` encoding at which point in the experiment we are. The data look like this:
 
 ```{r echo=FALSE, message=FALSE}
 ex <- 1 
@@ -342,7 +353,7 @@ curves %<>%
   mutate(y = y + trial * h1_ * exp(-((time-m1_)/s1_)**2)) %>%
   ungroup()
 
-rm(h1_, m1_, h1_)  
+rm(h1_, m1_, s1_)
 
 # plot a few curves
 ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
@@ -360,7 +371,7 @@ This is a case of a two-dimensional, nonlinear interaction between two covariate
 
 Each of the tensor functions $f$ is the generalisation of a complete interaction expression in `lm`:
 
-| Maths      | R notation in lm() |
+| Maths      | R formula in lm() |
 |:---------:|:----------:|
 | $\beta_1 \cdot t_i + \beta_2 \cdot r_i + \beta_3 \cdot t_i \cdot r_i$ | `time * trial` |
 
@@ -377,7 +388,8 @@ fvisgam(m3, view = c("time", "trial"), cond = list(Category = "PEAK"), color = c
 abline(h=c(20, 80),lty=2,lwd=2,col="red")
 plot_smooth(m3, view = "time", plot_all = "Category", cond = list(trial = 20), col = Category.colors, lwd=2, main = "trial = 20", print.summary = FALSE)
 plot_smooth(m3, view = "time", plot_all = "Category", cond = list(trial = 80), col = Category.colors, lwd=2, main = "trial = 80", print.summary = FALSE)
-
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "NO_PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "NO_PEAK", print.summary = FALSE, zlab = "y")
+fvisgam(m3, view = c("time", "trial"), cond = list(Category = "PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "PEAK", print.summary = FALSE, zlab = "y")
 ```
 
 If we were using `lm` instead of `bam` we would be able to produce similar surface visualisations, but in this case pretty bad estimates:
@@ -389,6 +401,7 @@ m3.lm <- lm(y ~ Category * time * trial, data = curves)
 ```{r echo=FALSE, warning=FALSE, fig.show="hold", message=FALSE}
 # construct predictions on a regular grid
 m3.lm.pred <- expand_grid(curves %>% distinct(Category, time), trial = 1:100) %>%
+  arrange(Category, trial, time) %>%
   mutate(y = predict(m3.lm, .))
 ggplot(m3.lm.pred) +
   aes(time, trial, fill = y) +
@@ -411,14 +424,25 @@ m3.lm.pred %>%
   facet_grid(~ trial, labeller = label_both) +
   theme_light() +
   theme(text = element_text(size = 15), legend.position = "bottom")
-  
+
 ```
 
-The surfaces themselves are non-linear, i.e. they are not flat, because of the product term $\beta_3 \cdot t_i \cdot r_i$, but each slice along either `time` or `trial` is a line (this is called a *ruled surface*). 
+```{r echo=FALSE, warning=FALSE, fig.show="hold", out.width="50%",message=FALSE}
+for (categ in c("NO_PEAK", "PEAK")) {
+persp(x = m3.lm.pred$time %>% unique() %>% sort(),
+      y = m3.lm.pred$trial %>% unique() %>% sort(),
+      z = m3.lm.pred %>% filter(Category == categ) %>% pivot_wider(names_from = "trial", values_from = "y") %>% select(-c(Category, time)) %>% as.matrix(),
+      xlab = "time", ylab = "trial", zlab = "y", main = categ, 
+      theta = 30, phi = 30, col = c('blue', 'white'), border = NA
+) 
+}
+```
+
+The surfaces themselves are non-linear, i.e. they are not flat, because of the product term $\beta_3 \cdot t_i \cdot r_i$, but each slice along either `time` or `trial` is a straight line (this is called a *ruled surface*). 
 
 To test for significance differences between PEAK and NO_PEAK, we can use binary smooth surfaces as above:
 
-```{r}
+```{r warning=FALSE}
 curves$IsPEAK <- (curves$Category == "PEAK") * 1
 m3.bin <- bam(y ~ te(time, trial) + te(time, trial, by = IsPEAK), data = curves)
 summary(m3.bin)
@@ -452,15 +476,153 @@ In this case the non-linear interaction between `time` and `trial` appears to be
 
 Another simplification of the model apparent from eye inspections is be to make the smooth over `trial` a linear term and independent of `Category`, i.e. substitute `s(trial, by = Category)` with just `trial`, or in maths notation $\beta_2 \cdot r_i$. The fact that the term is linear is suggsted by its shape and by the `edf` values of the respective smooths.
 
-### Random smooths
 
-Just like we moved from lm() to lmer(), we can build mixed-effects GAMs, or GAMMs.
 
-* Random effects become random smooths
-* These can model 'intercept' and/or 'slopes', i.e.:
-  - intercept: e.g. each speaker has a specific f0 shape that departs from the mean f0 contour for all speakers
-  - slope: e.g. each speaker has a specific way of realising a contrast expressed in the entire f0 contour
-* Smooth (functional) correlation between smooth random intercepts and slopes cannot be modelled with the mgcv package
+## Random effects
+
+Just like we moved from `lm()` to `lmer()`, we can build mixed-effects GAMs, or GAMMs.
+Random effects have the same meaning with GAMMs as with LMERs. The difference is that we can model variations in shape, i.e. **random smooths**. 
+
+The `mgcv` library allows for three different sorts of random terms, which in practice allow for three degrees of complexity:
+
+1. Random intercepts: only a constant
+2. Random slops: a constant plus a slope (tilt)
+3. Random smooths: arbitrary shape (within the limit set by the number of splines `k`)
+
+This is best illustrated in Fig. 6 at p. 10 of this [paper by van Rij et al.](https://journals.sagepub.com/doi/pdf/10.1177/2331216519832483).
+
+Suppose we have curves along the time axis, the fixed factor `Category` as before, and subject (`subjId`) as random factor.
+With `mgcv`, random intercepts are indicated as `s(subjId, bs = "re")`. This means that subject-specific effects only vary the global height of the `Category`-specific curves, i.e. they can shift those curves up or down but do not change their shape. This is the equivalent of `(1 | subjId)` in `lmer` notation.
+
+Random slope... it depends. These are a source of great confusion. If the slope is with respect to a covariate, say time, then slope means slope in the common sense, i.e. a tilted line. But just like with `lmer`, random slopes can be also specified with respect to a fixed factor, say `Category`, which will behave in the same manneer as with `lmer`, i.e. the 'slope' is the difference between the intercept and the specific level, e.g. `PEAK - NO_PEAK`. 
+
+A random slope with respect to time would be: `s(subjId, t, bs = "re")`, while a random slope with respect to a fixed factor like `Category` would be: `s(subjId, Category, bs = "re")`. The first one is the one represented in the figure from the paper by van Rij. 
+A random slope is equivalent to `(0 + t | subjId)`  in `lmer` notation. Note the explicit absence of intercept. This is because there is no way to estimate correlations between intercept and slope, as in `lmer`. If we want to model both random intercept and slope, we need to include both terms in the model, i.e. `s(subjId, bs = "re") + s(subjId, t, bs = "re")`, and yet the GAMM will not estimate the correlation between the two.
+
+Finally, a random smooth is indicated as: `s(t, subjId, bs = "fs")`. Note that the first term indicates the covariate, the second the random factor. 
+
+Each of the three setting can be further complexified by indicating a `by` factor, which behaves according to the conventions used in `mgcv`, i.e. for each level of the `by` factor an independent term is added. For example, a random intercept can be split by `Category` with: `s(subjId, by = Category, bs = "re")`, which adds two random intercepts, one for `PEAK`, one for  `NO_PEAK`. This achieves the same effect as `s(subjId, Category, bs = "re")`.
+
+A random slope could be: `s(subjId, t, by = Category, bs = "re")`, where the slope is with respect to `t`, while `Category` simply splits the term in two as before. 
+
+In the example below we use a random smooth split with respect to `Category`: `s(t, subjId, by = Category, bs = "fs")`.
+
+
+### A case with subject-specific shape variations
+A variation of the previous data set is depicted as follows:
+
+```{r echo=FALSE, cache=TRUE, message=FALSE, warning=FALSE}
+# Prior means
+M <- c(m1 = 0.7, # first large peak
+       s1 = 0.2,
+       h1 = 3,
+       m2 = 1.5, # second small peak
+       s2 = 0.1,
+       h2 = 1)
+# Prior vars
+S <- c(m1 = 0.1, # first large peak
+       s1 = 0.02,
+       h1 = 0.2,
+       m2 = 0.05, # second small peak
+       s2 = 0.02,
+       h2 = 0.1)
+
+nSubj <- 40
+nTrials <- 20
+nCurves <- nSubj * nTrials
+# Construct a random cov matrix with the st. dev. above:
+set.seed(90)
+R <- rcorrmatrix(length(M))
+C <- diag(S) %*% R %*% diag(S)
+# generate subject-specific params
+params <- rmvnorm(nSubj, M, C) %>%
+  `colnames<-`(names(M)) %>%
+  as_tibble() %>%
+  mutate(subjId = factor(1:nSubj))
+# generate curves according to params
+s_e <- 0.3 # st. dev. of residual additive noise
+t <- seq(0,2,by=0.1) # time axis interval
+curves <- params %>%
+  expand_grid(trialId = factor(1:nTrials), Category = c("PEAK", "NO_PEAK")) %>%
+  mutate(curveId = factor(1:n())) %>%
+  group_by(across(everything())) %>%
+  summarise(t = t,
+            y = case_when(
+              Category == "PEAK"    ~ h1 * exp(-((t-m1)/s1)**2) + h2 * exp(-((t-m2)/s2)**2),
+              Category == "NO_PEAK" ~ h1 * exp(-((t-m1)/s1)**2)
+            )) %>%
+  mutate(y = y + rnorm(n(), 0, s_e)) %>% # add residual noise
+  ungroup() %>%
+  select(-all_of(names(M))) %>%
+  arrange(curveId, t) %>%
+  mutate(across(c(subjId, Category, trialId, curveId), ~ factor(.x)))
+# plot
+curves %>%
+  filter(subjId %in% 1:5 & trialId %in% 1:4) %>%
+  ggplot() +
+  aes(t, y, group = curveId, color = subjId) +
+  facet_grid(~ Category, labeller = label_both) +
+  geom_line() +
+  scale_color_manual(values = colorblind_pal()(5)) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+
+```
+
+The data set contains several `y` curves for each subject (a subset of subjects and trials in the plot above). Note that:
+
+* All subjects globally behave similarly with respect to `Category`
+* Each subject has their own departure from the general trend 
+* The variation expressed on the first larger peak is consistent across `Category` levels within the same subject
+* In addition, there is also a consistent, subject-specific departure from the mean in the second peak in `PEAK` condition, though not obviously related to the one of the first peak
+
+We model all this by introducing a random smooth terms. Such terms vary along time, are speaker-dependent, i.e. are added to the fixed effects for each speaker, and come in two versions, one per `Category` level.
+
+The model in `mgcv` is expressed as follows (we are not modelling the effect of trial):
+
+```{r cache=TRUE, warning=FALSE}
+m4 <- bam(y ~ Category + s(t, by = Category) +
+            s(t, subjId, by = Category, bs = "fs", m = 1), data = curves)
+summary(m4)
+```
+The `m = 1` argument is usually added to random smooths. The reason is to increase the non-linearity penalty, i.e. a stronger regularisation.
+
+Let's compere it with a version without the random terms.
+
+```{r cache=TRUE, warning=FALSE}
+m4.fixed <- bam(y ~ Category + s(t, by = Category), data = curves)
+summary(m4.fixed)
+```
+
+Note how R-sq and deviance explained are way higher for the model with random terms. In this case we can also directly affirm that the random terms are justified, as these are significant and they are the only difference between the two models. 
+
+The summed fixed effects look as expected:
+
+```{r}
+plot_smooth(m4, view = "t", plot_all = "Category", col = Category.colors, print.summary = FALSE)
+```
+
+It is interesting to compare the result with the model without random terms:
+
+```{r}
+plot_smooth(m4.fixed, view = "t", plot_all = "Category", col = Category.colors, print.summary = FALSE)
+```
+
+Note how 'overconfident' the simpler model is!!
+
+
+
+Let's visualise the shape of the random terms, picking out the first 5 subjects, to be compared with the raw data above:
+
+```{r fig.show="hold", out.width="50%", warning=FALSE}
+inspect_random(m4, select = 3, cond=list(subjId = 1:5 %>% factor(), Category = "NO_PEAK"), main = "NO_PEAK", col = colorblind_pal()(5), lty = 1, lwd = 2, print.summary = FALSE)
+inspect_random(m4, select = 4, cond=list(subjId = 1:5 %>% factor(), Category = "PEAK"), main = "PEAK", col = colorblind_pal()(5), lty = 1, lwd = 2, print.summary = FALSE)
+```
+
+
+**Question:** Do you see find by eye inspection the subject-specific consistency in the change of shape of the first peak across `Category` levels in the plot above (comparing with the raw data further above)?
+
+**Question:** Does the GAMM model such consistency explicitly?
 
 
 ### What is special about time-varying signals?
