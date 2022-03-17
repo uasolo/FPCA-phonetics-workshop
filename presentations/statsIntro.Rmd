@@ -14,6 +14,7 @@ library(magrittr)
 library(lme4)
 library(emmeans)
 library(MASS)
+select <- dplyr::select
 
 ```
 # Ordinary linear models
@@ -47,14 +48,14 @@ ggplot(D) +
 
 A linear model has the form:
 $$
-y_i = \beta_0 + \beta_1 x_i + \epsilon_i
+y_i = \beta_0 + \beta_1 \cdot x_i + \epsilon_i
 $$
 
 * The data are the $x_i$ and the $y_i$
 * The linear relationship linking the data is $y_i = \beta_0 + \beta_1 x_i$
 * $\epsilon_i$ allows for unknown effects, preserving linearity
   + this is a strong hypothesis on the way  **unknown** or **not understood** interact with the known ones $x$ and $y$
-* **Modelling** means to find suitable, credible values for $\beta_0$ and $\beta_1$
+* **Estimation** means to find suitable, credible values for $\beta_0$ and $\beta_1$
 * **Interpreting** the model means to consider the role of $\beta_0$ and $\beta_1$
   + e.g. for a unit increase in $x$ we have a variation of $\beta_1$ in $y$ (in the appropriate units)
 
@@ -157,7 +158,7 @@ ggplot(D) +
 Yes, e.g.:
 
 $$
-y_i = \beta_0 + \beta_1 x_i + \beta_2 x_i^2 + \beta_3 x_i^3 + \epsilon_i
+y_i = \beta_0 + \beta_1 \cdot x_i + \beta_2 \cdot x_i^2 + \beta_3 \cdot x_i^3 + \epsilon_i
 $$
 is linear in the $\beta$'s, i.e. the $\beta$'s only appear in sums or in multiplications with known quantities (the $x_i$'s)
 ```{r}
@@ -173,7 +174,7 @@ The basic idea of GAM is to be able to determine automatically how many terms li
 
 The previous data set could have been modelled also by:
 $$
-y_i = \beta_0 + \beta_1 x_i +  \beta_3 x_i^3 + \epsilon_i
+y_i = \beta_0 + \beta_1 \cdot x_i +  \beta_3 \cdot x_i^3 + \epsilon_i
 $$
 How to decide in general what's the best model? 
 
@@ -198,21 +199,24 @@ Example:
 
 Now $x$ is a categorical variable, or factor. How do we make it into a number?
 
-```{r}
+```{r echo=FALSE}
 D <- tibble(x = gl(4, 50, labels = c('a', 'i', 'o', 'u')))
 D %<>% mutate(y = case_when(
   x == "a" ~ 1200,
   x == "i" ~ 2300,
   x == "o" ~ 930,
   x == "u" ~ 900) + rnorm(n(), 0, 100))
+D %>% head()
+```
 
+```{r}
 lm3 <- lm(y ~ x, data = D)
 summary(lm3)
 ```
 
 The real equation looks like:
 $$
-y_i = \beta_{/a/} + \beta_{/i/} I(x_i = /i/) +  \beta_{/o/} I(x_i = /o/) +  \beta_{/u/} I(x_i = /u/) + \epsilon_i
+y_i = \beta_{/a/} + \beta_{/i/} \cdot I(x_i = /i/) +  \beta_{/o/} \cdot I(x_i = /o/) +  \beta_{/u/} \cdot I(x_i = /u/) + \epsilon_i
 $$
 
 * lm() created indicator (or dummy) variables, i.e. taking values 0 or 1 on a logical statement
@@ -335,13 +339,16 @@ The maths goes like this:
 
 
 $$
-y_{i, j} = \beta_0 + \beta_1 x_{i, j} + u_i + \epsilon_{i, j} \\
+y_{i, j} = \beta_0 + \beta_1 \cdot x_{i, j} + u_i + \epsilon_{i, j} \\
 u_i \sim N(0, \sigma_u) \\
 \epsilon_{i, j} \sim N(0, \sigma) \\
 u_i,  \epsilon_{i, j} \; \text{ indipendent of each other}
 $$
 where $i$ is the subject index, $j$ is the utterance index within $i$. 
 
+**Note on terminology:** the factor `x` is called **fixed**, while the speaker factor `z` is called **random**. The term random refers to the fact that the levels of `z` are by design a random extraction from a much larger population of possible levels (speakers in this case). Random does not mean that the effect of this factor on the model will be random, erratic or anything like that. 
+
+Setting a factor as 'random' in a LMER simply means that we are constraining it to behave in a certain way, namely that its additive effect follows a zero-centered Gaussian distribution. In other words, we are hypothesising that these levels all belong to a distribution. If we add one more level, e.g. one more speaker, we already expect that its effect will be within a certain distribution, that its behaviour is unlikely to be completely different from the other speakers. This is a general practice known as *regularisation*, a strategy to get robust estimations. In practice, one can, and sometimes has to use it also outside the typical setting that gave random effects their name. For example, when the number of levels is high, say 10 or 20, even though these are all the levels there are, e.g. all the letters of the alphabet, and no random extraction from a larger set was made. In that case, it will be close to impossible to obtain reliable estimates if we set this factor as fixed. The only viable option is to set it as random, which only means that we are applying some constraints on it. Unfortunately, this also means that it is not possible to apply `emmeans` to those levels, i.e. no post-hoc tests. 
 
 In R with package lme4:
 ```{r}
@@ -358,11 +365,10 @@ We want add the following information to the random component of the model:
 * different subjects have a global level that varies
   - i.e.  random intercept, we've got it already, that's $u_i$
 * different subjects perform the contrast $x$ differently, i.e. some more, some less on average
-  - that's called a random slope (which is not a helpful name)
+  - that's called a random slope (which is not a helpful name in this case)
 * possibly, random intercepts and slopes are correlated
-  - e.g. the higher than average a subject is, the less prominently s/he produces the contrast $x$
+  - e.g. the higher than average subjects are, the less prominently they produce the contrast $x$
   
-(I omit the maths as it requires matrices)
 
 ```{r echo = FALSE}
 set.seed(30)
@@ -382,17 +388,19 @@ D %<>% mutate(y = y0 + x * y1 + V1 + V2 * x) %>%
   group_by(x, z) %>%
   group_modify(~ {.x$y + rnorm(15, 0, y.sd) %>% enframe(name = NULL, value = "y")})
 
-```
-
-```{r}
 ggplot(D) + aes(z, y, color = x) + geom_boxplot() + theme(legend.position="top")
 ```
+
+The R formula notation to express the random effect structure is: `(x|z)`. It is a short for  `(1 + x|z)`, which says it incorporates both random intercept and slope. It is *not* the same as `(1 |z) + (0 + x|z)`, because the latter specifies a random elements structure where random intercept and slope are not correlated, while with `(1 + x|z)` we also get an estimate of their correlation.
+
 ```{r}
 lmer1 <- lmer(y ~ x + (x|z), data = D) 
 lmer1 %>% summary
 emmeans(lmer1, pairwise ~ x)
 
 ```
+
+The estimate of the correlation between random intercept and slope (row `xTRUE`, column `Corr` under `Random effects`) confirms that they are negatively correlated.
 
 ## Inspecting random effects
 
@@ -422,3 +430,66 @@ r.squaredGLMM(lmer1)
 ```
 
 E.g. useful to have an idea of how large is the inter-subject variation compared to the general (fixed) effect under investigation.
+
+
+# Multiresponse models
+
+Suppose we want to predict the value of both F1 and F2 for each given vowel. 
+Can we do this? 
+
+Short answer:
+
+* If there are no random effects: yes
+* If there are random effects: more no than yes
+
+## No random effects
+
+Example:
+
+* $x_i$ is the vowel, e.g. /a/, /i/, /o/, /u/
+
+* $F1_i$ and $F2_i$ are the corresponding first two formats
+
+```{r echo=FALSE}
+D <- tibble(x = gl(4, 50, labels = c('a', 'i', 'o', 'u')))
+D %<>% mutate(
+  F1 = case_when(
+  x == "a" ~ 830,
+  x == "i" ~ 300,
+  x == "o" ~ 450,
+  x == "u" ~ 400) + rnorm(n(), 0, 100),
+  F2 = case_when(
+  x == "a" ~ 1200,
+  x == "i" ~ 2300,
+  x == "o" ~ 930,
+  x == "u" ~ 900) + rnorm(n(), 0, 100)
+  )
+```
+
+The equation looks like this:
+$$
+F1_i = \beta_{F1, /a/} + \beta_{F1, /i/} \cdot I(x_i = /i/) +  \beta_{F1, /o/} \cdot I(x_i = /o/) +  \beta_{F1, /u/} \cdot I(x_i = /u/) + \epsilon_{F1, i} \\
+F2_i = \beta_{F2, /a/} + \beta_{F2, /i/} \cdot I(x_i = /i/) +  \beta_{F2, /o/} \cdot I(x_i = /o/) +  \beta_{F2, /u/} \cdot I(x_i = /u/) + \epsilon_{F2, i} 
+$$
+In practice, these are two almost independent models, as all the $\beta$ terms for the two formants are distinct and independent. What links the two models is the fact that the two $\epsilon$ terms are estimated jointly and their correlation is also estimated (i.e. the two $\epsilon$ belong to a two dimensional random variable with Gaussian distribution, zero mean and a general 2-by-2 covariance matrix).
+
+In R, we can use `lm`:
+
+```{r}
+mlm1 <- lm(cbind(F1, F2) ~ x, data = D)
+summary(mlm1)
+emmeans(mlm1, pairwise ~ x | formant, mult.name = "formant")
+```
+More resources on this:
+
+* [Appendix to "An R Companion to Applied Regression" by Fox & Weisberg](https://socialsciences.mcmaster.ca/jfox/Books/Companion/appendices/Appendix-Multivariate-Linear-Models.pdf)
+* [Post by University of Virginia](https://data.library.virginia.edu/getting-started-with-multivariate-multiple-regression/)
+
+## Multiresponse LMER
+
+There are two directions I would try, one is frequentist, the other Bayesian. 
+
+* Frequentist: R library `mcglm`. It is quite rich and you can do basically everything **except** post-hoc comparisons. It does not interface with `emmeans`, nor there is any indication that such tests will be available in the future (see [this post by Bonat](https://stats.stackexchange.com/questions/363921/pairwise-comparisons-on-mcglm-joint-model-in-r
+))
+* Bayesian: using R library `brms`, which is based on the *Stan* engine, it is possible to define and estimate multiresponse LMERs. But Bayesian methods are beyond the scope of these notes
+
