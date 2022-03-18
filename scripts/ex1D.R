@@ -146,7 +146,14 @@ ggplot(PCscores) +
   theme(text = element_text(size = 16),
         legend.position = "bottom")
 
-
+# boxplot PC scores s1 and s2 by Category
+ggplot(PCscores %>% pivot_longer(s1:s2, names_to = "score", values_to = "value")) +
+  aes(Category, value) +
+  geom_boxplot() +
+  facet_grid(score ~ ., scales="free_y") +
+  theme_light() +
+  theme(text = element_text(size = 16),
+        legend.position = "bottom")
 
 # FPCA-based curve reconstruction
 

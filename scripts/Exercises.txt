@@ -18,7 +18,8 @@ Check what happens to s1 ~ Category.
 - ex3
 As ex2, but first peak now goes down when second peak (PEAK) goes up.
 This is captured by PC1, which is back to explaining most of the var.
-A residual of correction term is left to PC2, hard to interpret (artifact? non linearity?)
+A residual of correction term is left to PC2 due to the following:
+The NO_PEAK curves must be flat around the 2nd peak, while the 1st can still vary. But PC1 captures the up-down trade-off of peaks 1 and 2. Whenever a NO_PEAK has a low peak 1, PC1 would rise it's peak 2, but it must stay, hence the compensation, clearly visible in the scatter, while for PEAK it's much less clean.
 
 - ex4
 Narrow vs. wide peak. 
