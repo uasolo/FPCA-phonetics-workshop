@@ -1,7 +1,7 @@
 ---
 title: "A cursory view on linear models"
 author: "Michele Gubian"
-date: "9/10/2020"
+date: "March 2022"
 output: html_document
 # fig_width: 2
 # fig_height: 1.5
@@ -80,16 +80,16 @@ ggplot(D) +
 
 * What is Gaussian is $\epsilon$
 * $\epsilon_i$ are $N(0, \sigma^2)$ and *independent from each other* and have the same distribution (i.i.d.)
-  - this is usually unreasonable, yet of great utitlity in simplifying calculations
-  - keep an eye on independence, as this will be violated by GAMMs
+    - this is usually unreasonable, yet of great utitlity in simplifying calculations
+    - keep an eye on independence, as this will be violated by GAMMs
 * As a consequence, $y_i \sim N(\beta_0 + \beta_1 x_i, \sigma^2)$
 * and the estimates of $\beta_0$ and $\beta_1$ are Gaussian too
-  - This allows to build confidence intervals for them
+    - This allows to build confidence intervals for them
 
 * Does linearity imply Gaussianity?
-  - No
-  - The estimation of $\beta_0$ and $\beta_1$ does not require Gaussianity
-  - We like Gaussianity because it allows to build confidence intervals for $\beta_0$ and $\beta_1$
+    - No
+    - The estimation of $\beta_0$ and $\beta_1$ does not require Gaussianity
+    - We like Gaussianity because it allows to build confidence intervals for $\beta_0$ and $\beta_1$
 
 ## Linear models in R
   
@@ -106,15 +106,17 @@ summary(lm1)
 * (Intercept) is $\beta_0$, x is (confusingly) $\beta_1$
 * p-values are there thanks to the Gaussianity hypothesis on $\epsilon_i$
 * R-squared measures how much of the variance of  $y_i$ is explained by $y_i = \beta_0 + \beta_1 x_i$
-  - will come back to this with LMER
+    - will come back to this with LMER
 
 The linear model looks like this:
+
 ```{r echo = FALSE}
 ggplot(D) +
   aes(x, y) +
   geom_point() +
   geom_smooth(method='lm', formula= y~x, color = 'red')
 ```
+
 ... and it looks like a line,  hence the term "linear". In fact:
 
 * $\beta_0$ is the intercept of the line on the $y$ axis
@@ -123,7 +125,7 @@ ggplot(D) +
 However:
 
 * The terms intercept and slope are used also in settings where they are more confusing than helpful
-  - e.g. with factors (see below)
+    - e.g. with factors (see below)
 
 Check if the assumptions on $\epsilon$ are sensible:
 ```{r}
@@ -181,13 +183,14 @@ How to decide in general what's the best model?
 * **Model selection** is basically finding the simplest model consistent with
 a set of data
 * There are automated procedures based on information criteria
+
 ```{r}
 step(lm2)
 ```
 
 * But it is not always advisable to blindly rely on those procedures
-  + e.g. you may have good reasons to keep a predictor based on previous solid evidence
-  + or end up with too many variables just because you have a lot of data, which would hinder interpretability
+    - e.g. you may have good reasons to keep a predictor based on previous solid evidence
+    -  or end up with too many variables just because you have a lot of data, which would hinder interpretability
 
 ## Factors
 
@@ -222,8 +225,8 @@ $$
 * lm() created indicator (or dummy) variables, i.e. taking values 0 or 1 on a logical statement
 * they are 3, i.e. one minus the number of categories (factor levels)
 * The intercept models the fourth left-out level, here /a/
-  - if we had 4 indicators + intercept the equation would not be identifiable
-  - R picks the first level in alphabetic order as intercept
+      - if we had 4 indicators + intercept the equation would not be identifiable
+      - R picks the first level in alphabetic order as intercept
   
 Typical questions you want to answer using a factorial experiment 
 
@@ -233,12 +236,12 @@ Typical questions you want to answer using a factorial experiment
 Can we answer these questions from the summary?
 
 * What's the expected (mean) F2 frequency for /i/?
-  - $\beta_{/a/} + \beta_{/i/}$, i.e. Estimate of (Intercept) + Estimate of xi 
+    - $\beta_{/a/} + \beta_{/i/}$, i.e. Estimate of (Intercept) + Estimate of xi 
 * Are the F2 values of /o/ and /u/ distinguishable (significantly different)? 
-  - we cannot tell from the summary
-  - we can only answer this question on pairs /a/ vs. another vowel
-  - for the other pairs we need to compute post tests, or use contrasts
-* Fortunately, all this mess is taken care of by the emmeans package
+    - we cannot tell from the summary
+    - we can only answer this question on pairs /a/ vs. another vowel
+    - for the other pairs we need to compute post tests, or use contrasts
+* Fortunately, all this mess is taken care of by the `emmeans` R library
 
 ```{r}
 emmeans(lm3, pairwise ~ x)
@@ -320,10 +323,13 @@ Actually the data look like this when taking subjects ($z$) into account:
 ```{r}
 ggplot(D) + aes(z, y, color = x) + geom_boxplot() + theme(legend.position="top")
 ```
+
 How can we take this into account in a linear model?
+
 ```{r eval = FALSE}
 lm(y ~ x + z, data = D)
 ```
+
 This means that we have one indicator variable per subject, $z_1, z_2$, etc. But each new experiment will have different subjects, so $z_1$ does not mean anything in general. 
 
 In other words, knowing something about subjects 1 to 20 does not tell us anything about subject 21, as there are no constraints on them.
@@ -363,11 +369,11 @@ emmeans(lmer1, pairwise ~ x)
 We want add the following information to the random component of the model:
 
 * different subjects have a global level that varies
-  - i.e.  random intercept, we've got it already, that's $u_i$
+    - i.e.  random intercept, we've got it already, that's $u_i$
 * different subjects perform the contrast $x$ differently, i.e. some more, some less on average
-  - that's called a random slope (which is not a helpful name in this case)
+    - that's called a random slope (which is not a helpful name in this case)
 * possibly, random intercepts and slopes are correlated
-  - e.g. the higher than average subjects are, the less prominently they produce the contrast $x$
+    - e.g. the higher than average subjects are, the less prominently they produce the contrast $x$
   
 
 ```{r echo = FALSE}
@@ -422,7 +428,7 @@ An estimate has been proposed, **Pseudo-R-squared**, which allows to get info on
 
 * Marginal $R^2$: proportion of variance explained by fixed effects
 * Conditional $R^2$: proportion of variance explained by fixed and random effects combined
-  - i.e. all except $\epsilon$
+    - i.e. all except $\epsilon$
 
 ```{r warning=FALSE}
 library(MuMIn)
