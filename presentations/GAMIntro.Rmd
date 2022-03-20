@@ -1,7 +1,7 @@
 ---
 title: "A cursory view on Generalised Additive (Mixed) Models (GAMMs)"
 author: "Michele Gubian"
-date: "March 6, 2022"
+date: "March 2022"
 output: html_document
 ---
 
@@ -30,7 +30,8 @@ For simplicity:
 
 
 ```{r echo=FALSE, message=FALSE}
-home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+# home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
 data_dir <- file.path(home_dir,'data')
 ex <- 1 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
@@ -91,9 +92,10 @@ y_i = f(t_i) + f_P(t_i) + \epsilon_i
 $$
 where each $f()$ is a SPLINE:
 $$
-f(t) = \sum_{k=1}^K \beta_k b_k(t)
+f(t) = \sum_{k=1}^K \beta_k \cdot \phi_k(t)
 $$
 In the GAMMs lingo, the $f()$ are called **smooths**. 
+The functions $\phi_k(t)$ are the spline components, they are known, they play the same role as the powers of $t$ in the previous equation.
 In simple terms, we can imagina a smooth to be like a polynomial of unspecified degree, or in general a functional term of unspecified complexity, i.e. we do not say how many terms it should include. The GAMM machinary takes care of determining how many terms are strictly needed for our problem. 
 
 ## GAMMs in R
@@ -122,6 +124,7 @@ Note that regular smooths like `s(time)` are **centered on zero**, hence the int
 * `s(time)`, i.e. the zero-centered function $f(t_i)$
 
 Example:
+
 ```{r echo=FALSE, message=FALSE}
 # plot a few curves
 ex <- 2
@@ -159,7 +162,7 @@ summary(m1)
     
 **Partial effects** are smooths, which are zero centered in their default mode. This means that they represent the 'shape part' of the effect, i.e. the total effect minus the mean across the time axis (or whatever continuous variable you are using)
 
-Smooths are (implicitly) numbered by they order of appearance in the `summary()` output. To plot a selected smooth, two options (among many):
+Smooths are (implicitly) numbered by their order of appearance in the `summary()` output. To plot a selected smooth, two options (among many):
 
 First option: use `mgcv::plot`:
 ```{r}
@@ -187,6 +190,7 @@ The easy way to plot summed effects is to use `itsadug::plot_smooth`:
 ```{r}
 plot_smooth(m1, view = "time", rug = FALSE)
 ```
+
 One could also get all the relevant values and sum them manually. In our case, get samples from the smooth $f(t_i)$ using `get_modelterm` as above, then add the value of $\beta_0$ taken form the summary (i.e. `m1$coefficients["(Intercept)"]`).
 
 **Question:** the confidence intervals are quite thin in comparison with the impression of noisy signals from the raw data plot. Why is that?
@@ -257,7 +261,7 @@ curves %<>% mutate(Category = factor(Category)) # don't forget!
 m2 <- bam(y ~ Category + s(time, by = Category), data = curves)
 summary(m2)
 ```
-**Practical tip:** all variables that need to be used as fixed or random factors (here `Category`) **must** be converted to R class `factor`, otherwise `bam` will throw an error. 
+**Warning:** all variables that need to be used as fixed or random factors (here `Category`) **must** be converted to R class `factor`, otherwise `bam` will throw an error. 
 
 **Question:** is PEAK significantly different from NO_PEAK?
 
@@ -268,10 +272,13 @@ We can read off the `summary` output the statistical significance of parametric 
 With the model expressed as above, we **cannot** use the significance levels in the  `summary` to answer questions about the difference between smooths. A small p-value only says that the smooth is significantly different from zero, which means that its shape is different from the flat line `y = 0`. If both PEAK and NO_PEAK smooths appear with a small p-value, it means that their shapes are not flat, i.e. in both cases `y` varies non-linearly with `time`, but nothing can be said about whether their respective shapes are similar or not.
 
 Let's plot first. A look at the summed effects:
+
 ```{r}
 plot_smooth(m2, view = "time", plot_all = "Category", col = Category.colors)
 ```
+
 A graphical way to detect statistical differences between effects is:
+
 ```{r}
 plot_diff(m2, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
 ```
@@ -294,7 +301,7 @@ A binary smooth is a smooth that represents the difference between effects (incl
 2. we can plot such difference and interpret it
 
 In order to define a convenient binary smooth set up with `mgcv`, 
-first we need to define **numeric variables with the meaning of a logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted by the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK, with NO_PEAK as control level:
+first we need to define **numeric variables with the meaning of logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted by the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK, with NO_PEAK as control level:
 
 ```{r}
 curves$IsPEAK <- (curves$Category == "PEAK") * 1
@@ -363,6 +370,7 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
   theme_light() +
   theme(text = element_text(size = 15))
 ```
+
 This is a case of a two-dimensional, nonlinear interaction between two covariates, `time` ($t$) and `trial` $(r)$. The default way is to use a *tensor*. 
 
 | Equation  | R formula |
@@ -373,7 +381,7 @@ Each of the tensor functions $f$ is the generalisation of a complete interaction
 
 | Maths      | R formula in lm() |
 |:---------:|:----------:|
-| $\beta_1 \cdot t_i + \beta_2 \cdot r_i + \beta_3 \cdot t_i \cdot r_i$ | `time * trial` |
+| $\beta_1 \cdot t_i + \beta_2 \cdot r_i + \beta_3 \cdot t_i \cdot r_i$ | `time * trial`, or `time + trial + time:trial` |
 
 ```{r}
 m3 <- bam(y ~ Category + te(time, trial, by = Category), data = curves)
@@ -486,7 +494,7 @@ Random effects have the same meaning with GAMMs as with LMERs. The difference is
 The `mgcv` library allows for three different sorts of random terms, which in practice allow for three degrees of complexity:
 
 1. Random intercepts: only a constant
-2. Random slops: a constant plus a slope (tilt)
+2. Random slopes: a constant plus a slope (tilt)
 3. Random smooths: arbitrary shape (within the limit set by the number of splines `k`)
 
 This is best illustrated in Fig. 6 at p. 10 of this [paper by van Rij et al.](https://journals.sagepub.com/doi/pdf/10.1177/2331216519832483).
@@ -494,7 +502,7 @@ This is best illustrated in Fig. 6 at p. 10 of this [paper by van Rij et al.](ht
 Suppose we have curves along the time axis, the fixed factor `Category` as before, and subject (`subjId`) as random factor.
 With `mgcv`, random intercepts are indicated as `s(subjId, bs = "re")`. This means that subject-specific effects only vary the global height of the `Category`-specific curves, i.e. they can shift those curves up or down but do not change their shape. This is the equivalent of `(1 | subjId)` in `lmer` notation.
 
-Random slope... it depends. These are a source of great confusion. If the slope is with respect to a covariate, say time, then slope means slope in the common sense, i.e. a tilted line. But just like with `lmer`, random slopes can be also specified with respect to a fixed factor, say `Category`, which will behave in the same manneer as with `lmer`, i.e. the 'slope' is the difference between the intercept and the specific level, e.g. `PEAK - NO_PEAK`. 
+Random slopes... it depends. These are a source of great confusion. If the slope is with respect to a covariate, say time, then slope means slope in the common sense, i.e. a tilted line. But just like with `lmer`, random slopes can be also specified with respect to a fixed factor, say `Category`, which will behave in the same manneer as with `lmer`, i.e. the 'slope' is the difference between the intercept and the specific level, e.g. `PEAK - NO_PEAK`. 
 
 A random slope with respect to time would be: `s(subjId, t, bs = "re")`, while a random slope with respect to a fixed factor like `Category` would be: `s(subjId, Category, bs = "re")`. The first one is the one represented in the figure from the paper by van Rij. 
 A random slope is equivalent to `(0 + t | subjId)`  in `lmer` notation. Note the explicit absence of intercept. This is because there is no way to estimate correlations between intercept and slope, as in `lmer`. If we want to model both random intercept and slope, we need to include both terms in the model, i.e. `s(subjId, bs = "re") + s(subjId, t, bs = "re")`, and yet the GAMM will not estimate the correlation between the two.
