@@ -1,0 +1,119 @@
+---
+title: "GAMMs and time series"
+author: "Michele Gubian"
+date: "March 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggthemes)
+library(magrittr)
+library(mgcv)
+library(itsadug)
+library(emmeans)
+library(mvtnorm)
+library(clusterGeneration)
+select <- dplyr::select # conflict with MASS
+
+```
+
+# GAMMs are not time series models (!)
+This title is a bit provocative, yet strictly speaking it is correct. We will show two examples where we realise what is missing from GAMMs in order to become tools for time series analysis. In short, we need to communicate to the model something about the order of the time samples, which we have not done so far. 
+
+
+Consider the data below:
+
+```{r echo=FALSE, message=FALSE}
+home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+# home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
+data_dir <- file.path(home_dir,'data')
+ex <- 2 
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
+  filter(Category == "NO_PEAK") %>%
+  mutate(curveId = factor(curveId))
+# plot a few curves
+ggplot(curves %>% inner_join(curves %>% distinct(curveId) %>% slice_sample(n = 15))) +
+  aes(x = time, y = y, group = curveId, color = curveId) +
+  geom_line() +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "none")
+
+```
+
+Let's estimate a GAM:
+
+```{r fig.show="hold", message=FALSE}
+m1 <- bam(y ~ s(time, k = 20), data = curves)
+summary(m1)
+plot_smooth(m1, view = "time", col = "slateblue4", print.summary = FALSE, rug = FALSE)
+gam.check(m1)
+```
+
+We note a strong evidence for heteroscedasticity. Where does it come from?
+
+Look at the variation in the large peak. When `y` is high we are around the peak, and that is also where the largest variation across curves occurs, hence the wider residual span for higher fitted values. 
+
+Now let's consider one particular curve, say one whose first peak is higher than the mean. As we see from the raw curves, we expect that if the residual error for this particular curve at say `time = 0.4` is positive, it will also be positive in the next time samples. Hence **neighbouring residuals are correlated**, which violates one of the hypotheses of the model. We would like to express this fact in the GAMM. 
+
+Before doing that, let's take a step back. Imagine that the same data set was not a collection of time series. For example instead of `time` we could have `price` of houses (in millions of euros), and `y` could be some measure of demand. The plot would be like this:
+
+```{r echo=FALSE, message=FALSE}
+ggplot(curves %>%
+         inner_join(curves %>% distinct(curveId) %>% slice_sample(n = 15)) %>%
+         mutate(price = jitter(time))) +
+  aes(x = price, y = y) +
+  geom_point(color = "slateblue4") +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "none")
+```
+
+**Question:** How would you change the GAM above to reflect the fact that there are no curves but it is all one data set?
+
+## AR1 residuals
+
+Let's go back to the curves data set.
+A way to alleviate the problem above is to induce a structure in the residuals as follows:
+$$ \epsilon_i = \rho \cdot \epsilon_{i-1} + \psi_i $$
+which means that the residual at point $i$ is proportional to the residual at point $i-1$, i.e. one step earlier on the time axis, plus another unknown term $\psi_i$, the latter values distributed as $N(0, \sigma^2)$ and independent. The GAMM will not estimate the parameter $\rho$ for us directly, rather we meed to set it ourselves. This type of sub-model for the noise is well known in signal processing and it's called AR1, i.e. auto regressive model of order 1 (because it only depends on one step in the past). 
+
+What we typically do is this:
+
+1. Estimate a GAMM without AR1 term (like above)
+2. Estimate $\rho$ on the obtained residuals
+3. Re-run the GAMM setting $\rho$ equal to the estimated value above
+
+The following estimates $\rho$ and plots the complete autocorrelation function for the residuals:
+
+```{r}
+m1.acf <- acf_resid(m1)
+```
+
+This function estimates the correlation of residuals with themselves in the past at different lags. We take the value as lag 1 as our estimate for $\rho$
+
+```{r}
+rho <- m1.acf[2]
+# at index 1 we have lag 0, whose value is 1 by definition
+# at index 2 we have lag 1, which is what we need
+rho
+```
+
+Now we re-run the GAMM. We set $\rho$ by specifying the argument `rho`. We also need to indicate where the start of curves in the data are, otherwise the AR1 model will be also applied between the last and the first sample of curves (argument `AR.start`).
+
+```{r fig.show="hold", message=FALSE}
+m1.ar1 <- bam(y ~ s(time, k = 20), data = curves,
+              rho = rho, AR.start = curves$time == 0
+              )
+summary(m1.ar1)
+plot_smooth(m1.ar1, view = "time", col = "slateblue4", rug = FALSE, print.summary = FALSE)
+gam.check(m1.ar1)
+```
+
+The result is not very satisfying in this case, for reasons that will be clear in the next section. But we do notice that the confidence intervals of the estimated smooths are wider than before, i.e. less 'overconfident'. Adding extra structure to the model has made it a bit more conservative. 
+
+Although we haven't gained much, in practice the AR1 residual option is often applied, as it is relatively cheap in terms of computation time. 
+
+

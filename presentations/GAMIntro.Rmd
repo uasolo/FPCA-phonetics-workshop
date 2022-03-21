@@ -30,8 +30,8 @@ For simplicity:
 
 
 ```{r echo=FALSE, message=FALSE}
-# home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
-home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
+home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+# home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
 data_dir <- file.path(home_dir,'data')
 ex <- 1 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
@@ -632,18 +632,6 @@ inspect_random(m4, select = 4, cond=list(subjId = 1:5 %>% factor(), Category = "
 
 **Question:** Does the GAMM model such consistency explicitly?
 
-
-### What is special about time-varying signals?
-
-* What is the difference between time-series and other types of functional data?
-* When we provide information (to the model) about the grouping of smooths induced by having different subjects, is there any other relationship in the data we would like to represent?
-
-We would like to indicate which $(t_i, y_i)$ samples belong to the same curve! There are two ways of doing it:
-
-* Define another (nested) level of random smooth, call it the token
-  - but it is rarely done in practice, as it is likely to fail to converge (but see [this paper by van Rij et al.](https://journals.sagepub.com/doi/pdf/10.1177/2331216519832483))
-* Alternatively, enrich $\epsilon$ with an AR1 model to express correlation of adjacent samples
-  - $\epsilon_i = \rho \epsilon_{i-1} + \psi_i$
 
 ### Practical advice
 
