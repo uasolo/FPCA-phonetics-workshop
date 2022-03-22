@@ -12,9 +12,10 @@ Category.colors <- c("slategray4", "orangered")
 
 # data_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop/data"
 data_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop/data/"
-ex <- 5
+ex <- 6
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
-  mutate(across(c(curveId,  Category), ~ factor(.x)))
+  mutate(across(c(curveId,  Category), ~ factor(.x))) #%>%
+  # filter(Category == "NO_PEAK")
 
 nCurves <- curves %>% select(curveId) %>% n_distinct()
 
@@ -29,23 +30,28 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
 
 # GAM
 mod <- bam(y ~ Category + s(time, by = Category, k= 20)
-           # + s(time, curveId, bs = "fs", m=1, k = 15)
-           # ,rho = AR1, AR.start = curves$time == 0
+           + s(time, curveId, bs = "fs", m=1, k = 15)
+           # ,rho = rho, AR.start = curves$time == 0
            # ,discrete=TRUE, family="scat"
-           # , nthreads = 4
+           , nthreads = 4
            , data = curves)
 summary(mod)
 # plot(mod, pages = 1)
-plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors)
+plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE)
 op <- par(mfrow=c(2,2))
 gam.check(mod)
 par(op)
+
+rho <- acf_resid(mod)[2]
+
 # binary smooth version
 curves$IsPEAK <- (curves$Category == "PEAK") * 1
 curves$IsWIDE_PEAK <- (curves$Category == "WIDE_PEAK") * 1
 curves$IsLATE_PEAK <- (curves$Category == "LATE_PEAK") * 1
+curves$IsUP_PEAK <- (curves$Category == "UP_PEAK") * 1
 
-mod.bin <- bam(y ~ s(time) + s(time, by = IsLATE_PEAK, k = 20), data = curves)
+mod.bin <- bam(y ~ s(time) + s(time, by = IsUP_PEAK, k = 20)
+               , data = curves)
 summary(mod.bin)
 
 get_modelterm(mod.bin, select = 2) %>%
@@ -56,4 +62,3 @@ get_modelterm(mod.bin, select = 2) %>%
   theme_light() +
   theme(text = element_text(size = 15))
 
-AR1 <- acf_resid(mod)[2]

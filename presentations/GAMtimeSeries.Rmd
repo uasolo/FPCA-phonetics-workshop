@@ -49,16 +49,10 @@ Let's estimate a GAM:
 m1 <- bam(y ~ s(time, k = 20), data = curves)
 summary(m1)
 plot_smooth(m1, view = "time", col = "slateblue4", print.summary = FALSE, rug = FALSE)
-gam.check(m1)
 ```
 
-We note a strong evidence for heteroscedasticity. Where does it come from?
 
-Look at the variation in the large peak. When `y` is high we are around the peak, and that is also where the largest variation across curves occurs, hence the wider residual span for higher fitted values. 
-
-Now let's consider one particular curve, say one whose first peak is higher than the mean. As we see from the raw curves, we expect that if the residual error for this particular curve at say `time = 0.4` is positive, it will also be positive in the next time samples. Hence **neighbouring residuals are correlated**, which violates one of the hypotheses of the model. We would like to express this fact in the GAMM. 
-
-Before doing that, let's take a step back. Imagine that the same data set was not a collection of time series. For example instead of `time` we could have `price` of houses (in millions of euros), and `y` could be some measure of demand. The plot would be like this:
+Now, imagine that the same data set was not a collection of time series. For example instead of `time` we could have `price` of houses (in millions of euros), and `y` could be some measure of demand. The plot would be like this:
 
 ```{r echo=FALSE, message=FALSE}
 ggplot(curves %>%
@@ -75,7 +69,17 @@ ggplot(curves %>%
 
 ## AR1 residuals
 
-Let's go back to the curves data set.
+```{r message=FALSE}
+gam.check(m1)
+```
+
+We note a strong evidence for heteroscedasticity. Where does it come from?
+
+Look at the variation in the large peak. When `y` is high we are around the peak, and that is also where the largest variation across curves occurs, hence the wider residual span for higher fitted values. 
+
+Now let's consider one particular curve, say one whose first peak is higher than the mean. As we see from the raw curves, we expect that if the residual error for this particular curve at say `time = 0.4` is positive, it will also be positive in the next time samples. Hence **neighbouring residuals are correlated**, which violates one of the hypotheses of the model. We would like to express this fact in the GAMM. 
+
+
 A way to alleviate the problem above is to induce a structure in the residuals as follows:
 $$ \epsilon_i = \rho \cdot \epsilon_{i-1} + \psi_i $$
 which means that the residual at point $i$ is proportional to the residual at point $i-1$, i.e. one step earlier on the time axis, plus another unknown term $\psi_i$, the latter values distributed as $N(0, \sigma^2)$ and independent. The GAMM will not estimate the parameter $\rho$ for us directly, rather we meed to set it ourselves. This type of sub-model for the noise is well known in signal processing and it's called AR1, i.e. auto regressive model of order 1 (because it only depends on one step in the past). 
@@ -83,8 +87,8 @@ which means that the residual at point $i$ is proportional to the residual at po
 What we typically do is this:
 
 1. Estimate a GAMM without AR1 term (like above)
-2. Estimate $\rho$ on the obtained residuals
-3. Re-run the GAMM setting $\rho$ equal to the estimated value above
+2. Compute autocorrelation of residuals
+3. Re-run the GAMM setting $\rho$ equal to the autocorrelation value at lag 1
 
 The following estimates $\rho$ and plots the complete autocorrelation function for the residuals:
 
@@ -115,5 +119,80 @@ gam.check(m1.ar1)
 The result is not very satisfying in this case, for reasons that will be clear in the next section. But we do notice that the confidence intervals of the estimated smooths are wider than before, i.e. less 'overconfident'. Adding extra structure to the model has made it a bit more conservative. 
 
 Although we haven't gained much, in practice the AR1 residual option is often applied, as it is relatively cheap in terms of computation time. 
+
+## Curve-specific random factors
+
+
+Consider the data below:
+
+```{r echo=FALSE, message=FALSE}
+home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+# home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
+data_dir <- file.path(home_dir,'data')
+ex <- 6
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
+  mutate(across(c(curveId,  Category), ~ factor(.x)))
+# plot a few curves
+Category.colors <- c("slategray4", "orangered")
+ggplot(curves %>% inner_join(curves %>% distinct(curveId) %>% slice_sample(n = 15))) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  geom_line() +
+  scale_color_manual(values = Category.colors) +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "none")
+
+```
+
+Let's estimate a GAM:
+
+```{r fig.show="hold", message=FALSE}
+mod2 <- bam(y ~ Category + s(time, by = Category, k= 20)
+           , data = curves)
+summary(mod2)
+plot_smooth(mod2, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
+op <- par(mfrow=c(2,2))
+gam.check(mod2)
+par(op)
+
+```
+
+Estimates are pretty bad, diagnostics are alarming. 
+
+Let's try and apply the AR1 residual model:
+
+```{r fig.show="hold", message=FALSE}
+rho <- acf_resid(mod2)[2]
+mod2.ar1 <- bam(y ~ Category + s(time, by = Category, k= 20)
+                ,rho = rho, AR.start = curves$time == 0
+           , data = curves)
+summary(mod2.ar1)
+plot_smooth(mod2.ar1, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
+op <- par(mfrow=c(2,2))
+gam.check(mod2.ar1)
+par(op)
+
+```
+
+Results are encouraging, though overconfident with spurious differences. Diagnostics are still not right. Explained variance/deviance is very low.
+
+As noted in the previous case, the model does not have an explicit information about which points belong to which curves. The way to represent such information is to introduce a random smooth factor at the curve level:
+
+```{r fig.show="hold", message=FALSE, cache=TRUE}
+mod2.randCurves <- bam(y ~ Category + s(time, by = Category, k= 20)
+                       + s(time, curveId, bs = "fs", m=1, k = 15)
+                       , nthreads = 4
+                       , data = curves)
+summary(mod2.randCurves)
+plot_smooth(mod2.randCurves, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
+op <- par(mfrow=c(2,2))
+gam.check(mod2.randCurves)
+par(op)
+```
+
+This time diagnostics are excellent and the model explains basically all the variance. 
+
+Note that introducing random smooth term on curves is extremely expensive in terms of computation. Use multiple cores (`nthreads` argument). 
+
 
 
