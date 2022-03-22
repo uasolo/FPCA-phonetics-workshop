@@ -13,11 +13,12 @@ land <- read_csv(file.path(data_dir,  paste("exLand", ex, "land", "csv", sep = '
 
 
 # plot a few curves (one by one + landmark position)
-curveSample <- land %>% pull(curveId) %>% sample(20)
+curveSample <- land %>% pull(curveId) %>% sample(5)
 ggplot(curves %>% filter(curveId %in% curveSample)) +
-  aes(x = time, y = y, color = Category) +
+  aes(x = time, y = y, color = Category, group = curveId) +
   geom_line() +
-  geom_vline(data = land, mapping = aes(xintercept = l2, color = Category)) 
+  geom_vline(data = land %>% filter(curveId %in% curveSample),
+             mapping = aes(xintercept = l2, color = Category)) 
 
 # landmark reg (based only on land, not on curves!)
 reg <- landmarkreg.nocurve(land %>% select(starts_with("l")) %>% as.matrix,
@@ -65,7 +66,7 @@ abline(v = reg$land[2])
 # carry on in ex1D.R to analyse registered curve in 1D style
 
 # Joint FPCA on registered curves and their relative speech rate
-# i.e. 2D style analysis, with rime warp logvel as second dimension
+# i.e. 2D style analysis, with time warp logvel as second dimension
 
 # Build a 2D fd object
 
