@@ -12,10 +12,9 @@ Category.colors <- c("slategray4", "orangered")
 
 # data_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop/data"
 data_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop/data/"
-ex <- 6
+ex <- 2
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
-  mutate(across(c(curveId,  Category), ~ factor(.x))) #%>%
-  # filter(Category == "NO_PEAK")
+  mutate(across(c(curveId,  Category), ~ factor(.x))) 
 
 nCurves <- curves %>% select(curveId) %>% n_distinct()
 
@@ -29,11 +28,11 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
         legend.position = "bottom")
 
 # GAM
-mod <- bam(y ~ Category + s(time, by = Category, k= 20)
-           + s(time, curveId, bs = "fs", m=1, k = 15)
+mod <- bam(y ~ Category + s(time, by = Category, k= 10)
+           # + s(time, curveId, bs = "fs", m=1, k = 15)
            # ,rho = rho, AR.start = curves$time == 0
            # ,discrete=TRUE, family="scat"
-           , nthreads = 4
+           # , nthreads = 4
            , data = curves)
 summary(mod)
 # plot(mod, pages = 1)
@@ -50,7 +49,7 @@ curves$IsWIDE_PEAK <- (curves$Category == "WIDE_PEAK") * 1
 curves$IsLATE_PEAK <- (curves$Category == "LATE_PEAK") * 1
 curves$IsUP_PEAK <- (curves$Category == "UP_PEAK") * 1
 
-mod.bin <- bam(y ~ s(time) + s(time, by = IsUP_PEAK, k = 20)
+mod.bin <- bam(y ~ s(time) + s(time, by = IsPEAK, k = 20)
                , data = curves)
 summary(mod.bin)
 
@@ -61,4 +60,58 @@ get_modelterm(mod.bin, select = 2) %>%
   geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "red", alpha = 0.5) +
   theme_light() +
   theme(text = element_text(size = 15))
+
+
+### 2D
+
+ex <- 2
+curves <- read_csv(file.path(data_dir, paste("ex2D", ex, "csv", sep = '.'))) %>%
+  mutate(across(c(curveId,  Category), ~ factor(.x)))
+
+# plot a few curves
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 20)) %>%
+         pivot_longer(starts_with("y"), names_to = "DIM", values_to = "y")) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  facet_grid(DIM ~ .) +
+  geom_line() +
+  scale_color_manual(values = Category.colors) +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+
+
+
+
+curves %<>% mutate(IsSHALLOW = 1 * (Category == "SHALLOW_y1_TROUGH"))
+
+mod2D <- gam(
+  # list(y1 ~ s(time) + s(time, by = IsSHALLOW, k = 20),
+  #      y2 ~ s(time) + s(time, by = IsSHALLOW, k = 20))
+  list(y1 ~ Category + s(time, by=Category, k = 20) + s(curveId, bs = "re"),
+       y2 ~ Category + s(time, by=Category, k = 20) + s(curveId, bs = "re"))
+  , family = mvn(d=2)
+  # ,rho = AR1, AR.start = curves$time == 0
+  , data = curves
+)
+summary(mod2D)
+
+# plot_smooth(mod2D, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE)
+plot(mod2D, pages = 1)
+
+# Dim factor trick
+curves %<>%
+  pivot_longer(y1:y2, names_to = "Dim", values_to = "y") %>%
+  mutate(Dim = factor(Dim)) %>%
+  arrange(curveId, Dim, time) 
+curves$CategoryDim <- interaction(curves$Category, curves$Dim)
+
+mod <- bam(y ~ CategoryDim + s(time, by=CategoryDim, k = 20) 
+           # + s(time, by=Dim, k = 20)
+           # + s(time, curveId, bs = "fs", m=1, k = 20)
+           # + s(curveId, bs = "re")
+           # ,rho = AR1, AR.start = curves$time == 0
+           , data = curves
+           # ,discrete = TRUE, nthreads = 8
+)
+summary(mod)
 
