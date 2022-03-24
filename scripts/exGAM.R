@@ -6,6 +6,7 @@ library(tidyverse)
 library(magrittr)
 library(mgcv)
 library(itsadug)
+library(tictoc)
 
 Category.colors <- c("slategray4", "orangered")
 
@@ -30,7 +31,7 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
 # GAM
 mod <- bam(y ~ Category + s(time, by = Category, k= 10)
            # + s(time, curveId, bs = "fs", m=1, k = 15)
-           # ,rho = rho, AR.start = curves$time == 0
+           ,rho = rho, AR.start = curves$time == 0
            # ,discrete=TRUE, family="scat"
            # , nthreads = 4
            , data = curves)
@@ -49,8 +50,13 @@ curves$IsWIDE_PEAK <- (curves$Category == "WIDE_PEAK") * 1
 curves$IsLATE_PEAK <- (curves$Category == "LATE_PEAK") * 1
 curves$IsUP_PEAK <- (curves$Category == "UP_PEAK") * 1
 
-mod.bin <- bam(y ~ s(time) + s(time, by = IsPEAK, k = 20)
+tic()
+mod.bin <- bam(y ~ s(time, k = 15) + s(time, by = IsPEAK, k = 15) 
+               + s(time, subjId, bs = "fs", m=1, k = 15)
+               + s(time, subjId, by = IsPEAK, bs = "fs", m=1, k = 15)
+               , nthreads = 4
                , data = curves)
+toc()
 summary(mod.bin)
 
 get_modelterm(mod.bin, select = 2) %>%
@@ -61,12 +67,20 @@ get_modelterm(mod.bin, select = 2) %>%
   theme_light() +
   theme(text = element_text(size = 15))
 
+inspect_random(mod.bin, select = 4, cond=list(subjId = 1:5 %>% factor()),
+               # col = "red",
+               col = colorblind_pal()(5),
+               lty = 1, lwd = 2, print.summary = T)
+
+
 
 ### 2D
 
 ex <- 2
 curves <- read_csv(file.path(data_dir, paste("ex2D", ex, "csv", sep = '.'))) %>%
   mutate(across(c(curveId,  Category), ~ factor(.x)))
+
+nCurves <- curves %>% select(curveId) %>% n_distinct()
 
 # plot a few curves
 ggplot(curves %>% filter(curveId %in% sample(nCurves, 20)) %>%
@@ -99,6 +113,12 @@ summary(mod2D)
 plot(mod2D, pages = 1)
 
 # Dim factor trick
+# Wieling, Martijn, et al.
+# "Investigating dialectal differences using articulography." 
+# Journal of Phonetics 59 (2016): 122-143.
+
+
+
 curves %<>%
   pivot_longer(y1:y2, names_to = "Dim", values_to = "y") %>%
   mutate(Dim = factor(Dim)) %>%
