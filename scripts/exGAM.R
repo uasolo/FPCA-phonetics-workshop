@@ -7,13 +7,14 @@ library(magrittr)
 library(mgcv)
 library(itsadug)
 library(tictoc)
+library(refund)
 
 Category.colors <- c("slategray4", "orangered")
 
 
 # data_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop/data"
 data_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop/data/"
-ex <- 2
+ex <- 1
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
   mutate(across(c(curveId,  Category), ~ factor(.x))) 
 
@@ -31,10 +32,37 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
 # GAM
 mod <- bam(y ~ Category + s(time, by = Category, k= 10)
            # + s(time, curveId, bs = "fs", m=1, k = 15)
-           ,rho = rho, AR.start = curves$time == 0
+           # ,rho = rho, AR.start = curves$time == 0
            # ,discrete=TRUE, family="scat"
            # , nthreads = 4
            , data = curves)
+
+mod_data <- curves %>%
+  distinct(curveId, Category) %>%
+  column_to_rownames("curveId")
+mod_ydata <- curves %>% 
+  rename(.obs = curveId, .index = time, .value = y) %>%
+  select(.obs, .index, .value)
+
+mod <- pffr(Y ~ Category, data = mod_data, ydata = mod_ydata, rho = 0.9)
+
+
+
+mod <- pffr(Y ~ Category,
+            data = curves %>%
+              distinct(curveId, Category) %>%
+              column_to_rownames("curveId"),
+            ydata = curves %>% 
+              rename(.obs = curveId, .index = time, .value = y) %>%
+              select(.obs, .index, .value) %>% 
+              mutate(.obs = as.integer(.obs)),
+            rho = 0.9
+            )
+
+mod_bam <- mod
+class(mod_bam) = class(mod_bam)[-1]
+acf_resid(mod_bam)
+
 summary(mod)
 # plot(mod, pages = 1)
 plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE)

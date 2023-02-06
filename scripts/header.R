@@ -1,11 +1,11 @@
 library(fda)
-packageVersion('fda')
-# ‘5.1.5.1’
+if (packageVersion('fda') < 5.1) {
+  stop("Please install a recent version of 'fda', 5.1 or newer.")
+}
 library(tidyverse)
 library(emmeans)
 library(abind)
 library(funr)
-
 
 
 scripts_dir = funr::get_script_path() 

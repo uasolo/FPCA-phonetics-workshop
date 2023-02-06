@@ -149,7 +149,11 @@ rangex = range(x0marks)
     #  smooth relation between this curve"s values and target"s values
  #   if (monwrd) {
        #  use monotone smoother
-       Wfd       <- smooth.morph(xval, yval, WfdPar)$Wfdobj
+    if (packageVersion('fda') >= 6) {
+       Wfd       <- smooth.morph(xval, yval, range(yval), WfdPar)$Wfdobj
+    } else {
+      Wfd       <- smooth.morph(xval, yval,  WfdPar)$Wfdobj
+    }
        h         <- monfn(x, Wfd)
  #      b         <- (rangeval[2]-rangeval[1])/(h[n]-h[1])
        b         <- (diff(range(yval)))/(h[n]-h[1])
