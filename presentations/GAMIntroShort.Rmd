@@ -1,0 +1,213 @@
+---
+title: "GAMMs in a nutshell"
+author: "Michele Gubian"
+date: "May 2023"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+library(tidyverse)
+library(ggthemes)
+library(magrittr)
+library(mgcv)
+library(itsadug)
+library(emmeans)
+library(scales)
+
+```
+
+# Modelling curves
+
+Suppose we have curves belonging to two categories: P (Peak) and NP (No Peak):
+
+```{r echo=FALSE, message=FALSE}
+home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+data_dir <- file.path(home_dir,'data')
+ex <- 1 
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
+nCurves <- curves %>% select(curveId) %>% n_distinct()
+curves %<>% mutate(Category = factor(Category))
+
+Category.colors <- c("slategray4", "orangered")
+Category.labels <- c("NP (No Peak)", "P (Peak)")
+# plot a few curves
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 16))) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  geom_line(size = 0.3) +
+  scale_color_manual(values=Category.colors, labels = Category.labels) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+
+```
+
+We could could use some combination of linear regression and polynomial curve fitting:
+
+$$
+y_i = \beta_{0, NP} + \beta_{0, P} + \beta_{1, NP} \cdot t_i + \beta_{1, P} \cdot t_i + \beta_{2, NP} \cdot t_i^2 + \beta_{2, P} \cdot t_i^2 + 
+\beta_{3, NP} \cdot t_i^3 + \beta_{3, P} \cdot t_i^3 + ... + \epsilon_i 
+$$
+where $i$ is **not** an index for an entire curve, but for a single sample.
+
+## Problems
+
+* We don't know where to stop with power terms
+    + but we could use model selection 
+* Pure power series are really bad at interpolating general shapes
+    + because Taylor's theorem is about approximating curves near a specific point, not globally
+* How are we going to use the $\beta$ terms for insight and interpretation?
+
+# GAMMs (Generalised Additive Mixed Models)
+
+* Use **SPLINES** as basis functions, because they are good for interpolating any shape
+* Use **regularisation** and **Cross-Validation** to determine complexity (how many functions) and smoothness 
+* **Interpret shapes**, not coefficients
+
+![](../notes/splines.png)
+
+## GAMMs in R
+
+Using the `mgcv` R library, the model for the Peak/No Peak curves is expressed as:
+
+
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + \beta_P + f_{NP}(t_i) + f_P(t_i) + \epsilon_i$ | `y ~ Category + s(time, by = Category)` |
+
+where $P$ indicates the Peak category, while the default (control) level is $NP$ (No Peak), and $i$ is the sample (not curve) index.
+The equation is omitting the indicator functions. The complete version is:
+$$ y_i = \beta_0 + \beta_P \cdot I(i \in P) + f_{NP}(t_i) \cdot I(i \in NP) + f_P(t_i) \cdot I(i \in P) + \epsilon_i $$
+Note the asymmetry in the conventions for the parametric and the smooth parts of the model:
+
+* Parametric part: as in `lm()`, $\beta_0$ is the intercept, $\beta_P$ is the difference between level $P$ and the intercept
+* Smooths: one for each level of the fixed factor, all zero-centered
+
+Estimate the model with `mgcv::bam()`:
+```{r, echo=FALSE}
+curves %<>% mutate(Category = factor(Category)) # don't forget!
+m2 <- bam(y ~ Category + s(time, by = Category), data = curves)
+summary(m2)
+```
+
+### Plotting predictions
+
+```{r}
+plot_smooth(m2, view = "time", plot_all = "Category", print.summary = FALSE,
+            col = Category.colors)
+```
+
+### Testing for significance: graphical method
+
+A graphical way to detect statistical differences between effects is:
+
+```{r}
+plot_diff(m2, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")), print.summary = FALSE)
+```
+
+### Testing for significance: binary smooths
+
+While `emmeans` allows to test differences at specific points on the time axis (or other continuous dimensions), we need a way to assess for the significance of a smooth contrast as a whole. For the purpose, we utilise another way to specify a smooth interacting with a fixed factor with `mgcv::bam`, the so-called *binary smooths*.
+
+A binary smooth is a smooth that represents the difference between effects (including intercepts). We use them to model the  difference between two levels of a factor, or between more complex combinations of factor level interactions (more on this later). Once we are able to introduce such a term in the model, we obtain two things:
+
+1. we can assess the statistical significance of the  difference between a pair of levels of interest by reading it off the model `summary`
+2. we can plot such difference and interpret it
+
+In order to define a convenient binary smooth set up with `mgcv`, 
+first we need to define **numeric variables with the meaning of logical variables** (yes you read it right), which represent the desired contrasts -- a rather obscure convention adopted by the `mgcv` library. In our case we want to represent the difference between PEAK and  NO_PEAK, with NO_PEAK as control level:
+
+```{r}
+curves$IsPEAK <- (curves$Category == "PEAK") * 1
+```
+
+where  `* 1` is a quick way to transform the logical value inside `()` into a numeric one. The R formula and the corresponding maths form are:
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $y_i = \beta_0 + f_0(t_i) + b_P(t_i) \cdot I(i \in P) + \epsilon_i$ | `y ~ s(time) + s(time, by = IsPEAK)` |
+
+where:
+
+* $\beta_0$ is the global intercept
+* $f_0(t_i)$ is the global, zero-centered smooth
+* $b_P(t_i)$ is the **not zero-centered** binary smooth. It represents the total difference between PEAK and  NO_PEAK
+
+```{r}
+m2.bin <- bam(y ~ s(time) + s(time, by = IsPEAK), data = curves)
+summary(m2.bin)
+```
+| Maths  | R summary |
+|:---------:|:---------:|
+| $\beta_0$ | `(Intercept)` |
+| $f_0(t_i)$  | `s(time)` |
+| $b_P(t_i)$ | `s(time):IsPEAK` |
+
+Only now we are able to report about the significance of the difference between PEAK and NO_PEAK by reading off the `summary` output for `s(time):IsPEAK`.
+
+Here is how the difference term $b_P(t_i)$ looks:
+```{r, echo=FALSE}
+get_modelterm(m2.bin, select = 2, print.summary = FALSE) %>%
+  ggplot() +
+  aes(x = time, y = fit) +
+  geom_line() +
+  geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "red", alpha = 0.5) +
+  theme_light() +
+  theme(text = element_text(size = 15))
+```
+
+## A more complex scenario
+
+A GAMM predicting the probability $p$ that a certain (normalised) pair of format values $F1, F2$ corresponds to a mid-close [e]. The data set is composed by mod-closed and mid-open [e]. 
+
+As the data was collected from several speakers, we introduce a random *smooth* term, the generalisation of a random intercept in LMER. 
+
+| Equation  | R formula |
+|:---------:|:---------:|
+| $logit(p) = f(F1, F2) + f_{Speaker}(F1, F2)$ | `p ~ te(F1, F2) + te(F1, F2, speaker, bs = "fs")` |
+
+
+
+```{r, echo=FALSE}
+GAMM <- readRDS("GAMM_F1nF2n.rds")
+dat <- expand_grid(F1 = seq(0,1,by=0.01), F2 = seq(0.4, 1.4, by=0.01))
+fit <- dat %>% 
+  mutate(fit = predict.gam(GAMM, newdata = ., exclude = "te(F1,F2,speaker)", newdata.guaranteed = TRUE))
+ggplot(fit) + 
+  aes(x = F2, y = F1, fill = plogis(fit)) +
+  geom_raster(interpolate = TRUE) +
+  scale_fill_gradient2(high = muted("red"),
+                       mid = "white",
+                       low = muted("blue"),
+                       midpoint = 0.5,
+                       breaks = c(0.01, 0.5, 0.99),
+                       labels = c(0, 0.5, 1)) +
+  xlim(max(fit$F2), min(fit$F2)) +
+  ylim(max(fit$F1), min(fit$F1)) +
+  labs(fill = "Prob(mid-close [e])", x = "scaled F2", y = "scaled F1") +
+  theme_bw() +
+  theme(text = element_text(size = 14),
+        legend.position="bottom") 
+
+```
+
+New elements:
+
+* Two covariates (F1 and F2) instead of one (time)
+* Random term (by speaker) (the first "M" in GAMM)
+* logistic regression (the "G" in GAMM)
+
+Note that each term $f$ is fairly complex, but they can only be combined by a sum (the "A" in GAMM).
+
+
+
+##  In summary: what is a GAMM?
+
+> Curve fitting + regularisation + GLMER
+
+
+### Resources
+
+* Tutorial papers: [Martijn Wieling](http://martijnwieling.nl/files/GAM-tutorial-Wieling.pdf), [Marton Soskuthy](http://eprints.whiterose.ac.uk/113858/2/1703_05339v1.pdf)
+* Online tutorials: [Joseph Roy](https://jroy042.github.io/nonlinear/), [Jacolien van Rij](http://jacolienvanrij.com/Tutorials/GAMM.html), [Peter Laurinec](https://petolau.github.io/Analyzing-double-seasonal-time-series-with-GAM-in-R/), [Noam Ross](https://noamross.github.io/gams-in-r-course/), [Michael Clark](https://m-clark.github.io/generalized-additive-models/)
