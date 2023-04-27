@@ -13,9 +13,12 @@ library(magrittr)
 library(mgcv)
 library(itsadug)
 library(emmeans)
-library(mvtnorm)
+library(signal)
 library(clusterGeneration)
+library(RColorBrewer)
+
 select <- dplyr::select # conflict with MASS
+filter <- dplyr::filter # conflict with signal
 
 ```
 
@@ -113,86 +116,219 @@ m1.ar1 <- bam(y ~ s(time, k = 20), data = curves,
               )
 summary(m1.ar1)
 plot_smooth(m1.ar1, view = "time", col = "slateblue4", rug = FALSE, print.summary = FALSE)
+acf_resid(m1.ar1)
 gam.check(m1.ar1)
 ```
 
-The result is not very satisfying in this case, for reasons that will be clear in the next section. But we do notice that the confidence intervals of the estimated smooths are wider than before, i.e. less 'overconfident'. Adding extra structure to the model has made it a bit more conservative. 
+The results show that:
 
-Although we haven't gained much, in practice the AR1 residual option is often applied, as it is relatively cheap in terms of computation time. 
+* The strong positive AR1 term is gone
+* but an AR pattern is still there
+* heteroscedasticity is still there too
+* the estimated smooth has a wider confidence band
+* the AR1-augmented model converged quite quickly
+
+
 
 ## Curve-specific random factors
 
+The way to explicitly represent the information about curves, i.e. which sample belongs to which curve, is to introduce a random smooth factor at the curve level:
 
-Consider the data below:
-
-```{r echo=FALSE, message=FALSE}
-home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
-# home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
-data_dir <- file.path(home_dir,'data')
-ex <- 6
-curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
-  mutate(across(c(curveId,  Category), ~ factor(.x)))
-# plot a few curves
-Category.colors <- c("slategray4", "orangered")
-ggplot(curves %>% inner_join(curves %>% distinct(curveId) %>% slice_sample(n = 15))) +
-  aes(x = time, y = y, group = curveId, color = Category) +
-  geom_line() +
-  scale_color_manual(values = Category.colors) +
-  theme_light() +
-  theme(text = element_text(size = 15),
-        legend.position = "none")
-
+```{r message=FALSE, cache=TRUE}
+m1.randCurves <- bam(y ~ s(time, k = 20) + 
+                       + s(time, curveId, bs = "fs", m=1, k = 15)
+                       , nthreads = 2
+                       , data = curves)
+summary(m1.randCurves)
 ```
-
-Let's estimate a GAM:
-
-```{r fig.show="hold", message=FALSE}
-mod2 <- bam(y ~ Category + s(time, by = Category, k= 20)
-           , data = curves)
-summary(mod2)
-plot_smooth(mod2, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
-op <- par(mfrow=c(2,2))
-gam.check(mod2)
-par(op)
-
-```
-
-Estimates are pretty bad, diagnostics are alarming. 
-
-Let's try and apply the AR1 residual model:
-
-```{r fig.show="hold", message=FALSE}
-rho <- acf_resid(mod2)[2]
-mod2.ar1 <- bam(y ~ Category + s(time, by = Category, k= 20)
-                ,rho = rho, AR.start = curves$time == 0
-           , data = curves)
-summary(mod2.ar1)
-plot_smooth(mod2.ar1, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
-op <- par(mfrow=c(2,2))
-gam.check(mod2.ar1)
-par(op)
-
-```
-
-Results are encouraging, though overconfident with spurious differences. Diagnostics are still not right. Explained variance/deviance is very low.
-
-As noted in the previous case, the model does not have an explicit information about which points belong to which curves. The way to represent such information is to introduce a random smooth factor at the curve level:
 
 ```{r fig.show="hold", message=FALSE, cache=TRUE}
-mod2.randCurves <- bam(y ~ Category + s(time, by = Category, k= 20)
-                       + s(time, curveId, bs = "fs", m=1, k = 15)
-                       , nthreads = 4
-                       , data = curves)
-summary(mod2.randCurves)
-plot_smooth(mod2.randCurves, view = "time", plot_all = "Category", col = Category.colors, rug = FALSE, print.summary = FALSE)
+
+plot_smooth(m1.randCurves, view = "time", col = "slateblue4", rug = FALSE, print.summary = FALSE)
 op <- par(mfrow=c(2,2))
-gam.check(mod2.randCurves)
+gam.check(m1.randCurves)
+acf_resid(m1.randCurves)
 par(op)
 ```
 
-This time diagnostics are excellent and the model explains basically all the variance. 
+The results show that:
 
-Note that introducing random smooth term on curves is extremely expensive in terms of computation. Use multiple cores (`nthreads` argument). 
+* There is no AR residual anymore
+* residuals look uncorrelated, no pattern visible
+* the estimated smooth has a wider confidence band
+* the curve level random smooth-augmented model takes more time to converge
 
+As alternative to the `mgcv` library, you can try the [sparseFLMM](https://cran.r-project.org/web/packages/sparseFLMM/index.html) library, which incorporates curve-level random smooths by default and it performs an efficient estimation based on functional PCA. `sparseFLMM` is (in my opinion) generally less user-friendly than `mgcv`. 
+
+
+## AR1 residuals and latent factors
+
+
+```{r, echo=FALSE}
+tx <- seq(0, 1, by = 0.02)
+slow_curve <- partial(dnorm, mean = 1, sd = 0.3)
+osc_amp <- 0.5
+latent <- \(x) osc_amp * sin(4 * pi * x)
+latent <- compose(~ 0.5 * .x, partial(dnorm, mean = 0.5, sd = 0.2))
+funcFactors <- tribble(
+  ~F2, ~Fx, ~func,
+  "A", "1", slow_curve,
+  "A", "2", \(x) slow_curve(x) + latent(x),
+  "B", "1", \(x) - slow_curve(x) + 1,
+  "B", "2", \(x) - slow_curve(x) + 1 + latent(x - 0.2),
+) %>%
+  unite("F4", c(F2, Fx), remove = FALSE, sep = '.') %>% 
+  mutate(across(starts_with("F", ignore.case = FALSE), factor)) 
+
+curves <- funcFactors %>% 
+  group_by(F2, Fx, F4) %>% 
+  reframe(t = tx,
+          y0 = func[[1]](tx))
+# create N_rep repetitions per FAB level
+# n0 : white gaussian noise, param: n0_sd
+# n1 : AR1 noise, param: rho1
+N_rep <- 20
+n0_sd <- 0.02
+rho1 <- 0.9
+curves %<>% 
+  group_by(F2, Fx, F4) %>% 
+  reframe(expand_grid(rep = factor(1:N_rep), pick(everything()))) %>% 
+  group_by(F2, Fx, F4, rep) %>%
+  mutate(n0 = rnorm(y0, 0, n0_sd),
+         n1 = signal::filter(filt = 1, a = c(1, -rho1), x = n0),
+         curveId = cur_group_id()
+         ) %>% 
+  mutate(curveId = factor(curveId)) %>% 
+  relocate(curveId, .before = t)
+
+FactorColors <- list(
+  F2 = brewer.pal(4, "Paired")[c(2, 4)],
+  F4 = brewer.pal(4, "Paired")
+)
+
+```
+
+This is a curve dataset with a 4-level factor `F4`. An AR1 residual with coefficient $\rho =$ `r rho1` is added to the 4 expected curves.
+
+```{r, echo=FALSE}
+ggplot(data = curves %>% filter(rep %in% sample(N_rep, 8)),
+       mapping = aes(x = t, y = y0 + n1,
+                     group = interaction(F4, rep),
+                     color = F4)) +
+  geom_line(linewidth = 0.7) +
+  scale_color_manual(values = FactorColors$F4) +
+  ylab("y") +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+```
+Let us first model it as: `y ~ F4 + s(t, by = F4)`, i.e. a regular GAM with one factor and no AR1 residual.
+
+```{r, echo=FALSE, results='asis'}
+useRho <- F
+curveIdFactor <- F
+Factor <- "F4"
+noise <- "n1"
+knitr::knit_child('AR1.Rmd', envir = environment(), quiet = TRUE) %>% cat()
+```
+
+Notice that:
+
+* The model explains most of the variance
+* Residual plots look good
+* The AR1 pattern is clear, and it looks like an exponential decay
+
+Let us add the AR1 term to the model, taking the estimated value $\hat{\rho} =$ `r rho`:
+
+```{r, echo=FALSE, results='asis'}
+useRho <- T
+curveIdFactor <- F
+Factor <- "F4"
+noise <- "n1"
+knitr::knit_child('AR1.Rmd', envir = environment(), quiet = TRUE) %>% cat()
+```
+
+Notice that:
+
+* Explained var almost the same as without AR1
+* Residual plots still look good
+* The AR1 pattern is gone
+
+Let us now change two things:
+
+1. Pretend we do not know there are 4 levels, but only two levels `A` and `B`
+2. Remove the AR1 noise and introduce uncorrelated noise
+
+```{r, echo=FALSE}
+ggplot(data = curves %>% filter(rep %in% sample(N_rep, 8)),
+       mapping = aes(x = t, y = y0 + n0,
+                     group = interaction(F4, rep),
+                     color = F2)) +
+  geom_line(linewidth = 0.7) +
+  scale_color_manual(values = FactorColors$F2) +
+  ylab("y") +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+```
+
+Let us model this dataset as: `y ~ F2 + s(t, by = F2)`
+
+```{r, echo=FALSE, results='asis'}
+useRho <- F
+curveIdFactor <- F
+Factor <- "F2"
+noise <- "n0"
+knitr::knit_child('AR1.Rmd', envir = environment(), quiet = TRUE) %>% cat()
+```
+
+Notice that:
+
+* Explained var dropped significantly
+* Residual plots are awful, obvious patterns, even trajectories are visible
+* There is a very large AR pattern, which does not look like an exponential decay
+
+Let us blindly apply the AR1 recipe, i.e. take the estimated $\hat{\rho} =$ `r rho` and re-fit the model:
+
+```{r, echo=FALSE, results='asis'}
+useRho <- T
+curveIdFactor <- F
+Factor <- "F2"
+noise <- "n0"
+knitr::knit_child('AR1.Rmd', envir = environment(), quiet = TRUE) %>% cat()
+```
+
+Notice that:
+
+* Explained var did not improve
+* Residual plots are still awful, trajectories are still there
+* AR has changed, but has not gone away
+
+Let us instead add a curve-specific random smooth term (and remove the AR1 term):
+
+```{r, echo=FALSE, results='asis', cache=TRUE}
+useRho <- F
+curveIdFactor <- T
+Factor <- "F2"
+noise <- "n0"
+knitr::knit_child('AR1.Rmd', envir = environment(), quiet = TRUE) %>% cat()
+inspect_random(mod, select = 3,
+               cond=list(F2 = "A"),
+               lty = 1, lwd = 2, print.summary = FALSE)
+```
+
+Notice that:
+
+* Explained var reaches ceiling
+* Residual plots are prefect
+* AR is minimal
+* Random smooths clearly are not random, they capture the latent factor
+* Compute time is quite high (minutes, on a toy example with `r 4 * N_rep` curves)
+
+## Take home message
+
+* Do not apply AR1 recipe blindly
+* AC can be a consequence of a latent factor/variable
+* Yet the computational cost of the 'proper' solution (curve-specific smooths) is often prohibitively high
 
 
