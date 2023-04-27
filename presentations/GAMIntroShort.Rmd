@@ -20,7 +20,7 @@ library(scales)
 
 # Modelling curves
 
-Suppose we have curves belonging to two categories: P (Peak) and NP (No Peak):
+Suppose we have curves belonging to two categories: NP (No Peak) and P (Peak):
 
 ```{r echo=FALSE, message=FALSE}
 home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
@@ -31,14 +31,18 @@ nCurves <- curves %>% select(curveId) %>% n_distinct()
 curves %<>% mutate(Category = factor(Category))
 
 Category.colors <- c("slategray4", "orangered")
-Category.labels <- c("NP (No Peak)", "P (Peak)")
+Category.labels <- c(NO_PEAK = "NP (No Peak)", PEAK = "P (Peak)")
 # plot a few curves
-ggplot(curves %>% filter(curveId %in% sample(nCurves, 16))) +
-  aes(x = time, y = y, group = curveId, color = Category) +
+ggplot(curves %>%
+         filter(curveId %in% sample(nCurves, 10)) %>%
+         mutate(curveId = factor(curveId))) +
+  aes(x = time, y = y, group = curveId, color = curveId) +
   geom_line(size = 0.3) +
-  scale_color_manual(values=Category.colors, labels = Category.labels) +
+  facet_grid(~ Category, labeller = labeller(Category = Category.labels)) +
+  # scale_color_manual(values=Category.colors, labels = Category.labels) +
   theme_light() +
-  theme(text = element_text(size = 15))
+  theme(text = element_text(size = 15),
+        legend.position = "none")
 
 ```
 
