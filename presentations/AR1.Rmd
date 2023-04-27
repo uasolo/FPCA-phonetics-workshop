@@ -1,0 +1,22 @@
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+RHS <- str_glue("{Factor} + s(t, by = {Factor}, k = 10)")
+if (curveIdFactor) {
+  RHS <- str_c(RHS, str_glue(" + s(t, curveId, by = {Factor}, bs = \"fs\", m = 1)"))
+}
+
+set.seed(234)
+mod <- curves %>%
+  mutate(y = y0 + .data[[noise]]) %>% 
+  bam(as.formula(str_c("y ~ ", RHS)),
+      data = .,
+      nthreads = if (curveIdFactor) 4 else 1,
+      rho = if (useRho) rho else 0,
+      AR.start = if (useRho) {.$t == 0} else NULL
+  )
+mod %>% summary()
+# main <- str_glue("Factor: {Factor}, Noise: {noise}, rho = {if (useRho) {rho %>% round(3)} else 0}")
+plot_smooth(mod, view = "t", plot_all = Factor, #main = main,
+            col = FactorColors[[Factor]], rug = FALSE, print.summary = FALSE)
+mgcv::gam.check(mod)
+rho <- itsadug::acf_resid(mod, plot = TRUE)[2]
+```
