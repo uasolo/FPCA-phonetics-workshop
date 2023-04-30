@@ -174,20 +174,24 @@ This time linear time normalisation creates distortions and artifacts in the sol
 
 # Correlation between shape and duration
 
+## No categories
+
 ```{r}
-lin_expansion <- 1.5
+lin_expansion <- 1.3
 set.seed(28)
 curves %>% 
   filter(Category  == "PEAK") %>% 
   group_by(curveId) %>% 
-  mutate(across(c(y, t1), ~ runif(1, 1/lin_expansion, lin_expansion) * .x)) %>%
+  mutate(across(c(y, time), ~ runif(1, 1/lin_expansion, lin_expansion) * .x)) %>%
+  ungroup() %>% 
   inner_join(curves %>%
+               ungroup() %>% 
                filter(Category  == "PEAK") %>%
                distinct(curveId) %>% 
-               slice_sample(n = 20)) %>% 
+               slice_sample(n = 8)) %>% 
   mutate(curveId = factor(curveId)) %>% 
   ggplot() +
-  aes(t1, y, group = curveId, color = curveId) +
+  aes(time, y, group = curveId, color = curveId) +
   geom_line(linewidtth=0.3) +
   xlab("time") +
   theme_light() +
@@ -197,7 +201,134 @@ curves %>%
 
 ```
 
+### No time normalisation 
+```{r, fig.show="hold", out.width="50%"}
+set.seed(28)
+m5 <- bam(y ~ s(time),
+          data = curves %>% 
+            filter(Category  == "PEAK") %>% 
+            group_by(curveId) %>% 
+            mutate(across(c(y, time), ~ runif(1, 1/lin_expansion, lin_expansion) * .x)))
+summary(m5)
+plot_smooth(m5, view = "time",  print.summary = FALSE, rug = FALSE)
+```
 
+### Linear time normalisation
 
+```{r, fig.show="hold", out.width="50%"}
+set.seed(28)
+m6 <- bam(y ~ s(t_lin),
+          data = curves %>% 
+            filter(Category  == "PEAK") %>% 
+            group_by(curveId) %>% 
+            mutate(across(c(y, time), ~ runif(1, 1/lin_expansion, lin_expansion) * .x)) %>% 
+            mutate(t_lin = time/max(time))
+          )
+summary(m6)
+plot_smooth(m6, view = "t_lin",  print.summary = FALSE, rug = FALSE)
+```
 
+### Duration as covariate
+
+```{r, fig.show="hold", out.width="50%"}
+set.seed(28)
+m7 <- bam(y ~ te(t_lin, duration),
+          data = curves %>% 
+            filter(Category  == "PEAK") %>% 
+            group_by(curveId) %>% 
+            mutate(across(c(y, time), ~ runif(1, 1/lin_expansion, lin_expansion) * .x)) %>% 
+            mutate(t_lin = time/max(time),
+                   duration = max(time))
+          )
+summary(m7)
+fvisgam(m7, view = c("t_lin", "duration"), color = c('white', 'blue'), main = "", print.summary = FALSE)
+abline(h=c(2 / lin_expansion, 2 * lin_expansion),lty=2,lwd=2,col="red")
+fvisgam(m7, view = c("t_lin", "duration"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "", print.summary = FALSE, zlab = "y")
+plot_smooth(m7, view = "t_lin", cond = list(duration = 2 / lin_expansion),  print.summary = FALSE, rug = FALSE)
+plot_smooth(m7, view = "t_lin", cond = list(duration = 2 * lin_expansion),  print.summary = FALSE, rug = FALSE)
+```
+
+## With categories
+
+```{r}
+
+lin_expansion_category <- function(curves, log_expansion = 0.25, sd_expansion = 0.1) {
+  curves %>%
+    group_by(curveId, Category) %>% 
+    mutate(across(c(time, y), ~ case_when(
+      Category == "PEAK" ~ .x * rnorm(1, log_expansion, sd_expansion) %>% exp(),
+      Category == "NO_PEAK" ~ .x / rnorm(1, log_expansion, sd_expansion) %>% exp()
+    ))) %>% 
+    ungroup() %>% 
+    mutate(curveId = factor(curveId))
+}
+set.seed(28)
+ggplot(curves %>%
+         lin_expansion_category() %>% 
+         filter(curveId %in% sample(nCurves, 16))
+         ) +
+  aes(x = time, y = y, group = curveId, color = curveId) +
+  geom_line(linewidth = 0.3) +
+  facet_grid(~ Category, labeller = labeller(Category = Category.labels)) +
+  xlab("time") +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "none")
+```
+
+### No time normalisation
+```{r fig.show="hold"}
+set.seed(28)
+m8 <- bam(y ~ Category + s(time, by = Category),
+          data = curves %>% lin_expansion_category())
+summary(m8)
+plot_smooth(m8, view = "time",  plot_all = "Category", 
+            col = Category.colors,  print.summary = FALSE, rug = FALSE)
+```
+
+### Linear time normalisation
+```{r fig.show="hold"}
+set.seed(28)
+ggplot(curves %>% 
+         lin_expansion_category() %>% 
+            group_by(curveId) %>% 
+            mutate(t_lin = time / max(time))) +
+  aes(x = t_lin, y = y, group = curveId, color = curveId) +
+  geom_line(linewidth = 0.3) +
+  facet_grid(~ Category, labeller = labeller(Category = Category.labels)) +
+  theme_light() +
+  xlab("lin. norm. time") +
+  theme(text = element_text(size = 15),
+        legend.position = "none")
+
+set.seed(28)
+m9 <- bam(y ~ Category + s(t_lin, by = Category),
+          data = curves %>% lin_expansion_category() %>% 
+            group_by(curveId) %>% 
+            mutate(t_lin = time / max(time)))
+summary(m9)
+plot_smooth(m9, view = "t_lin",  plot_all = "Category", 
+            col = Category.colors,  print.summary = FALSE, rug = FALSE)
+```
+
+### Duration as covariate
+```{r, fig.show="hold", out.width="50%"}
+set.seed(28)
+m10 <- bam(y ~ Category + te(t_lin, duration, by = Category),
+          data = curves %>% lin_expansion_category() %>% 
+            group_by(curveId) %>% 
+            mutate(t_lin = time/max(time),
+                   duration = max(time))
+          )
+summary(m10)
+fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "NO_PEAK"),  color = c('white', 'blue'), main = "No Peak", print.summary = FALSE)
+abline(h=c(1.5, 2.5),lty=2,lwd=2,col="red")
+fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "PEAK"),  color = c('white', 'blue'), main = "Peak", print.summary = FALSE)
+abline(h=c(1.5, 2.5),lty=2,lwd=2,col="red")
+fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "NO_PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "No Peak", print.summary = FALSE, zlab = "y")
+fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "Peak", print.summary = FALSE, zlab = "y")
+plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 1.5), col = Category.colors, lwd=2, main = "duration = 1.5", print.summary = FALSE)
+plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 2.5), col = Category.colors, lwd=2, main = "duration = 2.5", print.summary = FALSE)
+
+```
 
