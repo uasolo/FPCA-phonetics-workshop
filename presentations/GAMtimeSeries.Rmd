@@ -1,7 +1,7 @@
 ---
 title: "GAMMs and time series"
 author: "Michele Gubian"
-date: "March 2022"
+date: "May 2023"
 output: html_document
 ---
 
@@ -22,16 +22,12 @@ filter <- dplyr::filter # conflict with signal
 
 ```
 
-# GAMMs are not time series models (!)
-This title is a bit provocative, yet strictly speaking it is correct. We will show two examples where we realise what is missing from GAMMs in order to become tools for time series analysis. In short, we need to communicate to the model something about the order of the time samples, which we have not done so far. 
-
-
 Consider the data below:
 
 ```{r echo=FALSE, message=FALSE}
-home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
+# home_dir <- "/vdata/ERC2/FPCA/FPCA-phonetics-workshop"
 # home_dir <- "C:/Users/Michele/Dropbox/scambio_temp/work/FDA/FPCA-phonetics-workshop"
-data_dir <- file.path(home_dir,'data')
+data_dir <- '../data'
 ex <- 2 
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>%
   filter(Category == "NO_PEAK") %>%
@@ -222,6 +218,7 @@ ggplot(data = curves %>% filter(rep %in% sample(N_rep, 8)),
   theme(text = element_text(size = 15),
         legend.position = "bottom")
 ```
+
 Let us first model it as: `y ~ F4 + s(t, by = F4)`, i.e. a regular GAM with one factor and no AR1 residual.
 
 ```{r, echo=FALSE, results='asis'}
@@ -327,7 +324,7 @@ Notice that:
 
 ## Take home message
 
-* Do not apply AR1 recipe blindly
+* Do not apply the AR1 recipe blindly
 * AC can be a consequence of a latent factor/variable
 * Yet the computational cost of the 'proper' solution (curve-specific smooths) is often prohibitively high
 

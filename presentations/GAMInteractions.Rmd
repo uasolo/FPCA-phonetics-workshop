@@ -1,13 +1,13 @@
 ---
 title: "Interactions between factors with GAMMs"
 author: "Michele Gubian"
-date: "March 11, 2022"
+date: "May 2023"
 output: html_document
 ---
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(magrittr)
 library(mgcv)
@@ -193,9 +193,9 @@ This hypothesis requires a more complex structure of binary smooths. First let u
 $$ (y\big\rvert_{h, B} - y\big\rvert_{h, D}) -  (y\big\rvert_{l, D} - y\big\rvert_{l, B}) > 0$$
 where $y\big\rvert_{h, B}$ means "the predicted $y$ at  `Category` `high` and `State` `BEFORE`", and similarly for the other terms. 
 That is, we are claiming that the difference curve between two difference curves has a certain sign. 
-In order to use the mechanism of binary smooths at our advantage, we need to find a way to get just one $b$ term that models the expression on the left of the inequality above. The way we did for H1 H2 and H3 was to set base levels with ordinary $f$ smooths and then define one extra set of $b$ terms expressing differences. The $f$ terms were based on either `Category` or `State`. 
+In order to use the mechanism of binary smooths at our advantage, we need to find a way to get just one $b$ term that models the expression on the left of the inequality above. The way we did for H1, H2 and H3 was to set base levels with ordinary $f$ smooths and then define one extra set of $b$ terms expressing differences. The $f$ terms were based on either `Category` or `State`. 
 There are two reasons why this is not enough in our case. First, with just one set of $b$ terms we will be able to express differences between levels, but not differences of differences. So we need two sets of $b$ terms with different meanings. In particular, we need the term $y\big\rvert_{h, B} - y\big\rvert_{h, D}$ to contain one $b$ element more than the term $y\big\rvert_{l, D} - y\big\rvert_{l, B}$, so that everything cancels out and only one $b$ term remains. 
-Second, there is no way to create the asymmetry in the subtractions that we need by using $f$ terms were based on either `Category` or `State`.
+Second, there is no way to create the asymmetry in the subtractions that we need by using $f$ terms based on either `Category` or `State`.
 
 Let's tackle the latter problem first. We have to create a new factor that brings about the asymmetry we need. Let's call it `X` and it is defined as in the picture below:
 
@@ -221,7 +221,7 @@ tribble(
 ```
 
 where `lD`$\cup$`hB` means "either `low` and `DURING` or `high` and `BEFORE`", and similarly for the other terms.
-This new factor `X` behaves similarly to `State` in that it divides the 6 cells into 3 sets of 2, but has an asymmetry with respect to `BEFORE` and `AFTER`. 
+This new factor `X` behaves similarly to `State` in that it divides the 6 cells into 3 sets of 2, but it has an asymmetry with respect to `BEFORE` and `AFTER`. 
 
 The model we are considering is the following:
 
@@ -276,3 +276,4 @@ abline(h=0, col='red', lty=2)
 ```
 
 Testing H4 brought two difficulties into the picture. First the need for two levels of binary smooth terms in order to express diff-of-diffs, second the need to create a new category with asymmetries in its cell composition, in order to obtain asymmetries in the signs. An example where only the first problem occurs can be found in section 4.10 of the [tutorial by Martijn Wieling](http://martijnwieling.nl/files/GAM-tutorial-Wieling.pdf).
+An example where a situation similar to testing H4 occurs can be found in the [supplementary materials](https://ars.els-cdn.com/content/image/1-s2.0-S0167639323000122-mmc1.pdf) of [this paper](https://www.sciencedirect.com/science/article/pii/S0167639323000122).

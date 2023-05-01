@@ -192,7 +192,7 @@ curves %>%
   mutate(curveId = factor(curveId)) %>% 
   ggplot() +
   aes(time, y, group = curveId, color = curveId) +
-  geom_line(linewidtth=0.3) +
+  geom_line(linewidth=0.3) +
   xlab("time") +
   theme_light() +
   theme(text = element_text(size = 15),
@@ -244,9 +244,14 @@ summary(m7)
 fvisgam(m7, view = c("t_lin", "duration"), color = c('white', 'blue'), main = "", print.summary = FALSE)
 abline(h=c(2 / lin_expansion, 2 * lin_expansion),lty=2,lwd=2,col="red")
 fvisgam(m7, view = c("t_lin", "duration"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "", print.summary = FALSE, zlab = "y")
-plot_smooth(m7, view = "t_lin", cond = list(duration = 2 / lin_expansion),  print.summary = FALSE, rug = FALSE)
-plot_smooth(m7, view = "t_lin", cond = list(duration = 2 * lin_expansion),  print.summary = FALSE, rug = FALSE)
+plot_smooth(m7, view = "t_lin", cond = list(duration = 2 / lin_expansion),  print.summary = FALSE, rug = FALSE, main = str_glue("Duration = {round(2 / lin_expansion, 2)}"), ylim = c(-0.1, 0.5))
+plot_smooth(m7, view = "t_lin", cond = list(duration = 2 * lin_expansion),  print.summary = FALSE, rug = FALSE, main = str_glue("Duration = {round(2 * lin_expansion, 2)}"), ylim = c(-0.1, 0.5))
 ```
+
+Notice that:
+
+* The model captures somehow the correlation between duration and shape change
+* Some shape traits are lost or wrong (the second peak is missing)
 
 ## With categories
 
@@ -312,7 +317,7 @@ plot_smooth(m9, view = "t_lin",  plot_all = "Category",
 ```
 
 ### Duration as covariate
-```{r, fig.show="hold", out.width="50%"}
+```{r, fig.show="hold", out.width="50%", cache=TRUE}
 set.seed(28)
 m10 <- bam(y ~ Category + te(t_lin, duration, by = Category),
           data = curves %>% lin_expansion_category() %>% 
@@ -327,8 +332,23 @@ fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "PEAK"),  col
 abline(h=c(1.5, 2.5),lty=2,lwd=2,col="red")
 fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "NO_PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "No Peak", print.summary = FALSE, zlab = "y")
 fvisgam(m10, view = c("t_lin", "duration"), cond = list(Category = "PEAK"), plot.type = "persp", theta = 30, phi = 30, color = c('blue', 'white'), main = "Peak", print.summary = FALSE, zlab = "y")
-plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 1.5), col = Category.colors, lwd=2, main = "duration = 1.5", print.summary = FALSE)
-plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 2.5), col = Category.colors, lwd=2, main = "duration = 2.5", print.summary = FALSE)
+plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 1.5), col = Category.colors, lwd=2, main = "duration = 1.5", print.summary = FALSE, ylim = c(-0.1, 1.3))
+plot_smooth(m10, view = "t_lin", plot_all = "Category", cond = list(duration = 2.5), col = Category.colors, lwd=2, main = "duration = 2.5", print.summary = FALSE, ylim = c(-0.1, 1.3))
 
 ```
+
+Notice that:
+
+* The two categories are estimated reliably only within their duration range
+* Out of their duration range, estimates are off and with large confidence bands
+
+This is to be expected because there are no samples of long NO_PEAK curves and of shot PEAK curves. 
+
+Besides that, using duration as covariate in a categorical setting is conceptually wrong, as duration is part of how the curve looks, just like its shape, and the purpose of the model should be to predict how the curve looks given its category. Duration is not part of the experimental design, so it should be a response variable, not a predictor. 
+
+## Alternative approaches to joint modelling of shape and duration
+
+An approach based on multidimensional functional PCA allows to jointly analyse curves together with their time distortion representation. This is more general than applying linear time normalisation and it is based on *landmark registration*. 
+
+See [this paper](https://ieeexplore.ieee.org/abstract/document/5947472), appendix A in [this paper](https://www.sciencedirect.com/science/article/abs/pii/S0167639317302017), [this paper](https://www.researchgate.net/profile/Michele-Gubian/publication/335829668_Zooming_in_on_Spatiotemporal_V-to-C_Coarticulation_with_Functional_PCA/links/5dff5f5ca6fdcc2837359757/Zooming-in-on-Spatiotemporal-V-to-C-Coarticulation-with-Functional-PCA.pdf) and material available in this repo (under `notes/` and `projects/`). 
 

@@ -47,7 +47,7 @@ ggplot(curves %>%
 
 ```
 
-We could could use some combination of linear regression and polynomial curve fitting:
+We could use some combination of linear regression and polynomial curve fitting:
 
 $$
 y_i = \beta_{0, NP} + \beta_{0, P} + \beta_{1, NP} \cdot t_i + \beta_{1, P} \cdot t_i + \beta_{2, NP} \cdot t_i^2 + \beta_{2, P} \cdot t_i^2 + 
@@ -158,6 +158,7 @@ get_modelterm(m2.bin, select = 2, print.summary = FALSE) %>%
   aes(x = time, y = fit) +
   geom_line() +
   geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "red", alpha = 0.5) +
+  geom_hline(yintercept=0, linetype="dashed", linewidth = 2) +
   theme_light() +
   theme(text = element_text(size = 15))
 ```
