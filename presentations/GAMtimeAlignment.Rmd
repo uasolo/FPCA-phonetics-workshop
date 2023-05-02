@@ -232,7 +232,7 @@ plot_smooth(m6, view = "t_lin",  print.summary = FALSE, rug = FALSE)
 
 ```{r, fig.show="hold", out.width="50%"}
 set.seed(28)
-m7 <- bam(y ~ te(t_lin, duration),
+m7 <- bam(y ~ te(t_lin, duration, k = 10),
           data = curves %>% 
             filter(Category  == "PEAK") %>% 
             group_by(curveId) %>% 
@@ -251,7 +251,7 @@ plot_smooth(m7, view = "t_lin", cond = list(duration = 2 * lin_expansion),  prin
 Notice that:
 
 * The model captures somehow the correlation between duration and shape change
-* Some shape traits are lost or wrong (the second peak is missing)
+  - Though some parts of the time-by-duration space are not well modelled
 
 ## With categories
 
@@ -319,7 +319,7 @@ plot_smooth(m9, view = "t_lin",  plot_all = "Category",
 ### Duration as covariate
 ```{r, fig.show="hold", out.width="50%", cache=TRUE}
 set.seed(28)
-m10 <- bam(y ~ Category + te(t_lin, duration, by = Category),
+m10 <- bam(y ~ Category + te(t_lin, duration, by = Category, k = 10),
           data = curves %>% lin_expansion_category() %>% 
             group_by(curveId) %>% 
             mutate(t_lin = time/max(time),

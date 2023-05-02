@@ -177,7 +177,7 @@ As the data was collected from several speakers, we introduce a random *smooth* 
 
 ```{r, echo=FALSE}
 GAMM <- readRDS("GAMM_F1nF2n.rds")
-dat <- expand_grid(F1 = seq(0,1,by=0.01), F2 = seq(0.4, 1.4, by=0.01))
+dat <- expand_grid(F1 = seq(-0.2,0.9,by=0.01), F2 = seq(0.4, 1.4, by=0.01))
 fit <- dat %>% 
   mutate(fit = predict.gam(GAMM, newdata = ., exclude = "te(F1,F2,speaker)", newdata.guaranteed = TRUE))
 ggplot(fit) + 
