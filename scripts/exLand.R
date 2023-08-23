@@ -4,12 +4,12 @@
 
 
 # adjust path or setwd
-source('header.R')
+source('scripts/header.R')
 ex = 1 # change according to ex number
 
 # load data
-curves <- read_csv(file.path(data_dir,  paste("exLand", ex, "csv", sep = '.')))
-land <- read_csv(file.path(data_dir,  paste("exLand", ex, "land", "csv", sep = '.')))
+curves <- read_csv(file.path("data",  paste("exLand", ex, "csv", sep = '.')))
+land <- read_csv(file.path("data",  paste("exLand", ex, "land", "csv", sep = '.')))
 
 
 # plot a few curves (one by one + landmark position)

@@ -5,14 +5,9 @@ if (packageVersion('fda') < 5.1) {
 library(tidyverse)
 library(emmeans)
 library(abind)
-library(funr)
 
 
-scripts_dir = funr::get_script_path() 
-home_dir = file.path(scripts_dir, "..") # or set your own home directory here
-data_dir = file.path(home_dir,'data')
-plots_dir =  file.path(home_dir,'plots')
-dir.create(plots_dir, showWarnings = FALSE)
+dir.create('plots', showWarnings = FALSE)
 
 
 getPCscores <- function(fpcaObj) {
