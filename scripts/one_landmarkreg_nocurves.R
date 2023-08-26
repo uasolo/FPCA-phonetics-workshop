@@ -2,10 +2,10 @@ one_landmarkreg_nocurves <- function(inputMarks, targetMarks, WfdPar=NULL, wlamb
   # Computes time warping h(t) so that input landmarks are moved to corresponding target landmarks.
   # Both input and target landmarks are first linearly mapped to (0,1),
   # then the code computes h(t) samples using the same procedure used in fda::landmarkreg.
-  # Both input and target landmarks must start with 0.
+  # Both input and target landmarks must start from 0.
   # The scaling to (0,1) (and reverse scaling at the end) is necessary
   # as smooth.morph does not yield the expected results 
-  # when operating on other intervals, e.g. when they differ too much from one aother. 
+  # when operating on other intervals, e.g. when they differ too much from one another. 
   
   # ARGUMENTS
   #
