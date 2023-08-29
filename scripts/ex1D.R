@@ -121,7 +121,7 @@ ggplot(PCcurves) +
              scales = "free_y",
              labeller = labeller(PC = PC_labeller)) +
   labs(color = expression(frac(s[k], sigma[k]))) +
-  geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', size = 1.5) +
+  geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.5) +
   xlab("Normalised time") +
   ylab("y") +
   ggtitle("FPCA") +
