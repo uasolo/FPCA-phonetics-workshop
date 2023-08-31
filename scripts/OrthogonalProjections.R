@@ -96,7 +96,7 @@ ggsave(file.path(plots_dir, str_c("Poly4", '.png')), pl,
 for (i in 1:4) {
   pl <- ggplot((curve * ob[i]) %>% funData2long1()) +
     aes(argvals, X) +
-    geom_line(col = 'red', linewidth = 1.2) +
+    geom_line(col = 'black', linewidth = 1.2) +
     xlab("time") + ylab("") +
     mytheme
   ggsave(file.path(plots_dir, str_c("curvePoly", i, '.png')), pl,
