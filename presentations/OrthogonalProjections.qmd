@@ -1,0 +1,17 @@
+---
+title: "Orthogonal projections"
+author: "Michele Gubian"
+date: "September 2023"
+format: revealjs
+editor: visual
+---
+
+## Load libraries
+
+```{r}
+#| echo: true
+
+library(fda)
+library(funData)
+library(tidyverse)
+```
