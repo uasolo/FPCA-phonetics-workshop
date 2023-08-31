@@ -4,14 +4,56 @@ author: "Michele Gubian"
 date: "September 2023"
 format: revealjs
 editor: visual
+fig-cap-location: top
 ---
 
-## Load libraries
+## Orthogonal basis 
 
-```{r}
-#| echo: true
+### (Legendre polynomials)
 
-library(fda)
-library(funData)
-library(tidyverse)
-```
+::: {layout-ncol=2}
+![$B1(t)$](plots/Poly1.png)
+
+![$B2(t)$](plots/Poly2.png)
+:::
+
+## Orthogonal basis 
+
+### (Legendre polynomials)
+
+::: {layout-ncol=2}
+![$B3(t)$](plots/Poly3.png)
+
+![$B4(t)$](plots/Poly4.png)
+:::
+
+## Function product
+
+::: {layout-ncol=3}
+
+![$f(t)$](plots/curve.png)
+
+![$B1(t)$](plots/Poly1.png)
+
+![$f(t) \cdot B1(t)$](plots/curvePoly1.png)
+:::
+
+## Scalar product
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![$\int f(t) \cdot B1(t) \; dt$](plots/curvePoly1Int.png)
+:::
+
+::: {.column width="50%"}
+Scalar product $=$
+
+<span style="color:#006400;">dark area</span> $-$  <span style="color:#7CFC00;">light area</span> $=$
+
+$= 0.30$ 
+:::
+
+::::
+
+

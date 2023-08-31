@@ -3,12 +3,12 @@ library(funData)
 library(MFPCA)
 library(tidyverse)
 
-ex <- 6 # change according to ex number
+ex <- 1 # change according to ex number
 curves <- read_csv(file.path("../data/", paste("ex1D", ex, "csv", sep = '.')))
 
 
-curvesFun <- funData(#argvals = seq(0, 2, by = 0.01),
-                     argvals = curves %>% filter(curveId == 1) %>% pull(time),
+curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
+                     # argvals = curves %>% filter(curveId == 1) %>% pull(time),
                      X = curves %>%
                        complete(curveId,  time) %>% 
                        pivot_wider(id_cols = curveId, names_from = time, values_from = y) %>% 
