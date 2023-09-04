@@ -55,6 +55,33 @@ mytheme <- theme_light() +
 
 plots_dir <- "../presentations/plots/"
 
+
+segments <- tribble(
+  ~x, ~xend, ~y, ~yend,
+  1.7, 1.7, 0, 1.7**2 + 3,
+  0, 1.7, 1.7**2 + 3, 1.7**2 + 3
+)
+
+pl <- ggplot() +
+  xlim(-3, 3) +
+  ylim(-1, 10) +
+  xlab("x") + ylab("y") +
+  geom_hline(yintercept = 0, color = 'grey') +
+  geom_vline(xintercept = 0, color = 'grey') +
+  geom_function(fun = ~ .x **2 + 3, linewidth=1.5) +
+  annotate(geom = "segment", x=1.7, xend=1.7, y=0, yend=5.89, linetype = 'dashed',
+           color = 'blue') +
+  annotate(geom = "segment", x=0, xend=1.7, y=5.89, yend=5.89, linetype = 'dashed',
+           color = 'blue') +
+  annotate(geom = "text", x=1.7, y = -0.5, label = "1.7", color = 'blue', size = 6) +
+  annotate(geom = "text", x=-.5, y = 5.89, label = "5.89", color = 'blue', size = 6) +
+  annotate(geom = "text", x=1, y=7.5, label="y = f(x)", size = 6) +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("f", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
 ex <- 1 # change according to ex number
 curves <- read_csv(file.path("../data/", paste("ex1D", ex, "csv", sep = '.')))
 

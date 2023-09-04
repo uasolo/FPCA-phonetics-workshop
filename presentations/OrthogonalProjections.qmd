@@ -7,6 +7,47 @@ editor: visual
 fig-cap-location: top
 ---
 
+## Functions
+
+A 'machine' that transforms numbers in a pre-specified way.
+
+::: {.fragment}
+```{dot}
+
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label="x", fontname="times-italic"]
+  B[shape = box label="f(x)", fontname="times-italic"]
+  C[shape = plaintext label = "y", fontname="times-italic"]
+  A -> B;
+  B -> C;
+  
+}
+```
+
+:::
+
+## Functions
+
+Example:
+
+```{dot}
+
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label=<<I>x</I>&nbsp; = 1.7>]
+  B[shape = box label = <<I>x</I><SUP >2</SUP> + 3>]
+  C[shape = plaintext label=<<I>y</I>&nbsp; = 1.7<SUP>2</SUP> + 3 = 5.89>]
+  A -> B;
+  B -> C;
+}
+```
+
+## Functions
+
+![](plots/f.png)
+
+
 ## Orthogonal basis 
 
 ### (Legendre polynomials)
