@@ -7,11 +7,13 @@ editor: visual
 fig-cap-location: top
 ---
 
+# Functions
+
 ## Functions
 
-A 'machine' that transforms numbers in a pre-specified way.
+A function is a 'machine' that transforms numbers in a pre-specified way.
 
-::: {.fragment}
+::: fragment
 ```{dot}
 
 digraph G {
@@ -24,7 +26,6 @@ rankdir=LR;
   
 }
 ```
-
 :::
 
 ## Functions
@@ -47,54 +48,157 @@ rankdir=LR;
 
 ![](plots/f.png)
 
+## From time samples to functions
 
-## Orthogonal basis 
+::: {layout-ncol="2"}
+![Samples](plots/samples.png)
 
+::: fragment
+![Function](plots/curve.png)
+:::
+
+:::
+
+# Operations on functions
+
+## Arithmetic
+### Addition
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/add2.png)
+
+::: fragment
+
+![$f(t) + g(t)$](plots/curve_plus_add2.png)
+
+:::
+:::
+
+## Arithmetic
+### Addition
+
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/add3.png)
+
+![$f(t) + g(t)$](plots/curve_plus_add3.png)
+:::
+
+## Arithmetic
+### Multiplication by a scalar
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+::: fragment
+
+![$0.5 \cdot f(t)$](plots/curve05.png)
+
+:::
+
+::: fragment
+
+![$-0.5 \cdot f(t)$](plots/curvem05.png)
+:::
+:::
+
+## Arithmetic
+### Multiplication by a function
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/mul2.png)
+
+::: fragment
+
+![$f(t) \cdot g(t)$](plots/curve_times_mul2.png)
+
+:::
+:::
+
+## Scalar product [^1]
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/mul2.png)
+
+::: fragment
+
+![$\langle f(t), g(t) \rangle$](plots/curvePoly2Int.png)
+
+:::
+:::
+
+::: fragment
+
+$\langle f(t), g(t) \rangle  =$ [dark area]{style="color:#006400;"} $-$ [light area]{style="color:#7CFC00;"} $= -0.15$
+::: 
+
+
+
+[^1]: a.k.a. dot prodoct, a.k.a. inner product
+
+## Scalar product [^1]
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/mul2.png)
+
+![$\langle f(t), g(t) \rangle$](plots/curvePoly2Int.png)
+
+:::
+
+
+
+$\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
+
+
+[^1]: a.k.a. dot prodoct, a.k.a. inner product
+
+
+
+
+# Orthogonal basis
+
+## Orthogonal basis
+
+> A set of functions such that the scalar product between any pair of them is zero
+
+
+## Orthogonal basis
 ### (Legendre polynomials)
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ![$B1(t)$](plots/Poly1.png)
 
 ![$B2(t)$](plots/Poly2.png)
 :::
 
-## Orthogonal basis 
+## Orthogonal basis
 
 ### (Legendre polynomials)
 
-::: {layout-ncol=2}
+::: {layout-ncol="2"}
 ![$B3(t)$](plots/Poly3.png)
 
 ![$B4(t)$](plots/Poly4.png)
 :::
 
-## Function product
 
-::: {layout-ncol=3}
+## Orthogonal projections
 
-![$f(t)$](plots/curve.png)
+![](plots/orthogonalProjection.drawio.svg)
 
-![$B1(t)$](plots/Poly1.png)
+## Reconstruction
 
-![$f(t) \cdot B1(t)$](plots/curvePoly1.png)
-:::
+![](plots/reconstruction.drawio.svg)
 
-## Scalar product
-
-:::: {.columns}
-
-::: {.column width="50%"}
-![$\int f(t) \cdot B1(t) \; dt$](plots/curvePoly1Int.png)
-:::
-
-::: {.column width="50%"}
-Scalar product $=$
-
-<span style="color:#006400;">dark area</span> $-$  <span style="color:#7CFC00;">light area</span> $=$
-
-$= 0.30$ 
-:::
-
-::::
 
 

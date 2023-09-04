@@ -55,13 +55,6 @@ mytheme <- theme_light() +
 
 plots_dir <- "../presentations/plots/"
 
-
-segments <- tribble(
-  ~x, ~xend, ~y, ~yend,
-  1.7, 1.7, 0, 1.7**2 + 3,
-  0, 1.7, 1.7**2 + 3, 1.7**2 + 3
-)
-
 pl <- ggplot() +
   xlim(-3, 3) +
   ylim(-1, 10) +
@@ -96,9 +89,13 @@ curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
 
 curve <- curvesFun[1]
 
+ylim <- c(-0.2, 0.5)
+
 pl <- ggplot(curve %>% funData2long()) +
   aes(argvals, X) +
   geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  # geom_point(col = 'blue') +
   xlab("time") + ylab("") +
   mytheme
 
@@ -108,6 +105,65 @@ ggsave(file.path(plots_dir, str_c("curve", '.png')), pl,
 
 argvals<-seq(0,2,0.01)
 ob <- eFun(argvals,M=4,type="Poly")
+
+pl <- ggplot((0.1 * ob[3]) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("add3", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- ggplot((0.1 * ob[3] + curve) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curve_plus_add3", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- ggplot((-0.5 * curve) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  # geom_point(col = 'blue') +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curvem05", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+
+pl <- ggplot(ob[2] %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(-1.3, 1.3) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("mul2", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- ggplot((ob[2] * curve) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(-0.5, 0.5) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curve_times_mul2", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+
 
 pl <- ggplot(ob %>% funData2long()) +
   aes(argvals, X) +
@@ -154,6 +210,8 @@ for (i in 1:4) {
 }
 
 s <- scalarProduct(curve, ob)
+s %>% round(2)
+
 for (i in 1:4) {
   pl <- reconstruction(s[1:i], extractObs(ob, 1:i)) %>%
     funData2long1() %>% 
@@ -168,7 +226,17 @@ for (i in 1:4) {
   )
 }
 
+pl <- reconstruction(s, ob) %>%
+  funData2long1() %>% 
+  ggplot() +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  xlab("time") + ylab("") +
+  mytheme
 
+ggsave(file.path(plots_dir, str_c("curveRecPoly.png")), pl,
+       width = 1500, height = 1200, units = "px"
+)
 
 
 
