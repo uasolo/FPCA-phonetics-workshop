@@ -88,10 +88,11 @@ curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
   approxNA()
 
 curve <- curvesFun[1]
+curve2 <- curvesFun[51]
 
 ylim <- c(-0.2, 0.5)
 
-pl <- ggplot(curve %>% funData2long()) +
+pl <- ggplot(curve2 %>% funData2long()) +
   aes(argvals, X) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
@@ -99,12 +100,25 @@ pl <- ggplot(curve %>% funData2long()) +
   xlab("time") + ylab("") +
   mytheme
 
-ggsave(file.path(plots_dir, str_c("curve", '.png')), pl,
+ggsave(file.path(plots_dir, str_c("curve2", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
+pl <- ggplot((0.5*(curve + curve2)) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  # geom_point(col = 'blue') +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curveMean2", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+
 argvals<-seq(0,2,0.01)
-ob <- eFun(argvals,M=4,type="Poly")
+ob <- eFun(argvals,M=20,type="Poly")
 
 pl <- ggplot((0.1 * ob[3]) %>% funData2long()) +
   aes(argvals, X) +
@@ -141,6 +155,10 @@ ggsave(file.path(plots_dir, str_c("curvem05", '.png')), pl,
 )
 
 
+
+
+
+
 pl <- ggplot(ob[2] %>% funData2long()) +
   aes(argvals, X) +
   geom_line(col = 'black', linewidth = 1) +
@@ -155,7 +173,7 @@ ggsave(file.path(plots_dir, str_c("mul2", '.png')), pl,
 pl <- ggplot((ob[2] * curve) %>% funData2long()) +
   aes(argvals, X) +
   geom_line(col = 'black', linewidth = 1) +
-  ylim(-0.5, 0.5) +
+  # ylim(-0.5, 0.5) +
   xlab("time") + ylab("") +
   mytheme
 
@@ -212,13 +230,13 @@ for (i in 1:4) {
 s <- scalarProduct(curve, ob)
 s %>% round(2)
 
-for (i in 1:4) {
+for (i in c(1:4, 8, 12, 16, 20)) {
   pl <- reconstruction(s[1:i], extractObs(ob, 1:i)) %>%
     funData2long1() %>% 
     ggplot() +
     aes(argvals, X) +
     geom_line(data = curve %>% funData2long1(), col = 'black', linewidth = 1) +
-    geom_line(col = 'red', linewidth = 1.2) +
+    geom_line(col = 'blue', linewidth = 1.2) +
     xlab("time") + ylab("") +
     mytheme
   ggsave(file.path(plots_dir, str_c("curveRecPoly", i, '.png')), pl,

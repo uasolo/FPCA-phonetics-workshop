@@ -25,5 +25,5 @@ inputMarks <- matrix(c(0, 0.5, 1, 2, 0, 0.7, 1.2, 1.9, 0, 0.4, 1.1, 2.2), nrow=3
 for (i in 1:5) inputMarks <- rbind(inputMarks, inputMarks)
 
 system.time({
-reg <- landmarkreg_nocurves(inputMarks, njobs = 1)
+reg <- landmarkreg_nocurves(inputMarks, njobs = 2)
 })
