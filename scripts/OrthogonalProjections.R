@@ -1,6 +1,7 @@
 library(fda)
 library(funData)
 library(tidyverse)
+library(emmeans)
 
 funData2long1 <- function(fd) {
   return(tibble(argvals = fd@argvals[[1]],
@@ -279,22 +280,178 @@ ggsave(file.path(plots_dir, str_c("curveRecPoly.png")), pl,
        width = 1500, height = 1200, units = "px"
 )
 
+# shape descr
+
+s <- scalarProduct(curve, ob)
+s %>% round(2)
+
+ylim <- c(-0.2, 0.8)
+
+pl <- ggplot((curve) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curve_shape", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
 
 
+
+s <- scalarProduct(curve + 0.3, ob)
+s[1:4] %>% round(2)
+
+pl <- ggplot((curve + 0.3) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curve_plus03_shape", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+
+curveRev <- curve
+nSamp <- length(curve@argvals[[1]])
+curveRev@X[1,] <- curve@X[1, nSamp:1]
+s <- scalarProduct(curveRev, ob)
+s[1:4] %>% round(2)
+
+pl <- ggplot((curveRev) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'black', linewidth = 1) +
+  ylim(ylim) +
+  xlab("time") + ylab("") +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curveRev_shape", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- ggplot(ob %>% extractObs(obs = 1:4) %>% funData2long()) +
+  aes(argvals, X) +
+  geom_line(col = 'red', linewidth = 1) +
+  facet_wrap(~ ID, ncol = 1, labeller = labeller(ID = ~ str_glue("B{.x}(t)"))) +
+  xlab("") + ylab("") +
+  theme_light() +
+  theme( axis.text=element_blank(),axis.ticks=element_blank())
+
+ggsave(file.path(plots_dir, str_c("PolyAll4", '.png')), pl,
+       width = 400, height = 1000, units = "px"
+)
+
+# stats with orth proj
+
+nCurves <- curves %>% select(curveId) %>% n_distinct()
+Category.colors <- c("slategray4", "orangered")
+ylim <- c(-0.2, 0.5)
+# plot a few curves
+curveSampleId <- sample(nCurves, 12)
+pl <- ggplot(curves %>% filter(curveId %in% curveSampleId)) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  scale_color_manual(values=Category.colors) +
+  geom_line(linewidth = 0.5) +
+  ylim(ylim) +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+
+ggsave(file.path(plots_dir, str_c("curves", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+meanCurve <- meanFunction(curvesFun, na.rm = TRUE)
+pl <- meanCurve %>% 
+  funData2long() %>% 
+  ggplot(aes(argvals, X)) +
+  geom_line(linewidth = 1) +
+  xlab("time") + ylab("y") +
+  ylim(ylim) +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("meanCurve", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- funData2long((curvesFun %>% extractObs(curveSampleId)) - meanCurve) %>% 
+  ggplot(aes(argvals, X, group = ID)) +
+  geom_line(linewidth = 0.5) +
+  xlab("time") + ylab("y") +
+  ylim(ylim) +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("curvesCentred", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+
+polyScores <- sapply(1:4, function(i) {
+  scalarProduct(curvesFun - meanCurve, ob[i])
+}) %>%
+  # round(2) %>% 
+  `colnames<-`(str_c('s', 1:4)) %>% 
+  as_tibble() %>% 
+  bind_cols(curves %>% distinct(curveId, Category), .)
+
+write_csv(polyScores, "../presentations/data/polyScores.csv")
+
+modList <- lapply(1:4, function(s) {
+  lm(as.formula(str_glue("s{s} ~  Category")), data = polyScores)
+})
+
+emmList <- lapply(1:4, function(s) {
+  emmeans(modList[[s]], pairwise ~ Category)
+})
+
+
+
+
+summary(mod)
+
+emm <- emmeans(mod, pairwise ~ Category)
+predCurves <- emm$emmeans %>% 
+  as_tibble() %>% 
+  select(Category, emmean) %>%
+  rename(s4 = emmean) %>% 
+  group_by(Category) %>% 
+  reframe(funData2long(meanCurve + s4 * ob[4])) %>%
+  # reframe(funData2long(meanCurve + mean(polyScores$s1, na.rm = TRUE) * ob[1] +
+  #                        mean(polyScores$s2, na.rm = TRUE) * ob[2] +
+  #                        mean(polyScores$s3, na.rm = TRUE) * ob[3] +
+  #                        s4 * ob[4])) %>% 
+  select(-ID) %>% 
+  rename(time = argvals, y = X)
+
+
+
+ylim <- c(-0.2, 0.5)
+ggplot(predCurves) +
+  aes(time, y, color = Category) +
+  geom_line() +
+  scale_color_manual(values=Category.colors) +
+  ylim(ylim) +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+  
 
 ##### splines
 
-rng    <- c(0,2) 
-nbasis <- 20
-norder <- 4
-basis2 <- create.bspline.basis(rng, nbasis, norder)
-fdParObj <- fdPar(fdobj = basis2, Lfdobj = 2, lambda = 0)
-curvesFun1 <- smooth.basis(argvals = curvesFun[1]@argvals[[1]],
-                           y = curvesFun[1]@X %>% as.numeric(),
-                           fdParobj = fdParObj)$fd
-
-sb <- fd(diag(nrow = nbasis), basis2)
-sb <- fd2funData(sb, argvals)
-
-
-curvesFun <- approxNA(curvesFun)
+# rng    <- c(0,2) 
+# nbasis <- 20
+# norder <- 4
+# basis2 <- create.bspline.basis(rng, nbasis, norder)
+# fdParObj <- fdPar(fdobj = basis2, Lfdobj = 2, lambda = 0)
+# curvesFun1 <- smooth.basis(argvals = curvesFun[1]@argvals[[1]],
+#                            y = curvesFun[1]@X %>% as.numeric(),
+#                            fdParobj = fdParObj)$fd
+# 
+# sb <- fd(diag(nrow = nbasis), basis2)
+# sb <- fd2funData(sb, argvals)
+# 
+# 
+# curvesFun <- approxNA(curvesFun)
