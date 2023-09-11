@@ -107,6 +107,22 @@ rankdir=LR;
 :::
 
 ## Arithmetic
+### Mean curve
+
+::: {layout-ncol="3"}
+![$f(t)$](plots/curve.png)
+
+![$g(t)$](plots/curve2.png)
+
+
+::: fragment
+
+![$\mu(t) = \frac{1}{2} \cdot (f(t) + g(t))$](plots/curveMean2.png)
+:::
+:::
+
+
+## Arithmetic
 ### Multiplication by a function
 
 ::: {layout-ncol="3"}
