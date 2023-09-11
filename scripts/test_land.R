@@ -27,3 +27,36 @@ for (i in 1:5) inputMarks <- rbind(inputMarks, inputMarks)
 system.time({
 reg <- landmarkreg_nocurves(inputMarks, njobs = 1)
 })
+
+ex <- 1 # change according to ex number
+curves <- read_csv(file.path("../data/", paste("ex1D", ex, "csv", sep = '.')))
+curves3 <- curves %>% 
+  filter(curveId %in% 1:3)
+
+curves3 <- curves3 %>% filter(
+  curveId == 1 & time < 1.5 | curveId == 2 & time < 1.7 | curveId == 3
+)
+
+curves3 <- curves3 %>% mutate(curveId = as.factor(curveId))
+
+
+land3 <- tribble(
+~curveId,  ~l1, ~l2, ~l3,
+  1, 0, 1, 1.5,
+  2, 0, 1.7/2, 1.7,
+  3, 0, 4/3, 2
+) %>% 
+  mutate(curveId = as.factor(curveId))
+
+ggplot(curves3) +
+  aes(time, y, color = curveId) +
+  facet_grid(curveId ~ .) +
+  geom_line() +
+  geom_vline(aes(xintercept = value),
+             data = land3 %>% pivot_longer(cols = starts_with("l"))) +
+  mytheme
+
+
+
+reg <- landmarkreg_nocurves(land3 %>% select(!curveId), c(0,1,2), compute_hinv = TRUE)
+reg$h %>% plot()

@@ -17,6 +17,29 @@ funData2long <- function(fd) {
   )
 }
 
+long2irregFunData <- function(df, .obs, .index, .value) {
+  return(
+    irregFunData(
+      argvals = df %>%
+        dplyr::select(all_of(c(.obs, .index))) %>%
+        pivot_wider(names_from = {{.obs}}, values_from = {{.index}}, values_fn = list) %>%
+        as.list() %>%
+        unlist(recursive = FALSE, use.names = FALSE),
+      X = curves %>%
+        dplyr::select(all_of(c(.obs, .value))) %>%
+        pivot_wider(names_from = {{.obs}}, values_from = {{.value}}, values_fn = list) %>%
+        as.list() %>%
+        unlist(recursive = FALSE, use.names = FALSE)
+    )
+  )
+}
+
+long2funData <- function(df, .obs, .index, .value) {
+  return(
+    long2irregFunData(df, .obs, .index, .value) %>% as.funData()
+  )
+}
+
 plotIntegral <- function(fd, plusColor = 'darkgreen', minusColor = 'lawngreen') {
   return(
     fd %>% 
