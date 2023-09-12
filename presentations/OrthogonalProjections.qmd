@@ -11,6 +11,152 @@ fig-cap-location: top
 tab-cap-location: top
 ---
 
+# Motivation
+
+## Statistics on a curve dataset
+
+::: {layout-ncol="2"}
+::: fragment
+![](plots/curves.png)
+:::
+
+::: {.incremental}
+* What is the shape of the typical curve for each Category?
+* Are the Category levels significantly different?
+* If so, where and how?
+* Are there other systematic shape variations in the dataset?
+:::
+
+:::
+
+## GAMMs
+
+```{r}
+#| echo: true
+#| eval: false
+library(mgcv)
+mod <- bam(y ~ Category + s(time, by = Category),
+           data = curves)
+```
+
+::: fragment
+![](plots/plot_smooth.png)
+:::
+
+## GAMMs
+
+```{r}
+#| echo: true
+#| eval: false
+library(mgcv)
+mod <- bam(y ~ Category + s(time, by = Category),
+           data = curves)
+```
+![](plots/plot_diff.png)
+
+## GAMMs 
+
+::: {layout-ncol="2"}
+::: fragment
+### PROs
+
+::: {.incremental}
+* From raw sampled curves to model
+* Native mixed model
+
+:::
+
+:::
+
+::: fragment
+
+### CONs
+ 
+::: {.incremental}
+
+* Not easy with multidimensional data
+* No modelling of duration
+* Can be computationally heavy
+
+:::
+:::
+
+:::
+
+## GAMMs
+
+::: fragment
+```{dot}
+
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label="sampled curves"]
+  B[shape = box label="GAMM" style = rounded]
+  C[shape = plaintext label = "model"]
+  A -> B;
+  B -> C;
+  
+}
+```
+:::
+
+## Functional PCA
+
+::: fragment
+```{dot}
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label="sampled curves"]
+  B[shape = box label="FPCA" style = rounded]
+  C[shape = box label="LMER" style = rounded]
+  D[shape = plaintext label = "model"]
+  A -> B;
+  B -> C;
+  C -> D;
+  
+}
+```
+:::
+
+## Functional PCA
+
+::: {layout-ncol="2"}
+
+::: fragment
+
+### PROs
+ 
+::: {.incremental}
+
+* Native multidimensional data
+* [Can model duration*]{style="color:red"}
+* Computationally light
+* Produces an intermediate model 
+
+:::
+:::
+
+
+
+
+::: fragment
+### CONs
+
+::: {.incremental}
+* Requires two steps
+* Not native mixed model
+* Intermediate model may not be effective
+
+:::
+
+:::
+
+
+:::
+
+
+
+
 # Functions
 
 ## Functions
@@ -22,15 +168,18 @@ tab-cap-location: top
 
 digraph G {
 rankdir=LR;
-  A[shape = plaintext label="x", fontname="times-italic"]
-  B[shape = box label="f(x)", fontname="times-italic"]
-  C[shape = plaintext label = "y", fontname="times-italic"]
+  A[shape = plaintext label="x" fontname="times-italic"]
+  B[shape = box label="f(x)" fontname="times-italic"  style = rounded]
+  C[shape = plaintext label = "y" fontname="times-italic"]
   A -> B;
   B -> C;
   
 }
 ```
 :::
+
+
+
 
 ## Functions
 
@@ -41,7 +190,7 @@ Example:
 digraph G {
 rankdir=LR;
   A[shape = plaintext label=<<I>x</I>&nbsp; = 1.7>]
-  B[shape = box label = <<I>x</I><SUP >2</SUP> + 3>]
+  B[shape = box label = <<I>x</I><SUP >2</SUP> + 3>  style = rounded]
   C[shape = plaintext label=<<I>y</I>&nbsp; = 1.7<SUP>2</SUP> + 3 = 5.89>]
   A -> B;
   B -> C;
@@ -172,23 +321,11 @@ $\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
 
 ## Orthogonal basis
 
-### (Legendre polynomials)
+![Legendre polynomials](plots/Poly2by2.png){height="500"}
 
-::: {layout-ncol="2"}
-![$B1(t)$](plots/Poly1.png)
-
-![$B2(t)$](plots/Poly2.png)
-:::
 
 ## Orthogonal basis
 
-### (Legendre polynomials)
-
-::: {layout-ncol="2"}
-![$B3(t)$](plots/Poly3.png)
-
-![$B4(t)$](plots/Poly4.png)
-:::
 
 ## Orthogonal projections
 
@@ -274,7 +411,7 @@ $\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
 ::: {.column width="40%"}
 | | |
 |-------|------:|
-| $s_1$ |  [0.72]{style="color:red;"} |
+| $s_1$ |  [0.72]{style="color:red"} |
 | $s_2$ | -0.15 |
 | $s_3$ | -0.05 |
 | $s_4$ |  0.05 |
@@ -329,7 +466,6 @@ $\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
 ::: fragment
 ```{r}
 #| echo: false
-
 library(tidyverse)
 polyScores <- read_csv("data/polyScores.csv")
 polyScores %>% 
@@ -342,6 +478,7 @@ polyScores %>%
 ## Fit a regression model on s1
 ```{r}
 #| echo: true
+#| output-location: fragment
 mod <- lm(s1 ~ Category, data = polyScores)
 summary(mod)
 ``` 
@@ -385,11 +522,11 @@ $$ f_{NO\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, NO\_PEAK} \cdot 
 
 ![](plots/PC.png)
 
-## Explained variance
+<!-- ## Explained variance -->
 
-| PC1  | PC2  | PC3  | PC4 |
-|------:|------:|------:|------:|
-| 99.59% | 0.24% |  0.11% |  0.05% |
+<!-- | PC1  | PC2  | PC3  | PC4 | -->
+<!-- |------:|------:|------:|------:| -->
+<!-- | 99.59% | 0.24% |  0.11% |  0.05% | -->
 
 ## Compute scores
 
@@ -407,15 +544,9 @@ pcScores %>%
 ```{r}
 #| echo: true
 mod <- lm(s1 ~ Category, data = pcScores)
-summary(mod)
-``` 
-
-## Model predictions on s1
-
-```{r}
-#| echo: true
 emmeans(mod, pairwise ~ Category)
 ``` 
+
 
 ## Reconstruct predicted curves from s1
 

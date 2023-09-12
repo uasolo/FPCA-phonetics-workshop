@@ -3,6 +3,8 @@ library(funData)
 library(MFPCA)
 library(tidyverse)
 library(emmeans)
+library(mgcv)
+library(itsadug)
 
 funData2long1 <- function(fd) {
   return(tibble(argvals = fd@argvals[[1]],
@@ -78,6 +80,9 @@ reconstruction <- function(scores, basis, mu=NULL) {
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
+Category.colors <- c("slategray4", "orangered")
+
+
 plots_dir <- "../presentations/plots/"
 
 pl <- ggplot() +
@@ -102,6 +107,15 @@ ggsave(file.path(plots_dir, str_c("f", '.png')), pl,
 
 ex <- 1 # change according to ex number
 curves <- read_csv(file.path("../data/", paste("ex1D", ex, "csv", sep = '.')))
+
+# GAM
+mod <- bam(y ~ Category + s(time, by = Category),
+           data = curves  %>% 
+             mutate(Category = factor(Category)))
+plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors)
+plot_diff(mod, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
+# same manually, 750x500
+
 
 curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
                      X = curves %>%
@@ -345,10 +359,26 @@ ggsave(file.path(plots_dir, str_c("PolyAll4", '.png')), pl,
        width = 400, height = 1000, units = "px"
 )
 
+pl <- ob %>%
+  extractObs(obs = 1:4) %>%
+  funData2long() %>% 
+  rename(B = ID, time = argvals, y = X) %>% 
+  ggplot(aes(time, y)) +
+  geom_line(col = 'red', linewidth = 1) +
+  facet_wrap(~ B, ncol = 2, labeller = labeller(B = ~ str_glue("B{.x}(t)"))) +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("Poly2by2", '.png')), pl,
+       width = 1600, height = 1200, units = "px"
+)
+
+
+
+
+
 # stats with orth proj
 
 nCurves <- curves %>% select(curveId) %>% n_distinct()
-Category.colors <- c("slategray4", "orangered")
 ylim <- c(-0.2, 0.5)
 # plot a few curves
 curveSampleId <- sample(nCurves, 12)

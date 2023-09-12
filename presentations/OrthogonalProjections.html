@@ -404,6 +404,195 @@ Michele Gubian
   <p class="date">September 25, 2023</p>
 </section>
 <section>
+<section id="motivation" class="title-slide slide level1 center">
+<h1>Motivation</h1>
+
+</section>
+<section id="statistics-on-a-curve-dataset" class="slide level2">
+<h2>Statistics on a curve dataset</h2>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<p><img data-src="plots/curves.png"></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<ul>
+<li class="fragment">What is the shape of the typical curve for each Category?</li>
+<li class="fragment">Are the Category levels significantly different?</li>
+<li class="fragment">If so, where and how?</li>
+<li class="fragment">Are there other systematic shape variations in the dataset?</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<section id="gamms" class="slide level2">
+<h2>GAMMs</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">library</span>(mgcv)</span>
+<span id="cb1-2"><a href="#cb1-2"></a>mod <span class="ot">&lt;-</span> <span class="fu">bam</span>(y <span class="sc">~</span> Category <span class="sc">+</span> <span class="fu">s</span>(time, <span class="at">by =</span> Category),</span>
+<span id="cb1-3"><a href="#cb1-3"></a>           <span class="at">data =</span> curves)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="fragment">
+<p><img data-src="plots/plot_smooth.png"></p>
+</div>
+</section>
+<section id="gamms-1" class="slide level2">
+<h2>GAMMs</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">library</span>(mgcv)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>mod <span class="ot">&lt;-</span> <span class="fu">bam</span>(y <span class="sc">~</span> Category <span class="sc">+</span> <span class="fu">s</span>(time, <span class="at">by =</span> Category),</span>
+<span id="cb2-3"><a href="#cb2-3"></a>           <span class="at">data =</span> curves)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<img data-src="plots/plot_diff.png" class="r-stretch"></section>
+<section id="gamms-2" class="slide level2">
+<h2>GAMMs</h2>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<!-- -->
+<h3 id="pros">PROs</h3>
+<div>
+<ul>
+<li class="fragment">From raw sampled curves to model</li>
+<li class="fragment">Native mixed model</li>
+</ul>
+</div>
+</div>
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<!-- -->
+<h3 id="cons">CONs</h3>
+<div>
+<ul>
+<li class="fragment">Not easy with multidimensional data</li>
+<li class="fragment">No modelling of duration</li>
+<li class="fragment">Can be computationally heavy</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="gamms-3" class="slide level2">
+<h2>GAMMs</h2>
+<div class="fragment">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<div>
+<svg width="960" height="480" viewbox="0.00 0.00 297.81 44.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 40)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-40 293.81,-40 293.81,4 -4,4"></polygon> <!-- A --> <g id="node1" class="node">
+<title>
+A
+</title>
+<text text-anchor="middle" x="51.35" y="-13.8" font-family="Times,serif" font-size="14.00">sampled curves</text> </g> <!-- B --> <g id="node2" class="node">
+<title>
+B
+</title>
+<path fill="none" stroke="black" d="M187.87,-36C187.87,-36 150.63,-36 150.63,-36 144.63,-36 138.63,-30 138.63,-24 138.63,-24 138.63,-12 138.63,-12 138.63,-6 144.63,0 150.63,0 150.63,0 187.87,0 187.87,0 193.87,0 199.87,-6 199.87,-12 199.87,-12 199.87,-24 199.87,-24 199.87,-30 193.87,-36 187.87,-36"></path> <text text-anchor="middle" x="169.25" y="-13.8" font-family="Times,serif" font-size="14.00">GAMM</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
+<title>
+A-&gt;B
+</title>
+<path fill="none" stroke="black" d="M102.85,-18C111.43,-18 120.23,-18 128.48,-18"></path> <polygon fill="black" stroke="black" points="128.58,-21.5 138.58,-18 128.58,-14.5 128.58,-21.5"></polygon> </g> <!-- C --> <g id="node3" class="node">
+<title>
+C
+</title>
+<text text-anchor="middle" x="262.81" y="-13.8" font-family="Times,serif" font-size="14.00">model</text> </g> <!-- B&#45;&gt;C --> <g id="edge2" class="edge">
+<title>
+B-&gt;C
+</title>
+<path fill="none" stroke="black" d="M199.98,-18C208.15,-18 217.09,-18 225.58,-18"></path> <polygon fill="black" stroke="black" points="225.63,-21.5 235.63,-18 225.63,-14.5 225.63,-21.5"></polygon> </g> </g>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="functional-pca" class="slide level2">
+<h2>Functional PCA</h2>
+<div class="fragment">
+<div class="cell">
+<div class="cell-output-display">
+<div>
+<div>
+<svg width="960" height="480" viewbox="0.00 0.00 381.58 44.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 40)">
+<title>
+G
+</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-40 377.58,-40 377.58,4 -4,4"></polygon> <!-- A --> <g id="node1" class="node">
+<title>
+A
+</title>
+<text text-anchor="middle" x="51.35" y="-13.8" font-family="Times,serif" font-size="14.00">sampled curves</text> </g> <!-- B --> <g id="node2" class="node">
+<title>
+B
+</title>
+<path fill="none" stroke="black" d="M180.69,-36C180.69,-36 150.69,-36 150.69,-36 144.69,-36 138.69,-30 138.69,-24 138.69,-24 138.69,-12 138.69,-12 138.69,-6 144.69,0 150.69,0 150.69,0 180.69,0 180.69,0 186.69,0 192.69,-6 192.69,-12 192.69,-12 192.69,-24 192.69,-24 192.69,-30 186.69,-36 180.69,-36"></path> <text text-anchor="middle" x="165.69" y="-13.8" font-family="Times,serif" font-size="14.00">FPCA</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
+<title>
+A-&gt;B
+</title>
+<path fill="none" stroke="black" d="M102.61,-18C111.31,-18 120.21,-18 128.46,-18"></path> <polygon fill="black" stroke="black" points="128.48,-21.5 138.48,-18 128.48,-14.5 128.48,-21.5"></polygon> </g> <!-- C --> <g id="node3" class="node">
+<title>
+C
+</title>
+<path fill="none" stroke="black" d="M271.53,-36C271.53,-36 240.75,-36 240.75,-36 234.75,-36 228.75,-30 228.75,-24 228.75,-24 228.75,-12 228.75,-12 228.75,-6 234.75,0 240.75,0 240.75,0 271.53,0 271.53,0 277.53,0 283.53,-6 283.53,-12 283.53,-12 283.53,-24 283.53,-24 283.53,-30 277.53,-36 271.53,-36"></path> <text text-anchor="middle" x="256.14" y="-13.8" font-family="Times,serif" font-size="14.00">LMER</text> </g> <!-- B&#45;&gt;C --> <g id="edge2" class="edge">
+<title>
+B-&gt;C
+</title>
+<path fill="none" stroke="black" d="M192.75,-18C200.79,-18 209.81,-18 218.43,-18"></path> <polygon fill="black" stroke="black" points="218.65,-21.5 228.65,-18 218.65,-14.5 218.65,-21.5"></polygon> </g> <!-- D --> <g id="node4" class="node">
+<title>
+D
+</title>
+<text text-anchor="middle" x="346.58" y="-13.8" font-family="Times,serif" font-size="14.00">model</text> </g> <!-- C&#45;&gt;D --> <g id="edge3" class="edge">
+<title>
+C-&gt;D
+</title>
+<path fill="none" stroke="black" d="M283.67,-18C291.71,-18 300.67,-18 309.22,-18"></path> <polygon fill="black" stroke="black" points="309.37,-21.5 319.37,-18 309.37,-14.5 309.37,-21.5"></polygon> </g> </g>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="functional-pca-1" class="slide level2">
+<h2>Functional PCA</h2>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<!-- -->
+<h3 id="pros-1">PROs</h3>
+<div>
+<ul>
+<li class="fragment">Native multidimensional data</li>
+<li class="fragment"><span style="color:red">Can model duration*</span></li>
+<li class="fragment">Computationally light</li>
+<li class="fragment">Produces an intermediate model</li>
+</ul>
+</div>
+</div>
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<!-- -->
+<h3 id="cons-1">CONs</h3>
+<div>
+<ul>
+<li class="fragment">Requires two steps</li>
+<li class="fragment">Not native mixed model</li>
+<li class="fragment">Intermediate model may not be effective</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section></section>
+<section>
 <section id="functions" class="title-slide slide level1 center">
 <h1>Functions</h1>
 
@@ -431,7 +620,7 @@ A
 <title>
 B
 </title>
-<polygon fill="none" stroke="black" points="144,-36 90,-36 90,0 144,0 144,-36"></polygon> <text text-anchor="middle" x="117" y="-13.8" font-family="Times,serif" font-style="italic" font-size="14.00">f(x)</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
+<path fill="none" stroke="black" d="M132,-36C132,-36 102,-36 102,-36 96,-36 90,-30 90,-24 90,-24 90,-12 90,-12 90,-6 96,0 102,0 102,0 132,0 132,0 138,0 144,-6 144,-12 144,-12 144,-24 144,-24 144,-30 138,-36 132,-36"></path> <text text-anchor="middle" x="117" y="-13.8" font-family="Times,serif" font-style="italic" font-size="14.00">f(x)</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
 <title>
 A-&gt;B
 </title>
@@ -471,7 +660,7 @@ A
 <title>
 B
 </title>
-<polygon fill="none" stroke="black" points="151.61,-36 97.61,-36 97.61,0 151.61,0 151.61,-36"></polygon> <text text-anchor="start" x="107.05" y="-14.8" font-family="Times,serif" font-style="italic" font-size="14.00">x</text> <text text-anchor="start" x="113.27" y="-14.8" font-family="Times,serif" baseline-shift="super" font-size="14.00">2</text> <text text-anchor="start" x="120.27" y="-14.8" font-family="Times,serif" font-size="14.00"> + 3</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
+<path fill="none" stroke="black" d="M139.61,-36C139.61,-36 109.61,-36 109.61,-36 103.61,-36 97.61,-30 97.61,-24 97.61,-24 97.61,-12 97.61,-12 97.61,-6 103.61,0 109.61,0 109.61,0 139.61,0 139.61,0 145.61,0 151.61,-6 151.61,-12 151.61,-12 151.61,-24 151.61,-24 151.61,-30 145.61,-36 139.61,-36"></path> <text text-anchor="start" x="107.05" y="-14.8" font-family="Times,serif" font-style="italic" font-size="14.00">x</text> <text text-anchor="start" x="113.27" y="-14.8" font-family="Times,serif" baseline-shift="super" font-size="14.00">2</text> <text text-anchor="start" x="120.27" y="-14.8" font-family="Times,serif" font-size="14.00"> + 3</text> </g> <!-- A&#45;&gt;B --> <g id="edge1" class="edge">
 <title>
 A-&gt;B
 </title>
@@ -761,51 +950,15 @@ B-&gt;C
 </section>
 <section id="orthogonal-basis-2" class="slide level2">
 <h2>Orthogonal basis</h2>
-<h3 id="legendre-polynomials">(Legendre polynomials)</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(B1(t)\)</span></figcaption>
-<p><img data-src="plots/Poly1.png"></p>
+<figcaption>Legendre polynomials</figcaption>
+<p><img data-src="plots/Poly2by2.png" height="500"></p>
 </figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(B2(t)\)</span></figcaption>
-<p><img data-src="plots/Poly2.png"></p>
-</figure>
-</div>
-</div>
-</div>
 </div>
 </section>
 <section id="orthogonal-basis-3" class="slide level2">
 <h2>Orthogonal basis</h2>
-<h3 id="legendre-polynomials-1">(Legendre polynomials)</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(B3(t)\)</span></figcaption>
-<p><img data-src="plots/Poly3.png"></p>
-</figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(B4(t)\)</span></figcaption>
-<p><img data-src="plots/Poly4.png"></p>
-</figure>
-</div>
-</div>
-</div>
-</div>
 </section>
 <section id="orthogonal-projections" class="slide level2">
 <h2>Orthogonal projections</h2>
@@ -957,7 +1110,7 @@ B-&gt;C
 <tbody>
 <tr class="odd">
 <td><span class="math inline">\(s_1\)</span></td>
-<td style="text-align: right;"><span style="color:red;">0.72</span></td>
+<td style="text-align: right;"><span style="color:red">0.72</span></td>
 </tr>
 <tr class="even">
 <td><span class="math inline">\(s_2\)</span></td>
@@ -1126,8 +1279,10 @@ B-&gt;C
 <section id="fit-a-regression-model-on-s1" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> polyScores)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> polyScores)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell fragment">
 <div class="cell-output cell-output-stdout">
 <pre><code>
 Call:
@@ -1153,8 +1308,8 @@ F-statistic:  2440 on 1 and 96 DF,  p-value: &lt; 2.2e-16</code></pre>
 <section id="model-predictions-on-s1" class="slide level2">
 <h2>Model predictions on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="fu">library</span>(emmeans)</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">library</span>(emmeans)</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$emmeans
  Category  emmean       SE df lower.CL upper.CL
@@ -1186,11 +1341,11 @@ $contrasts
 
 <img data-src="plots/emmCurves_Poly_s1234.png" class="r-stretch"></section></section>
 <section>
-<section id="functional-pca" class="title-slide slide level1 center">
+<section id="functional-pca-2" class="title-slide slide level1 center">
 <h1>Functional PCA</h1>
 
 </section>
-<section id="functional-pca-1" class="slide level2">
+<section id="functional-pca-3" class="slide level2">
 <h2>Functional PCA</h2>
 <div>
 <ol type="1">
@@ -1202,28 +1357,11 @@ $contrasts
 <section id="principal-components-pcs" class="slide level2">
 <h2>Principal Components (PCs)</h2>
 
+<!-- ## Explained variance -->
+<!-- | PC1  | PC2  | PC3  | PC4 | -->
+<!-- |------:|------:|------:|------:| -->
+<!-- | 99.59% | 0.24% |  0.11% |  0.05% | -->
 <img data-src="plots/PC.png" class="r-stretch"></section>
-<section id="explained-variance" class="slide level2">
-<h2>Explained variance</h2>
-<table>
-<thead>
-<tr class="header">
-<th style="text-align: right;">PC1</th>
-<th style="text-align: right;">PC2</th>
-<th style="text-align: right;">PC3</th>
-<th style="text-align: right;">PC4</th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;">99.59%</td>
-<td style="text-align: right;">0.24%</td>
-<td style="text-align: right;">0.11%</td>
-<td style="text-align: right;">0.05%</td>
-</tr>
-</tbody>
-</table>
-</section>
 <section id="compute-scores-1" class="slide level2">
 <h2>Compute scores</h2>
 <div class="cell">
@@ -1298,34 +1436,8 @@ $contrasts
 <section id="fit-a-regression-model-on-s1-1" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = s1 ~ Category, data = pcScores)
-
-Residuals:
-       Min         1Q     Median         3Q        Max 
--0.0190485 -0.0032451 -0.0002065  0.0031945  0.0179834 
-
-Coefficients:
-              Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept)   0.040415   0.001010   40.00   &lt;2e-16 ***
-CategoryPEAK -0.080843   0.001429  -56.58   &lt;2e-16 ***
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 0.007145 on 98 degrees of freedom
-Multiple R-squared:  0.9703,    Adjusted R-squared:   0.97 
-F-statistic:  3201 on 1 and 98 DF,  p-value: &lt; 2.2e-16</code></pre>
-</div>
-</div>
-</section>
-<section id="model-predictions-on-s1-1" class="slide level2">
-<h2>Model predictions on s1</h2>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$emmeans
  Category  emmean      SE df lower.CL upper.CL
