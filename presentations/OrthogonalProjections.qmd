@@ -1,7 +1,8 @@
 ---
-title: "Orthogonal projections"
+title: "Orthogonal Projections and Functional PCA"
 author: "Michele Gubian"
 date: "25 September 2023"
+date-format: long
 format:
   revealjs:
     df-print: kable
@@ -14,7 +15,7 @@ tab-cap-location: top
 
 ## Functions
 
-A function is a 'machine' that transforms numbers in a pre-specified way.
+> A function is a 'machine' that transforms numbers in a pre-specified way.
 
 ::: fragment
 ```{dot}
@@ -338,24 +339,91 @@ polyScores %>%
 ```
 :::
 
-## Fit a regression model on a s4
+## Fit a regression model on s1
 ```{r}
 #| echo: true
-mod <- lm(s4 ~ Category, data = polyScores)
+mod <- lm(s1 ~ Category, data = polyScores)
 summary(mod)
 ``` 
 
-## Model predictions on s4
+## Model predictions on s1
 
 ```{r}
 #| echo: true
 library(emmeans)
-emm <- emmeans(mod, pairwise ~ Category)
-emm
+emmeans(mod, pairwise ~ Category)
 ``` 
 
-## Reconstruct predicted curves from s4
+## Reconstruct predicted curves from s1
 
-$$ f_{PEAK}(t) = \mu(t) + s_{4, PEAK} \cdot B4(t)$$
-$$ f_{NO\_PEAK}(t) = \mu(t) + s_{4, NO\_PEAK} \cdot B4(t)$$
+$$ f_{PEAK}(t) = \mu(t) + s_{1, PEAK} \cdot B1(t)$$
+$$ f_{NO\_PEAK}(t) = \mu(t) + s_{1, NO\_PEAK} \cdot B1(t)$$
+
+## Reconstruct predicted curves from s1
+
+![](plots/emmCurves_Poly_s1.png)
+
+## Reconstruct predicted curves from s1, s2, s3, s4
+
+$$ f_{PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, PEAK} \cdot Bk(t)$$
+$$ f_{NO\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, NO\_PEAK} \cdot Bk(t)$$
+
+## Reconstruct predicted curves from s1, s2, s3, s4
+
+![](plots/emmCurves_Poly_s1234.png)
+
+# Functional PCA
+
+## Functional PCA
+
+::: {.incremental}
+1. [Construct]{style="color:red"} an orthogonal basis [optimised on your curve dataset]{style="color:red"} 
+2. Compute orthogonal projections (scores)
+:::
+
+## Principal Components (PCs)
+
+![](plots/PC.png)
+
+## Explained variance
+
+| PC1  | PC2  | PC3  | PC4 |
+|------:|------:|------:|------:|
+| 99.59% | 0.24% |  0.11% |  0.05% |
+
+## Compute scores
+
+```{r}
+#| echo: false
+
+pcScores <- read_csv("data/pcScores.csv")
+pcScores %>% 
+  filter(curveId %in% c(1,2,3,51, 52, 53)) %>% 
+  mutate(across(starts_with("s"), ~ round(.x, 4)))
+
+```
+
+## Fit a regression model on s1
+```{r}
+#| echo: true
+mod <- lm(s1 ~ Category, data = pcScores)
+summary(mod)
+``` 
+
+## Model predictions on s1
+
+```{r}
+#| echo: true
+emmeans(mod, pairwise ~ Category)
+``` 
+
+## Reconstruct predicted curves from s1
+
+$$ f_{PEAK}(t) = \mu(t) + s_{1, PEAK} \cdot PC1(t)$$
+$$ f_{NO\_PEAK}(t) = \mu(t) + s_{1, NO\_PEAK} \cdot PC1(t)$$
+
+## Reconstruct predicted curves from s1
+
+![](plots/emmCurves_PCs1.png)
+
 

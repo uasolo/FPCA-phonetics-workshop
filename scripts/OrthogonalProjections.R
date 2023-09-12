@@ -1,5 +1,6 @@
 library(fda)
 library(funData)
+library(MFPCA)
 library(tidyverse)
 library(emmeans)
 
@@ -392,10 +393,10 @@ ggsave(file.path(plots_dir, str_c("curvesCentred", '.png')), pl,
 polyScores <- sapply(1:4, function(i) {
   scalarProduct(curvesFun - meanCurve, ob[i])
 }) %>%
-  # round(2) %>% 
   `colnames<-`(str_c('s', 1:4)) %>% 
   as_tibble() %>% 
-  bind_cols(curves %>% distinct(curveId, Category), .)
+  bind_cols(curves %>% distinct(curveId, Category), .) %>% 
+  filter(!if_any(starts_with("s"), ~ is.na(.x)))
 
 write_csv(polyScores, "../presentations/data/polyScores.csv")
 
@@ -407,18 +408,20 @@ emmList <- lapply(1:4, function(s) {
   emmeans(modList[[s]], pairwise ~ Category)
 })
 
+emm <- lapply(seq_along(emmList),
+              function(k) {
+                emmList[[k]]$emmeans %>%
+                  as_tibble() %>% 
+                  select(Category, emmean) %>% 
+                  rename(!!str_c("s", k) := emmean)
+              }) %>% 
+  reduce(left_join, by = "Category")
 
 
-
-summary(mod)
-
-emm <- emmeans(mod, pairwise ~ Category)
-predCurves <- emm$emmeans %>% 
-  as_tibble() %>% 
-  select(Category, emmean) %>%
-  rename(s4 = emmean) %>% 
+predCurves <- emm %>% 
   group_by(Category) %>% 
-  reframe(funData2long(meanCurve + s4 * ob[4])) %>%
+  # reframe(funData2long(meanCurve + s1 * ob[1])) %>%
+  reframe(funData2long(meanCurve + s1 * ob[1] + s2 * ob[2] + s3 * ob[3] + s4 * ob[4])) %>%
   # reframe(funData2long(meanCurve + mean(polyScores$s1, na.rm = TRUE) * ob[1] +
   #                        mean(polyScores$s2, na.rm = TRUE) * ob[2] +
   #                        mean(polyScores$s3, na.rm = TRUE) * ob[3] +
@@ -429,7 +432,7 @@ predCurves <- emm$emmeans %>%
 
 
 ylim <- c(-0.2, 0.5)
-ggplot(predCurves) +
+pl <- ggplot(predCurves) +
   aes(time, y, color = Category) +
   geom_line() +
   scale_color_manual(values=Category.colors) +
@@ -438,6 +441,60 @@ ggplot(predCurves) +
   theme(text = element_text(size = 15),
         legend.position = "bottom")
   
+ggsave(file.path(plots_dir, str_c("emmCurves_s1234", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+# FPCA
+
+pcaFun <- PACE(curvesFun, npc = 4)
+pl <- pcaFun$functions %>% 
+  funData2long() %>% 
+  rename(PC = ID, time = argvals, y = X) %>% 
+  ggplot(aes(time, y)) +
+  geom_line(col = 'red', linewidth = 1) +
+  facet_wrap(~ PC, ncol = 2, labeller = labeller(PC = ~ str_glue("PC{.x}(t)"))) +
+  mytheme
+
+ggsave(file.path(plots_dir, str_c("PC", '.png')), pl,
+       width = 1600, height = 1200, units = "px"
+)
+
+(pcaFun$values / sum( pcaFun$values)) %>% `*`(100) %>% round(2)
+
+pcScores <- pcaFun$scores %>%
+  `colnames<-`(str_c('s', 1:4)) %>% 
+  as_tibble() %>% 
+  bind_cols(curves %>% distinct(curveId, Category), .) %>% 
+  filter(!if_any(starts_with("s"), ~ is.na(.x)))
+
+write_csv(pcScores, "../presentations/data/pcScores.csv")
+
+modPC <- lm(s1 ~ Category, data = pcScores)
+emmPC <- emmeans(modPC, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>% 
+  select(Category, emmean) %>% 
+  rename(s1= emmean)
+
+predCurves <- emmPC %>% 
+  group_by(Category) %>% 
+  reframe(funData2long(pcaFun$mu + s1 * pcaFun$functions[1])) %>%
+  select(-ID) %>% 
+  rename(time = argvals, y = X)
+
+pl <- ggplot(predCurves) +
+  aes(time, y, color = Category) +
+  geom_line() +
+  scale_color_manual(values=Category.colors) +
+  ylim(ylim) +
+  theme_light() +
+  theme(text = element_text(size = 15),
+        legend.position = "bottom")
+
+ggsave(file.path(plots_dir, str_c("emmCurves_PCs1", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
 
 ##### splines
 
