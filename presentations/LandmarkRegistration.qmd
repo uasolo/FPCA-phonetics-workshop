@@ -1,0 +1,15 @@
+---
+title: "Landmark Registration"
+author: "Michele Gubian"
+editor: visual
+date: "26 September 2023"
+date-format: long
+format:
+  revealjs:
+    df-print: kable
+editor: visual
+fig-cap-location: top
+tab-cap-location: top
+---
+
+
