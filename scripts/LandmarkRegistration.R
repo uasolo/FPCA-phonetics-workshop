@@ -78,7 +78,7 @@ ggsave(file.path(plots_dir, str_c("few_unreg_curves", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
-reg <- landmarkreg_nocurves(inputMarks = land %>% select(!curveId),
+reg <- landmarkreg_nocurves(inputMarks = land %>% select(!curveId), 
                             njobs = 3)
 curvesReg <- applyReg(dat = curves, reg = reg,
                       id = "curveId", time = "time", value = "y")
@@ -92,6 +92,38 @@ pl <- ggplot(curvesReg %>% filter(curveId %in% 1:4)) +
 ggsave(file.path(plots_dir, str_c("few_reg_curves", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
+
+durationReg <- diff(reg$landmarks)
+
+durations <- land %>% 
+  pivot_longer(cols = starts_with("l"), names_to = "rightBoundary", values_to = "time") %>% 
+  group_by(curveId) %>%
+  mutate(before = time - lag(time)) %>% 
+  filter(!is.na(before)) %>% 
+  mutate(after = durationReg) %>% 
+  select(!time) %>% 
+  ungroup() %>% 
+  pivot_longer(cols = c("before", "after"), names_to = "registration", values_to = "duration") %>% 
+  mutate(registration = factor(registration, levels = c("before", "after")),
+         rightBoundary = factor(rightBoundary))
+  
+  
+
+
+ggplot(durations %>% filter(curveId %in% 1:3)) +
+  aes(x = curveId, y = duration) + 
+  geom_bar(stat="identity", fill = 'white', color = 'black') +
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 5,
+            position = position_stack(vjust = 0.5), show.legend = FALSE) +
+  facet_grid(~ registration) +
+  ylab("Duration") +
+  coord_flip() + 
+  mytheme
+
+
+
+
+
 
 ### ExLand1
 ex <- 1
