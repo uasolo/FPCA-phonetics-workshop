@@ -107,20 +107,14 @@ ggsave(file.path(plots_dir, str_c("few_reg_curves", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
-durationReg <- diff(reg$landmarks)
-
-durations <- land %>% 
-  pivot_longer(cols = starts_with("l"), names_to = "rightBoundary", values_to = "time") %>% 
-  group_by(curveId) %>%
-  mutate(before = time - lag(time)) %>% 
-  filter(!is.na(before)) %>% 
-  mutate(after = durationReg) %>% 
-  select(!time) %>% 
-  ungroup() %>% 
-  pivot_longer(cols = c("before", "after"), names_to = "registration", values_to = "duration") %>% 
-  mutate(registration = factor(registration, levels = c("before", "after")),
-         rightBoundary = factor(rightBoundary))
-  
+durations <- landmarks2long(land, form = "duration", id = "curveId")
+durations <- bind_rows(list(
+  before = durations,
+  after = landmarks2long(reg$landmarks, form = "duration") %>% 
+    select(!id) %>% 
+    expand_grid(durations %>% distinct(curveId))
+), .id = "registration") %>% 
+  mutate(registration = factor(registration, levels = c("before", "after")))
 
 
 
@@ -263,9 +257,17 @@ ggsave(file.path(plots_dir, str_c("early_late_pred_curves_simple", '.png')), pl,
 )
 
 # duration plots
-durations <- landmarks2durations(land %>% select(!Category),
-                                 id = "curveId",
-                                 targetMarks = reg$landmarks)
+
+durations <- landmarks2long(land %>% select(!Category),
+                            form = "duration",
+                            id = "curveId")
+durations <- bind_rows(list(
+  before = durations,
+  after = landmarks2long(reg$landmarks, form = "duration") %>% 
+    select(!id) %>% 
+    expand_grid(durations %>% distinct(curveId))
+), .id = "registration") %>% 
+  mutate(registration = factor(registration, levels = c("before", "after")))
 
 
 
@@ -366,5 +368,135 @@ mfpca <- MFPCA(yRegMult,
 # Prop of explained var
 mfpca$values  / sum( mfpca$values)
 
+# scores st. dev.
+sdFun <- mfpca$scores %>% apply(2, sd) 
+# PC curves to be plotted
+PCcurves <- expand_grid(PC = 1:2,
+                        DIM = 1, # 1:2 or 1
+                        fractionOfStDev = seq(-1, 1, by=.25)) %>%
+  group_by(PC, DIM, fractionOfStDev) %>%
+  reframe(time = mfpca$meanFunction[[DIM]]@argvals[[1]],
+          y = (mfpca$meanFunction[[DIM]] +
+                 fractionOfStDev * sdFun[PC] * mfpca$functions[[DIM]][PC])@X %>% as.numeric()
+  )
+# Plot
+DIMlabels <- c(`1` = "y", `2` = "log rate")
+pl <- ggplot(PCcurves) +
+  aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_line() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
+  facet_grid(DIM ~ PC,
+             scales = "free_y",
+             labeller = labeller(PC = ~ str_glue("PC{.x}"),
+                                 DIM = DIMlabels)) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
+  # geom_vline(xintercept = reg$landmarks) + 
+  xlab("registered time") +
+  mytheme +
+  theme(legend.position = "bottom")
 
+ggsave(file.path(plots_dir, str_c("FPCA_curves_early_late_2D_y", '.png')), pl,
+       width = 2000,
+       height = 1200, # 2000
+       units = "px"
+)
 
+# PC durations to be plotted
+DIMlograte <- 2 # lograte is the second dimension in mfpca
+
+PCdur <- expand_grid(PC = 1:2,
+                     fractionOfStDev = seq(-1, 1, by=.5),
+                     landmarks2long(reg$landmarks)
+                     ) %>%
+  group_by(PC, fractionOfStDev, leftBoundary) %>%
+  mutate(duration = lograte2duration(
+    lograte = mfpca$meanFunction[[DIMlograte]] +
+      fractionOfStDev * sdFun[PC] * mfpca$functions[[DIMlograte]][PC],
+    from = from, to = to)) %>% 
+  ungroup() %>% 
+  select(!c(from, to, id))
+
+pl <- ggplot(PCdur) +
+  aes(x = fractionOfStDev %>% factor(labels = ""),
+      y = duration, color = fractionOfStDev) + 
+  geom_bar(stat="identity", fill = 'white') +
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 3.5,
+            position = position_stack(vjust = 0.5), show.legend = FALSE) +
+  facet_grid(~ PC, labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
+  labs(color = expression(frac(s[k], sigma[s[k]]))) +
+  ylab("time") +
+  coord_flip() + 
+  mytheme +
+  theme(legend.position = "bottom",
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+ggsave(file.path(plots_dir, str_c("early_late_PCdur", '.png')), pl,
+       width = 1800, height = 1200, units = "px"
+)
+
+# collect PC scores
+PCscores <- mfpca$scores %>% `colnames<-`( paste0("s", 1:2)) %>% as_tibble %>%
+  bind_cols(curvesReg %>% distinct(curveId, Category), .)
+
+# model s1
+mod <- lm(s1 ~ Category, data = PCscores)
+emmeans(mod, pairwise ~ Category)
+
+# reconstruct predicted curves
+emm <- emmeans(mod, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>% 
+  select(Category, emmean) %>% 
+  rename(s1= emmean)
+
+DIMy <- 1
+predCurves <- emm %>% 
+  group_by(Category) %>% 
+  reframe(funData2long(mfpca$meanFunction[[DIMy]] + s1 * mfpca$functions[[DIMy]][1])) %>%
+  select(!id) %>% 
+  rename(`registered time` = time, y = value)
+
+pl <- ggplot(predCurves) +
+  aes(`registered time`, y, color = Category) +
+  geom_line() +
+  scale_color_manual(values=Category.colors) +
+  geom_vline(xintercept = reg$landmarks) + 
+  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+                                         breaks = reg$landmarks,
+                                         labels = str_c("l", seq_along(reg$landmarks)))) +
+  mytheme +
+  theme(legend.position = "bottom")
+
+ggsave(file.path(plots_dir, str_c("early_late_pred_curves_2D", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+predDur <- expand_grid(emm, landmarks2long(reg$landmarks)) %>% 
+  group_by(Category, leftBoundary) %>% 
+  mutate(duration = lograte2duration(
+    lograte = mfpca$meanFunction[[DIMlograte]] +
+      s1 * mfpca$functions[[DIMlograte]][1],
+    from = from, to = to)) %>% 
+  ungroup() %>% 
+  select(!c(from, to, id))
+
+pl <- ggplot(predDur) +
+  aes(x = Category, y = duration, color = Category) + 
+  geom_bar(stat="identity", fill = 'white') +
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 3.5,
+            position = position_stack(vjust = 0.5), show.legend = FALSE) +
+  ylab("time") +
+  scale_color_manual(values=Category.colors) +
+  coord_flip() + 
+  mytheme +
+  theme(legend.position = "bottom",
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank())
+
+ggsave(file.path(plots_dir, str_c("early_late_predDur", '.png')), pl,
+       width = 1600, height = 1000, units = "px"
+)
