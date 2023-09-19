@@ -540,6 +540,10 @@ pcScores %>%
 
 ```
 
+## PCs and scores
+
+![](plots/ex1D.1.FPCA_curves.png)
+
 ## Fit a regression model on s1
 ```{r}
 #| echo: true
@@ -557,4 +561,62 @@ $$ f_{NO\_PEAK}(t) = \mu(t) + s_{1, NO\_PEAK} \cdot PC1(t)$$
 
 ![](plots/emmCurves_PCs1.png)
 
+# Multi-dimensional FPCA
 
+## A two-dimensional curve dataset
+
+![](plots/ex2D.1.curves.png)
+
+## D-dimensional Principal Components
+
+::: {.incremental}
+
+* There are D mean curves
+  - $\mu_{y1}(t)$ and $\mu_{y2}(t)$
+* Each PC is composed of D curves
+  - $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
+* [Scores do not increase]{style="color:red"} 
+* Each score controls a PC, which is made of D 1-dimensional curves
+  - $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
+
+:::
+
+
+
+## Principal Components (PCs)
+
+![](plots/ex2D.1.FPCA_curves.png)
+
+
+## Compute scores
+
+![](plots/ex2D.1.PCscores_scatter.png)
+
+
+## Fit a regression model on s1
+```{r}
+#| echo: true
+#| eval: false
+mod <- lm(s1 ~ Category, data = pcScores)
+emmeans(mod, pairwise ~ Category)
+``` 
+| Category | $s_1$ |
+|-------|------:|
+| HIGH_PEAK  | -0.12 |
+| LOW_PEAK   | 0.12  |
+
+## Reconstruct predicted curves from s1
+
+::: fragment
+$$ y1_{HIGH\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y1}(t)$$
+$$ y2_{HIGH\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y2}(t)$$
+:::
+
+::: fragment
+$$ y1_{LOW\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y1}(t)$$
+$$ y2_{LOW\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y2}(t)$$
+:::
+
+## Reconstruct predicted curves from s1
+
+![](plots/ex2D.1.pred_curves.png)

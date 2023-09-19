@@ -1433,6 +1433,10 @@ $contrasts
 </div>
 </div>
 </section>
+<section id="pcs-and-scores" class="slide level2">
+<h2>PCs and scores</h2>
+
+<img data-src="plots/ex1D.1.FPCA_curves.png" class="r-stretch"></section>
 <section id="fit-a-regression-model-on-s1-1" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
@@ -1459,7 +1463,82 @@ $contrasts
 <section id="reconstruct-predicted-curves-from-s1-3" class="slide level2">
 <h2>Reconstruct predicted curves from s1</h2>
 
-<img data-src="plots/emmCurves_PCs1.png" class="r-stretch"><div class="footer footer-default">
+<img data-src="plots/emmCurves_PCs1.png" class="r-stretch"></section></section>
+<section>
+<section id="multi-dimensional-fpca" class="title-slide slide level1 center">
+<h1>Multi-dimensional FPCA</h1>
+
+</section>
+<section id="a-two-dimensional-curve-dataset" class="slide level2">
+<h2>A two-dimensional curve dataset</h2>
+
+<img data-src="plots/ex2D.1.curves.png" class="r-stretch"></section>
+<section id="d-dimensional-principal-components" class="slide level2">
+<h2>D-dimensional Principal Components</h2>
+<div>
+<ul>
+<li class="fragment">There are D mean curves
+<ul>
+<li class="fragment"><span class="math inline">\(\mu_{y1}(t)\)</span> and <span class="math inline">\(\mu_{y2}(t)\)</span></li>
+</ul></li>
+<li class="fragment">Each PC is composed of D curves
+<ul>
+<li class="fragment"><span class="math inline">\(PC1_{y1}(t)\)</span> and <span class="math inline">\(PC1_{y2}(t)\)</span>, <span class="math inline">\(PC2_{y1}(t)\)</span> and <span class="math inline">\(PC2_{y2}(t)\)</span>, etc.</li>
+</ul></li>
+<li class="fragment"><span style="color:red">Scores do not increase</span></li>
+<li class="fragment">Each score controls a PC, which is made of D 1-dimensional curves
+<ul>
+<li class="fragment"><span class="math inline">\(s_1\)</span> controls (i.e.&nbsp;multiplies) <span class="math inline">\(PC1_{y1}(t)\)</span> and <span class="math inline">\(PC1_{y2}(t)\)</span></li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="principal-components-pcs-1" class="slide level2">
+<h2>Principal Components (PCs)</h2>
+
+<img data-src="plots/ex2D.1.FPCA_curves.png" class="r-stretch"></section>
+<section id="compute-scores-2" class="slide level2">
+<h2>Compute scores</h2>
+
+<img data-src="plots/ex2D.1.PCscores_scatter.png" class="r-stretch"></section>
+<section id="fit-a-regression-model-on-s1-2" class="slide level2">
+<h2>Fit a regression model on s1</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<table>
+<thead>
+<tr class="header">
+<th>Category</th>
+<th style="text-align: right;"><span class="math inline">\(s_1\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>HIGH_PEAK</td>
+<td style="text-align: right;">-0.12</td>
+</tr>
+<tr class="even">
+<td>LOW_PEAK</td>
+<td style="text-align: right;">0.12</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="reconstruct-predicted-curves-from-s1-4" class="slide level2">
+<h2>Reconstruct predicted curves from s1</h2>
+<div class="fragment">
+<p><span class="math display">\[ y1_{HIGH\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y1}(t)\]</span> <span class="math display">\[ y2_{HIGH\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y2}(t)\]</span></p>
+</div>
+<div class="fragment">
+<p><span class="math display">\[ y1_{LOW\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y1}(t)\]</span> <span class="math display">\[ y2_{LOW\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y2}(t)\]</span></p>
+</div>
+</section>
+<section id="reconstruct-predicted-curves-from-s1-5" class="slide level2">
+<h2>Reconstruct predicted curves from s1</h2>
+
+<img data-src="plots/ex2D.1.pred_curves.png" class="r-stretch"><div class="footer footer-default">
 
 </div>
 </section></section>

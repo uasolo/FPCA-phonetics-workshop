@@ -2,54 +2,18 @@ library(fda)
 library(funData)
 library(MFPCA)
 library(tidyverse)
+library(landmarkregUtils)
 library(emmeans)
 library(mgcv)
 library(itsadug)
 
-funData2long1 <- function(fd) {
-  return(tibble(argvals = fd@argvals[[1]],
-                X = fd@X %>% as.numeric()))
-}
-
-funData2long <- function(fd) {
-  return(
-    tibble(ID = seq_len(fd@X %>% nrow())) %>% 
-      group_by(ID) %>% 
-      reframe(funData2long1(fd[ID])) %>% 
-      ungroup() %>% 
-      mutate(ID = factor(ID))
-  )
-}
-
-long2irregFunData <- function(df, .obs, .index, .value) {
-  return(
-    irregFunData(
-      argvals = df %>%
-        dplyr::select(all_of(c(.obs, .index))) %>%
-        pivot_wider(names_from = {{.obs}}, values_from = {{.index}}, values_fn = list) %>%
-        as.list() %>%
-        unlist(recursive = FALSE, use.names = FALSE),
-      X = curves %>%
-        dplyr::select(all_of(c(.obs, .value))) %>%
-        pivot_wider(names_from = {{.obs}}, values_from = {{.value}}, values_fn = list) %>%
-        as.list() %>%
-        unlist(recursive = FALSE, use.names = FALSE)
-    )
-  )
-}
-
-long2funData <- function(df, .obs, .index, .value) {
-  return(
-    long2irregFunData(df, .obs, .index, .value) %>% as.funData()
-  )
-}
 
 plotIntegral <- function(fd, plusColor = 'darkgreen', minusColor = 'lawngreen') {
   return(
     fd %>% 
       funData2long1() %>% 
       ggplot() +
-      aes(argvals, X) +
+      aes(time, value) +
       geom_line() +
       geom_ribbon(aes(ymax = ifelse(X > 0, X, 0), ymin = 0), fill = plusColor) +
       geom_ribbon(aes(ymin = ifelse(X < 0, X, 0), ymax = 0), fill = minusColor) +
@@ -83,7 +47,8 @@ mytheme <- theme_light() +
 Category.colors <- c("slategray4", "orangered")
 
 
-plots_dir <- "../presentations/plots/"
+plots_dir <- "presentations/plots/"
+data_dir <- "data/"
 
 pl <- ggplot() +
   xlim(-3, 3) +
@@ -106,7 +71,7 @@ ggsave(file.path(plots_dir, str_c("f", '.png')), pl,
 )
 
 ex <- 1 # change according to ex number
-curves <- read_csv(file.path("../data/", paste("ex1D", ex, "csv", sep = '.')))
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
 
 # GAM
 mod <- bam(y ~ Category + s(time, by = Category),
@@ -115,6 +80,9 @@ mod <- bam(y ~ Category + s(time, by = Category),
 plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors)
 plot_diff(mod, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
 # same manually, 750x500
+
+curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
+  as.funData()
 
 
 curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
@@ -132,7 +100,7 @@ curve2 <- curvesFun[51]
 ylim <- c(-0.2, 0.5)
 
 pl <- ggplot(curve2 %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time , value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   # geom_point(col = 'blue') +
@@ -144,7 +112,7 @@ ggsave(file.path(plots_dir, str_c("curve2", '.png')), pl,
 )
 
 pl <- ggplot((0.5*(curve + curve2)) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   # geom_point(col = 'blue') +
@@ -160,7 +128,7 @@ argvals<-seq(0,2,0.01)
 ob <- eFun(argvals,M=20,type="Poly")
 
 pl <- ggplot((0.1 * ob[3]) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   xlab("time") + ylab("") +
@@ -171,7 +139,7 @@ ggsave(file.path(plots_dir, str_c("add3", '.png')), pl,
 )
 
 pl <- ggplot((0.1 * ob[3] + curve) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   xlab("time") + ylab("") +
@@ -182,7 +150,7 @@ ggsave(file.path(plots_dir, str_c("curve_plus_add3", '.png')), pl,
 )
 
 pl <- ggplot((-0.5 * curve) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   # geom_point(col = 'blue') +
@@ -199,7 +167,7 @@ ggsave(file.path(plots_dir, str_c("curvem05", '.png')), pl,
 
 
 pl <- ggplot(ob[2] %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(-1.3, 1.3) +
   xlab("time") + ylab("") +
@@ -210,7 +178,7 @@ ggsave(file.path(plots_dir, str_c("mul2", '.png')), pl,
 )
 
 pl <- ggplot((ob[2] * curve) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   # ylim(-0.5, 0.5) +
   xlab("time") + ylab("") +
@@ -223,7 +191,7 @@ ggsave(file.path(plots_dir, str_c("curve_times_mul2", '.png')), pl,
 
 
 pl <- ggplot(ob %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'red', linewidth = 1.5) +
   facet_grid(~ ID) +
   xlab("time") + ylab("") +
@@ -235,7 +203,7 @@ ggsave(file.path(plots_dir, str_c("Poly4", '.png')), pl,
 
 for (i in 1:4) {
   pl <- ggplot((curve * ob[i]) %>% funData2long1()) +
-    aes(argvals, X) +
+    aes(time, value) +
     geom_line(col = 'black', linewidth = 1.2) +
     xlab("time") + ylab("") +
     mytheme
@@ -257,7 +225,7 @@ for (i in 1:4) {
 
 for (i in 1:4) {
   pl <- ggplot(ob[i] %>% funData2long1()) +
-    aes(argvals, X) +
+    aes(time, value) +
     geom_line(col = 'red', linewidth = 1.2) +
     xlab("time") + ylab("") +
     mytheme
@@ -273,7 +241,7 @@ for (i in c(1:4, 8, 12, 16, 20)) {
   pl <- reconstruction(s[1:i], extractObs(ob, 1:i)) %>%
     funData2long1() %>% 
     ggplot() +
-    aes(argvals, X) +
+    aes(time, value) +
     geom_line(data = curve %>% funData2long1(), col = 'black', linewidth = 1) +
     geom_line(col = 'blue', linewidth = 1.2) +
     xlab("time") + ylab("") +
@@ -286,7 +254,7 @@ for (i in c(1:4, 8, 12, 16, 20)) {
 pl <- reconstruction(s, ob) %>%
   funData2long1() %>% 
   ggplot() +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   xlab("time") + ylab("") +
   mytheme
@@ -303,7 +271,7 @@ s %>% round(2)
 ylim <- c(-0.2, 0.8)
 
 pl <- ggplot((curve) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   xlab("time") + ylab("") +
@@ -319,7 +287,7 @@ s <- scalarProduct(curve + 0.3, ob)
 s[1:4] %>% round(2)
 
 pl <- ggplot((curve + 0.3) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   xlab("time") + ylab("") +
@@ -337,7 +305,7 @@ s <- scalarProduct(curveRev, ob)
 s[1:4] %>% round(2)
 
 pl <- ggplot((curveRev) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'black', linewidth = 1) +
   ylim(ylim) +
   xlab("time") + ylab("") +
@@ -348,7 +316,7 @@ ggsave(file.path(plots_dir, str_c("curveRev_shape", '.png')), pl,
 )
 
 pl <- ggplot(ob %>% extractObs(obs = 1:4) %>% funData2long()) +
-  aes(argvals, X) +
+  aes(time, value) +
   geom_line(col = 'red', linewidth = 1) +
   facet_wrap(~ ID, ncol = 1, labeller = labeller(ID = ~ str_glue("B{.x}(t)"))) +
   xlab("") + ylab("") +
@@ -398,7 +366,7 @@ ggsave(file.path(plots_dir, str_c("curves", '.png')), pl,
 meanCurve <- meanFunction(curvesFun, na.rm = TRUE)
 pl <- meanCurve %>% 
   funData2long() %>% 
-  ggplot(aes(argvals, X)) +
+  ggplot(aes(time, value)) +
   geom_line(linewidth = 1) +
   xlab("time") + ylab("y") +
   ylim(ylim) +
@@ -525,6 +493,26 @@ ggsave(file.path(plots_dir, str_c("emmCurves_PCs1", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
+# 2D FPCA
+
+
+
+#### create ex2D.3
+
+ex <- 1 # change according to ex number
+curves <- read_csv(file.path(data_dir, paste("ex2D", ex, "csv", sep = '.'))) %>% 
+  mutate(across(c(curveId, Category), ~ factor(.x)))
+# scramble curves in dim y2, leave them as is in y1
+curves <- curves %>% 
+  distinct(curveId) %>% 
+  mutate(id2 = sample(curveId, replace = FALSE)) %>% 
+  left_join(curves %>% select(!c(y1, Category)), by = "curveId", multiple = "all") %>%
+  select(!curveId) %>% 
+  rename(curveId = id2) %>% 
+  inner_join(curves %>% select(!y2), by = c("curveId", "time")) %>% 
+  arrange(curveId, time) %>% 
+  relocate(y1, .before = y2) %>% 
+  relocate(Category, .before = time)
 
 ##### splines
 
