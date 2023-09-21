@@ -90,7 +90,8 @@ plot_diff(mod, view = "time", comp = list(Category = c("ONE_PEAK", "TWO_PEAKS"))
 # save manually, 750x500
 
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
-  as.funData()
+  as.funData() %>%
+  approxNA()
 
 
 curve <- curvesFun[1] %>% approxNA()
@@ -108,8 +109,8 @@ arith.colors <- c("black", "red", "blue")
 
 
 operands <- list( # change operands here
-  curve # op1 
-  , ob[2] # op2  ,0.2 * ob[2]  curve2
+  curve + 0.3 # op1 
+  , ob[1] # op2  ,0.2 * ob[2]  curve2
   # ,curve * ob[2] # , 0.5 * (curve + curve2)  # result
   ) %>% 
   lapply(function(f) {
@@ -121,6 +122,7 @@ operands <- list( # change operands here
 
 ylim <- c(-0.3, 0.5)
 ylim <- c(-1.2, 1.2)
+ylim <- c(-0.3, 0.8)
 pl <- ggplot(operands) +
   aes(time , value, group = id, color = id) +
   geom_line(linewidth = 1) +
@@ -131,16 +133,17 @@ pl <- ggplot(operands) +
   mytheme +
   theme(legend.position = "none")
 
-ggsave(file.path(plots_dir, str_c("scalarprod1", '.png')), pl,
+ggsave(file.path(plots_dir, str_c("shape3s2_res", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
-pl <- plotIntegral(curve * ob[2]) +
+pl <- plotIntegral((curveRev) * ob[2]) +
   xlab("time (s)") + ylab("y") +
+  ylim(-0.7, 0.6) +
   mytheme +
   theme(legend.position = "none")
 
-
+scalarProduct(curve + 10, ob[2]) %>% round(2)
 
 
 pl <- ggplot(curve2 %>% funData2long()) +
@@ -152,81 +155,6 @@ pl <- ggplot(curve2 %>% funData2long()) +
   mytheme
 
 ggsave(file.path(plots_dir, str_c("curve2", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-pl <- ggplot((0.5*(curve + curve2)) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  # geom_point(col = 'blue') +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curveMean2", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-
-
-pl <- ggplot((0.1 * ob[3]) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("add3", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-pl <- ggplot((0.1 * ob[3] + curve) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curve_plus_add3", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-pl <- ggplot((-0.5 * curve) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  # geom_point(col = 'blue') +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curvem05", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-
-
-
-
-
-pl <- ggplot(ob[2] %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(-1.3, 1.3) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("mul2", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-pl <- ggplot((ob[2] * curve) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  # ylim(-0.5, 0.5) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curve_times_mul2", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
@@ -307,55 +235,12 @@ ggsave(file.path(plots_dir, str_c("curveRecPoly.png")), pl,
 
 # shape descr
 
-s <- scalarProduct(curve, ob)
-s %>% round(2)
-
-ylim <- c(-0.2, 0.8)
-
-pl <- ggplot((curve) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curve_shape", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
-
-
-s <- scalarProduct(curve + 0.3, ob)
-s[1:4] %>% round(2)
-
-pl <- ggplot((curve + 0.3) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curve_plus03_shape", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
-
 
 curveRev <- curve
 nSamp <- length(curve@argvals[[1]])
 curveRev@X[1,] <- curve@X[1, nSamp:1]
 s <- scalarProduct(curveRev, ob)
 s[1:4] %>% round(2)
-
-pl <- ggplot((curveRev) %>% funData2long()) +
-  aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  ylim(ylim) +
-  xlab("time") + ylab("") +
-  mytheme
-
-ggsave(file.path(plots_dir, str_c("curveRev_shape", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
-)
 
 pl <- ggplot(ob %>% extractObs(obs = 1:4) %>% funData2long()) +
   aes(time, value) +
@@ -460,14 +345,14 @@ emm <- lapply(seq_along(emmList),
 
 predCurves <- emm %>% 
   group_by(Category) %>% 
-  # reframe(funData2long(meanCurve + s1 * ob[1])) %>%
-  reframe(funData2long(meanCurve + s1 * ob[1] + s2 * ob[2] + s3 * ob[3] + s4 * ob[4])) %>%
+  reframe(funData2long(meanCurve + s1 * ob[1])) %>%
+  # reframe(funData2long(meanCurve + s1 * ob[1] + s2 * ob[2] + s3 * ob[3] + s4 * ob[4])) %>%
   # reframe(funData2long(meanCurve + mean(polyScores$s1, na.rm = TRUE) * ob[1] +
   #                        mean(polyScores$s2, na.rm = TRUE) * ob[2] +
   #                        mean(polyScores$s3, na.rm = TRUE) * ob[3] +
   #                        s4 * ob[4])) %>% 
-  select(-ID) %>% 
-  rename(time = argvals, y = X)
+  select(-id) %>% 
+  rename(y = value)
 
 
 
@@ -481,7 +366,7 @@ pl <- ggplot(predCurves) +
   theme(text = element_text(size = 15),
         legend.position = "bottom")
   
-ggsave(file.path(plots_dir, str_c("emmCurves_s1234", '.png')), pl,
+ggsave(file.path(plots_dir, str_c("emmCurves_Poly_s1", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 

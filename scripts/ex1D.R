@@ -24,7 +24,7 @@ nCurves <- curves %>% distinct(curveId) %>% nrow()
 
 
 # plot a few curves
-pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 20))) +
+pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 10))) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   scale_color_manual(values=Category.colors) +
@@ -63,6 +63,7 @@ pl <- ggplot(PCcurves) +
   facet_wrap(~ PC, nrow = 1,
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
   labs(color = expression(frac(s[k], sigma[k]))) +
+  labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   mytheme +
   theme(legend.position = "bottom")

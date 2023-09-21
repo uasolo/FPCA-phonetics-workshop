@@ -413,7 +413,7 @@ Michele Gubian
 <div class="quarto-layout-panel">
 <div class="quarto-layout-row quarto-layout-valign-top">
 <div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<p><img data-src="plots/curves.png"></p>
+<p><img data-src="plots/ex1D.1.curves.png"></p>
 </div>
 <div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
 <ul>
@@ -534,7 +534,7 @@ C-&gt;D
 <div class="fragment">
 <!-- -->
 <h3 id="fpca-lmer">FPCA + LMER</h3>
-<p><img data-src="plots/emmCurves_PCs1.png"></p>
+<p><img data-src="plots/ex1D.1.pred_curves.png"></p>
 </div>
 </div>
 </div>
@@ -1132,7 +1132,7 @@ B-&gt;C
 <section id="a-curve-dataset" class="slide level2">
 <h2>A curve dataset</h2>
 
-<img data-src="plots/curves.png" class="r-stretch"></section>
+<img data-src="plots/ex1D.1.curves.png" class="r-stretch"></section>
 <section id="subtract-the-mean-curve" class="slide level2">
 <h2>Subtract the mean curve</h2>
 <div class="quarto-layout-panel">
@@ -1230,7 +1230,7 @@ B-&gt;C
 </div>
 </section>
 <section id="fit-a-regression-model-on-s1" class="slide level2">
-<h2>Fit a regression model on s1</h2>
+<h2>Fit a regression model on s<sub>1</sub></h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> polyScores)</span>
 <span id="cb2-2"><a href="#cb2-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1259,7 +1259,7 @@ F-statistic:  2440 on 1 and 96 DF,  p-value: &lt; 2.2e-16</code></pre>
 </div>
 </section>
 <section id="model-predictions-on-s1" class="slide level2">
-<h2>Model predictions on s1</h2>
+<h2>Model predictions on s<sub>1</sub></h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">library</span>(emmeans)</span>
 <span id="cb4-2"><a href="#cb4-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1278,19 +1278,19 @@ $contrasts
 </div>
 </section>
 <section id="reconstruct-predicted-curves-from-s1" class="slide level2">
-<h2>Reconstruct predicted curves from s1</h2>
-<p><span class="math display">\[ f_{PEAK}(t) = \mu(t) + s_{1, PEAK} \cdot B1(t)\]</span> <span class="math display">\[ f_{NO\_PEAK}(t) = \mu(t) + s_{1, NO\_PEAK} \cdot B1(t)\]</span></p>
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
+<p><span class="math display">\[ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot B1(t)\]</span> <span class="math display">\[ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot B1(t)\]</span></p>
 </section>
 <section id="reconstruct-predicted-curves-from-s1-1" class="slide level2">
-<h2>Reconstruct predicted curves from s1</h2>
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
 
 <img data-src="plots/emmCurves_Poly_s1.png" class="r-stretch"></section>
 <section id="reconstruct-predicted-curves-from-s1-s2-s3-s4" class="slide level2">
-<h2>Reconstruct predicted curves from s1, s2, s3, s4</h2>
-<p><span class="math display">\[ f_{PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, PEAK} \cdot Bk(t)\]</span> <span class="math display">\[ f_{NO\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, NO\_PEAK} \cdot Bk(t)\]</span></p>
+<h2>Reconstruct predicted curves from s<sub>1</sub>, s<sub>2</sub>, s<sub>3</sub>, s<sub>4</sub></h2>
+<p><span class="math display">\[ f_{ONE\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, ONE\_PEAK} \cdot Bk(t)\]</span> <span class="math display">\[ f_{TWO\_PEAKS}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, TWO\_PEAKS} \cdot Bk(t)\]</span></p>
 </section>
 <section id="reconstruct-predicted-curves-from-s1-s2-s3-s4-1" class="slide level2">
-<h2>Reconstruct predicted curves from s1, s2, s3, s4</h2>
+<h2>Reconstruct predicted curves from s<sub>1</sub>, s<sub>2</sub>, s<sub>3</sub>, s<sub>4</sub></h2>
 
 <img data-src="plots/emmCurves_Poly_s1234.png" class="r-stretch"></section></section>
 <section>
@@ -1391,7 +1391,7 @@ $contrasts
 
 <img data-src="plots/ex1D.1.FPCA_curves.png" class="r-stretch"></section>
 <section id="fit-a-regression-model-on-s1-1" class="slide level2">
-<h2>Fit a regression model on s1</h2>
+<h2>Fit a regression model on s<sub>1</sub></h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
 <span id="cb6-2"><a href="#cb6-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -1410,13 +1410,51 @@ $contrasts
 </div>
 </section>
 <section id="reconstruct-predicted-curves-from-s1-2" class="slide level2">
-<h2>Reconstruct predicted curves from s1</h2>
-<p><span class="math display">\[ f_{PEAK}(t) = \mu(t) + s_{1, PEAK} \cdot PC1(t)\]</span> <span class="math display">\[ f_{NO\_PEAK}(t) = \mu(t) + s_{1, NO\_PEAK} \cdot PC1(t)\]</span></p>
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
+<p><span class="math display">\[ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot PC1(t)\]</span> <span class="math display">\[ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot PC1(t)\]</span></p>
 </section>
 <section id="reconstruct-predicted-curves-from-s1-3" class="slide level2">
-<h2>Reconstruct predicted curves from s1</h2>
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
 
-<img data-src="plots/emmCurves_PCs1.png" class="r-stretch"></section></section>
+<img data-src="plots/ex1D.1.pred_curves.png" class="r-stretch"></section>
+<section id="three-variances" class="slide level2">
+<h2>Three Variances</h2>
+<div style="font-size: 80%;">
+<div>
+<ol type="1">
+<li class="fragment">PCs are ordered by decreasing prop. of explained variance</li>
+<li class="fragment">Score variance (or st. dev.)</li>
+<li class="fragment">Prop. of variance explained by a regression model predicting a score (<span class="math inline">\(R^2\)</span>)</li>
+</ol>
+<ul>
+<li class="fragment"><span style="color:red">These three variances are not related to one another</span>
+<ul>
+<li class="fragment">e.g.&nbsp;PC7 explains 0.1% of the var. but a LMER predicting <span class="math inline">\(s_7\)</span> from a given set of predictors (unknown to FPCA) explains 90% of the variance</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="relation-to-pca" class="slide level2">
+<h2>Relation to PCA</h2>
+<div>
+<div style="font-size: 80%;">
+<ul>
+<li class="fragment">Functional PCA extends PCA from the domain of vectors to the domain of functions</li>
+<li class="fragment">The key difference is in the definition of scalar product between functions instead of vectors
+<ul>
+<li class="fragment">PCs are functions instead of vectors</li>
+</ul></li>
+<li class="fragment">All the other concepts stay the same
+<ul>
+<li class="fragment">PCs are ordered by decreasing proportion of explained variance</li>
+<li class="fragment">Input data are approximated by linear combinations of PCs determined by scores</li>
+<li class="fragment">PCs are orthogonal to one another</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</section></section>
 <section>
 <section id="multi-dimensional-fpca" class="title-slide slide level1 center">
 <h1>Multi-dimensional FPCA</h1>
