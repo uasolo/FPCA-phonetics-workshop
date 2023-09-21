@@ -8,21 +8,22 @@ library(mgcv)
 library(itsadug)
 
 
-plotIntegral <- function(fd, plusColor = 'darkgreen', minusColor = 'lawngreen') {
+plotIntegral <- function(fd, plusColor = 'darkblue', minusColor = 'lightskyblue') {
   return(
     fd %>% 
       funData2long1() %>% 
       ggplot() +
       aes(time, value) +
       geom_line() +
-      geom_ribbon(aes(ymax = ifelse(X > 0, X, 0), ymin = 0), fill = plusColor) +
-      geom_ribbon(aes(ymin = ifelse(X < 0, X, 0), ymax = 0), fill = minusColor) +
+      geom_ribbon(aes(ymax = ifelse(value > 0, value, 0), ymin = 0), fill = plusColor) +
+      geom_ribbon(aes(ymin = ifelse(value < 0, value, 0), ymax = 0), fill = minusColor) +
       xlab("") +
       ylab("") 
   )
 }
 
-gplots::col2hex("lawngreen")
+gplots::col2hex("lightskyblue") 
+# "#00008B"  "#87CEFA"
 
 zeroFun <- function(argvals) {
   argvals <- as.numeric(argvals)
@@ -71,33 +72,76 @@ ggsave(file.path(plots_dir, str_c("f", '.png')), pl,
 )
 
 ex <- 1 # change according to ex number
-curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
+curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
+  mutate(across(c(curveId, Category), ~ factor(.x)))
+
+# curves <- curves %>% 
+#   mutate(Category = fct_recode(Category, ONE_PEAK = "NO_PEAK", TWO_PEAKS = "PEAK")) 
+  
+# write_csv(curves, file.path(data_dir, paste("ex1D", ex, "csv", sep = '.')))
+
 
 # GAM
 mod <- bam(y ~ Category + s(time, by = Category),
            data = curves  %>% 
              mutate(Category = factor(Category)))
 plot_smooth(mod, view = "time", plot_all = "Category", col = Category.colors)
-plot_diff(mod, view = "time", comp = list(Category = c("PEAK", "NO_PEAK")))
-# same manually, 750x500
+plot_diff(mod, view = "time", comp = list(Category = c("ONE_PEAK", "TWO_PEAKS")))
+# save manually, 750x500
 
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
   as.funData()
 
 
-curvesFun <- funData(argvals = seq(0, 2, by = 0.01),
-                     X = curves %>%
-                       complete(curveId,  time) %>% 
-                       pivot_wider(id_cols = curveId, names_from = time, values_from = y) %>% 
-                       select(!curveId) %>% 
-                       as.matrix()
-) %>% 
-  approxNA()
+curve <- curvesFun[1] %>% approxNA()
+curve2 <- curvesFun[51] %>% approxNA()
 
-curve <- curvesFun[1]
-curve2 <- curvesFun[51]
+# Orth basis
+argvals<-seq(0,2,0.01)
+ob <- eFun(argvals,M=20,type="Poly")
 
-ylim <- c(-0.2, 0.5)
+
+arith.colors <- c("black", "red", "blue")
+
+# Compose func operation elements
+
+
+
+operands <- list( # change operands here
+  curve # op1 
+  , ob[2] # op2  ,0.2 * ob[2]  curve2
+  # ,curve * ob[2] # , 0.5 * (curve + curve2)  # result
+  ) %>% 
+  lapply(function(f) {
+    funData2long(f) %>% select(!id)
+  }) %>% 
+  bind_rows(.id = "id") %>% 
+  mutate(id = factor(id))
+
+
+ylim <- c(-0.3, 0.5)
+ylim <- c(-1.2, 1.2)
+pl <- ggplot(operands) +
+  aes(time , value, group = id, color = id) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(values=arith.colors) +
+  ylim(ylim) +
+  geom_hline(yintercept = 0, linetype = "dotted") +
+  xlab("time (s)") + ylab("y") +
+  mytheme +
+  theme(legend.position = "none")
+
+ggsave(file.path(plots_dir, str_c("scalarprod1", '.png')), pl,
+       width = 1500, height = 1200, units = "px"
+)
+
+pl <- plotIntegral(curve * ob[2]) +
+  xlab("time (s)") + ylab("y") +
+  mytheme +
+  theme(legend.position = "none")
+
+
+
 
 pl <- ggplot(curve2 %>% funData2long()) +
   aes(time , value) +
@@ -124,8 +168,6 @@ ggsave(file.path(plots_dir, str_c("curveMean2", '.png')), pl,
 )
 
 
-argvals<-seq(0,2,0.01)
-ob <- eFun(argvals,M=20,type="Poly")
 
 pl <- ggplot((0.1 * ob[3]) %>% funData2long()) +
   aes(time, value) +
@@ -251,12 +293,12 @@ for (i in c(1:4, 8, 12, 16, 20)) {
   )
 }
 
-pl <- reconstruction(s, ob) %>%
+pl <- reconstruction(s[1:4], extractObs(ob, 1:4)) %>%
   funData2long1() %>% 
   ggplot() +
   aes(time, value) +
-  geom_line(col = 'black', linewidth = 1) +
-  xlab("time") + ylab("") +
+  geom_line(col = 'blue', linewidth = 1) +
+  xlab("time (s)") + ylab("") +
   mytheme
 
 ggsave(file.path(plots_dir, str_c("curveRecPoly.png")), pl,

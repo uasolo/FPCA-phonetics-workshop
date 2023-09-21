@@ -12,7 +12,7 @@
 
   <meta name="author" content="Michele Gubian">
   <meta name="dcterms.date" content="2023-09-25">
-  <title>Orthogonal Projections and Functional PCA</title>
+  <title>Functional PCA</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -391,7 +391,7 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Orthogonal Projections and Functional PCA</h1>
+  <h1 class="title">Functional PCA</h1>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -420,7 +420,7 @@ Michele Gubian
 <li class="fragment">What is the shape of the typical curve for each Category?</li>
 <li class="fragment">Are the Category levels significantly different?</li>
 <li class="fragment">If so, where and how?</li>
-<li class="fragment">Are there other systematic shape variations in the dataset?</li>
+<li class="fragment">Are there other systematic shape variations across curves?</li>
 </ul>
 </div>
 </div>
@@ -439,44 +439,6 @@ Michele Gubian
 </section>
 <section id="gamms-1" class="slide level2">
 <h2>GAMMs</h2>
-<div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="fu">library</span>(mgcv)</span>
-<span id="cb2-2"><a href="#cb2-2"></a>mod <span class="ot">&lt;-</span> <span class="fu">bam</span>(y <span class="sc">~</span> Category <span class="sc">+</span> <span class="fu">s</span>(time, <span class="at">by =</span> Category),</span>
-<span id="cb2-3"><a href="#cb2-3"></a>           <span class="at">data =</span> curves)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</div>
-
-<img data-src="plots/plot_diff.png" class="r-stretch"></section>
-<section id="gamms-2" class="slide level2">
-<h2>GAMMs</h2>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<!-- -->
-<h3 id="pros">PROs</h3>
-<div>
-<ul>
-<li class="fragment">From raw sampled curves to model</li>
-<li class="fragment">Native mixed model</li>
-</ul>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<!-- -->
-<h3 id="cons">CONs</h3>
-<div>
-<ul>
-<li class="fragment">Not easy with multidimensional data</li>
-<li class="fragment">No modelling of duration</li>
-<li class="fragment">Can be computationally heavy</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-</section>
-<section id="gamms-3" class="slide level2">
-<h2>GAMMs</h2>
-<div class="fragment">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -512,11 +474,9 @@ B-&gt;C
 </div>
 </div>
 </div>
-</div>
 </section>
 <section id="functional-pca" class="slide level2">
 <h2>Functional PCA</h2>
-<div class="fragment">
 <div class="cell">
 <div class="cell-output-display">
 <div>
@@ -560,37 +520,68 @@ C-&gt;D
 </div>
 </div>
 </div>
+</section>
+<section id="results-spoiler" class="slide level2">
+<h2>Results (spoiler)</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="fragment">
+<!-- -->
+<h3 id="gamms-2">GAMMs</h3>
+<p><img data-src="plots/plot_smooth.png"></p>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="fragment">
+<!-- -->
+<h3 id="fpca-lmer">FPCA + LMER</h3>
+<p><img data-src="plots/emmCurves_PCs1.png"></p>
+</div>
+</div>
 </div>
 </section>
-<section id="functional-pca-1" class="slide level2">
-<h2>Functional PCA</h2>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<!-- -->
-<h3 id="pros-1">PROs</h3>
-<div>
-<ul>
-<li class="fragment">Native multidimensional data</li>
-<li class="fragment"><span style="color:red">Can model duration*</span></li>
-<li class="fragment">Computationally light</li>
-<li class="fragment">Produces an intermediate model</li>
-</ul>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
-<!-- -->
-<h3 id="cons-1">CONs</h3>
-<div>
-<ul>
-<li class="fragment">Requires two steps</li>
-<li class="fragment">Not native mixed model</li>
-<li class="fragment">Intermediate model may not be effective</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
+<section id="compareMethods-id" class="slide level2" data-menu-title="GAMMs vs. FPCA + LMER">
+<h2></h2>
+<table style="width:100%;">
+<colgroup>
+<col style="width: 36%">
+<col style="width: 31%">
+<col style="width: 31%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>GAMMs</th>
+<th>FPCA + LMER</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Complexity</td>
+<td>1 step</td>
+<td>2 steps</td>
+</tr>
+<tr class="even">
+<td>Mixed models</td>
+<td>yes</td>
+<td>no + yes</td>
+</tr>
+<tr class="odd">
+<td>Computation</td>
+<td>heavy</td>
+<td>light</td>
+</tr>
+<tr class="even">
+<td>Multidimensional curves</td>
+<td>not really</td>
+<td>yes</td>
+</tr>
+<tr class="odd">
+<td><span style="color:red">Shape + duration analysis</span></td>
+<td><span style="color:red">no</span></td>
+<td><span style="color:red">yes</span></td>
+</tr>
+</tbody>
+</table>
 </section></section>
 <section>
 <section id="functions" class="title-slide slide level1 center">
@@ -711,231 +702,154 @@ B-&gt;C
 <h1>Operations on functions</h1>
 
 </section>
-<section id="arithmetic" class="slide level2">
-<h2>Arithmetic</h2>
-<h3 id="addition">Addition</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<section id="addition" class="slide level2">
+<h2>Addition</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(f(t) + \color{red}{g(t)}\)</span></figcaption>
+<p><img data-src="plots/add1.png"></p>
 </figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/add2.png"></p>
-</figure>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(f(t) + g(t)\)</span></figcaption>
-<p><img data-src="plots/curve_plus_add2.png"></p>
-</figure>
-</div>
-</div>
 </div>
 </div>
 </section>
-<section id="arithmetic-1" class="slide level2">
-<h2>Arithmetic</h2>
-<h3 id="addition-1">Addition</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<section id="addition-1" class="slide level2">
+<h2>Addition</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(f(t) + \color{red}{g(t)} = \color{blue}{y(t)}\)</span></figcaption>
+<p><img data-src="plots/add1_res.png"></p>
 </figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/add3.png"></p>
-</figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(f(t) + g(t)\)</span></figcaption>
-<p><img data-src="plots/curve_plus_add3.png"></p>
-</figure>
-</div>
-</div>
 </div>
 </div>
 </section>
-<section id="arithmetic-2" class="slide level2">
-<h2>Arithmetic</h2>
-<h3 id="multiplication-by-a-scalar">Multiplication by a scalar</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<section id="multiplication-by-a-scalar" class="slide level2">
+<h2>Multiplication by a scalar</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(\color{red}{0.5} \cdot f(t)\)</span></figcaption>
+<p><img data-src="plots/mul1.png"></p>
 </figure>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(0.5 \cdot f(t)\)</span></figcaption>
-<p><img data-src="plots/curve05.png"></p>
-</figure>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(-0.5 \cdot f(t)\)</span></figcaption>
-<p><img data-src="plots/curvem05.png"></p>
-</figure>
-</div>
-</div>
 </div>
 </div>
 </section>
-<section id="arithmetic-3" class="slide level2">
-<h2>Arithmetic</h2>
-<h3 id="mean-curve">Mean curve</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<section id="multiplication-by-a-scalar-1" class="slide level2">
+<h2>Multiplication by a scalar</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}\)</span></figcaption>
+<p><img data-src="plots/mul1_res.png"></p>
 </figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/curve2.png"></p>
-</figure>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(\mu(t) = \frac{1}{2} \cdot (f(t) + g(t))\)</span></figcaption>
-<p><img data-src="plots/curveMean2.png"></p>
-</figure>
-</div>
-</div>
 </div>
 </div>
 </section>
-<section id="arithmetic-4" class="slide level2">
-<h2>Arithmetic</h2>
-<h3 id="multiplication-by-a-function">Multiplication by a function</h3>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<section id="multiplication-by-a-scalar-2" class="slide level2">
+<h2>Multiplication by a scalar</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}\)</span></figcaption>
+<p><img data-src="plots/mul2_res.png"></p>
 </figure>
 </div>
 </div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+</section>
+<section id="mean-curve" class="slide level2">
+<h2>Mean curve</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/mul2.png"></p>
+<figcaption><span class="math inline">\(\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})\)</span></figcaption>
+<p><img data-src="plots/mean1.png"></p>
 </figure>
 </div>
 </div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+</section>
+<section id="mean-curve-1" class="slide level2">
+<h2>Mean curve</h2>
+<div class="column" style="width:75%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t) \cdot g(t)\)</span></figcaption>
-<p><img data-src="plots/curve_times_mul2.png"></p>
+<figcaption><span class="math inline">\(\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}\)</span></figcaption>
+<p><img data-src="plots/mean1_res.png"></p>
 </figure>
 </div>
 </div>
+</section>
+<section id="multiplication-by-a-function" class="slide level2">
+<h2>Multiplication by a function</h2>
+<div class="column" style="width:75%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(t) \cdot \color{red}{g(t)}\)</span></figcaption>
+<p><img data-src="plots/funmul1.png"></p>
+</figure>
+</div>
+</div>
+</section>
+<section id="multiplication-by-a-function-1" class="slide level2">
+<h2>Multiplication by a function</h2>
+<div class="column" style="width:75%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(t) \cdot \color{red}{g(t)} = \color{blue}{y(t)}\)</span></figcaption>
+<p><img data-src="plots/funmul1_res.png"></p>
+</figure>
 </div>
 </div>
 </section>
 <section id="scalar-product-1" class="slide level2">
 <h2>Scalar product <sup>1</sup></h2>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<div class="columns">
+<div class="column" style="width:60%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
-</figure>
-</div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/mul2.png"></p>
-</figure>
-</div>
-</div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(\langle f(t), g(t) \rangle\)</span></figcaption>
-<p><img data-src="plots/curvePoly2Int.png"></p>
+<figcaption><span class="math inline">\(\langle f(t), \color{red}{g(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/funmul1.png"></p>
 </figure>
 </div>
 </div>
 </div>
-</div>
-<div class="fragment">
-<p><span class="math inline">\(\langle f(t), g(t) \rangle =\)</span> <span style="color:#006400;">area above 0</span> <span class="math inline">\(-\)</span> <span style="color:#7CFC00;">area below 0</span> <span class="math inline">\(= -0.15\)</span></p>
-</div>
-<aside><ol class="aside-footnotes"><li id="fn1"><p>a.k.a. dot prodoct, a.k.a. inner product</p></li></ol></aside></section>
+<aside><ol class="aside-footnotes"><li id="fn1"><p>a.k.a. dot product, a.k.a. inner product</p></li></ol></aside></section>
 <section id="scalar-product" class="slide level2">
 <h2>Scalar product</h2>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<div class="columns">
+<div class="column" style="width:60%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
-<p><img data-src="plots/curve.png"></p>
+<figcaption><span class="math inline">\(\langle f(t), \color{red}{g(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/scalarprod1.png"></p>
 </figure>
 </div>
+</div><div class="column" style="width:40%;">
+<div class="fragment">
+<p><span class="math inline">\(\langle f(t), \color{red}{g(t)} \rangle =\)</span></p>
+<p><span style="color:#00008B;">area above 0</span> <span class="math inline">\(-\)</span></p>
+<p><span style="color:#87CEFA;">area below 0</span> <span class="math inline">\(=\)</span></p>
+<p><span class="math inline">\(-0.15\)</span></p>
 </div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+</div>
+</div>
+</section>
+<section id="scalar-product-2" class="slide level2">
+<h2>Scalar product</h2>
+<div class="columns">
+<div class="column" style="width:60%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(g(t)\)</span></figcaption>
-<p><img data-src="plots/mul2.png"></p>
+<figcaption><span class="math inline">\(\langle f(t), \color{red}{g(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/scalarprod1.png"></p>
 </figure>
 </div>
-</div>
-<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<figcaption><span class="math inline">\(\langle f(t), g(t) \rangle\)</span></figcaption>
-<p><img data-src="plots/curvePoly2Int.png"></p>
-</figure>
+</div><div class="column" style="width:40%;">
+<p><span class="math inline">\(\langle f(t), \color{red}{g(t)} \rangle =\)</span></p>
+<p><span class="math inline">\(\int_0^2 f(t) \cdot \color{red}{g(t)} \; dt =\)</span></p>
+<p><span class="math inline">\(-0.15\)</span></p>
 </div>
 </div>
-</div>
-</div>
-<p><span class="math inline">\(\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15\)</span></p>
 </section></section>
 <section>
 <section id="orthogonal-basis" class="title-slide slide level1 center">
@@ -956,9 +870,6 @@ B-&gt;C
 <p><img data-src="plots/Poly2by2.png" height="500"></p>
 </figure>
 </div>
-</section>
-<section id="orthogonal-basis-3" class="slide level2">
-<h2>Orthogonal basis</h2>
 </section>
 <section id="orthogonal-projections" class="slide level2">
 <h2>Orthogonal projections</h2>
@@ -1045,131 +956,173 @@ B-&gt;C
 <h1>Scores as shape descriptors</h1>
 
 </section>
-<section id="scores-as-shape-descriptors-1" class="slide level2">
-<h2>Scores as shape descriptors</h2>
+<section id="score-s1" class="slide level2">
+<h2>Score s<sub>1</sub></h2>
 <div class="columns">
-<div class="column" style="width:40%;">
+<div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption><span class="math inline">\(f(t)\)</span></figcaption>
 <p><img data-src="plots/curve_shape.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:20%;">
+</div><div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption>Basis</figcaption>
-<p><img data-src="plots/PolyAll4.png"></p>
+<figcaption><span class="math inline">\(\color{red}{B_1(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly1.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:40%;">
-<table>
-<caption>Scores</caption>
-<tbody>
-<tr class="odd">
-<td><span class="math inline">\(s_1\)</span></td>
-<td style="text-align: right;">0.30</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_2\)</span></td>
-<td style="text-align: right;">-0.15</td>
-</tr>
-<tr class="odd">
-<td><span class="math inline">\(s_3\)</span></td>
-<td style="text-align: right;">-0.05</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_4\)</span></td>
-<td style="text-align: right;">0.05</td>
-</tr>
-</tbody>
-</table>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\langle f(t), \color{red}{B_1(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape1s1_res.png"></p>
+</figure>
 </div>
 </div>
+</div>
+<p><span class="math display">\[s_1 = 0.30\]</span></p>
 </section>
-<section id="scores-as-shape-descriptors-2" class="slide level2">
-<h2>Scores as shape descriptors</h2>
+<section id="score-s1-1" class="slide level2">
+<h2>Score s<sub>1</sub></h2>
 <div class="columns">
-<div class="column" style="width:40%;">
+<div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption><span class="math inline">\(f(t) + 0.3\)</span></figcaption>
 <p><img data-src="plots/curve_plus03_shape.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:20%;">
+</div><div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption>Basis</figcaption>
-<p><img data-src="plots/PolyAll4.png"></p>
+<figcaption><span class="math inline">\(\color{red}{B_1(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly1.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:40%;">
-<table>
-<caption>Scores</caption>
-<tbody>
-<tr class="odd">
-<td><span class="math inline">\(s_1\)</span></td>
-<td style="text-align: right;"><span style="color:red">0.72</span></td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_2\)</span></td>
-<td style="text-align: right;">-0.15</td>
-</tr>
-<tr class="odd">
-<td><span class="math inline">\(s_3\)</span></td>
-<td style="text-align: right;">-0.05</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_4\)</span></td>
-<td style="text-align: right;">0.05</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</section>
-<section id="scores-as-shape-descriptors-3" class="slide level2">
-<h2>Scores as shape descriptors</h2>
-<div class="columns">
-<div class="column" style="width:40%;">
+</div><div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(f(2 - t)\)</span></figcaption>
+<figcaption><span class="math inline">\(\langle f(t) + 0.3, \color{red}{B_1(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape2s1_res.png"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><span class="math display">\[s_1 = 0.72\]</span></p>
+</section>
+<section id="score-s1-2" class="slide level2">
+<h2>Score s<sub>1</sub></h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(2.0 - t)\)</span></figcaption>
 <p><img data-src="plots/curveRev_shape.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:20%;">
+</div><div class="column" style="width:33%;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption>Basis</figcaption>
-<p><img data-src="plots/PolyAll4.png"></p>
+<figcaption><span class="math inline">\(\color{red}{B_1(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly1.png"></p>
 </figure>
 </div>
-</div><div class="column" style="width:40%;">
-<table>
-<caption>Scores</caption>
-<tbody>
-<tr class="odd">
-<td><span class="math inline">\(s_1\)</span></td>
-<td style="text-align: right;">0.30</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_2\)</span></td>
-<td style="text-align: right;"><span style="color:red;">+0.15</span></td>
-</tr>
-<tr class="odd">
-<td><span class="math inline">\(s_3\)</span></td>
-<td style="text-align: right;">-0.05</td>
-</tr>
-<tr class="even">
-<td><span class="math inline">\(s_4\)</span></td>
-<td style="text-align: right;"><span style="color:red;">-0.05</span></td>
-</tr>
-</tbody>
-</table>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\langle f(2.0 - t), \color{red}{B_1(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape3s1_res.png"></p>
+</figure>
 </div>
 </div>
+</div>
+<p><span class="math display">\[s_1 = 0.30\]</span></p>
+</section>
+<section id="score-s2" class="slide level2">
+<h2>Score s<sub>2</sub></h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(t)\)</span></figcaption>
+<p><img data-src="plots/curve_shape.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\color{red}{B_2(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly2.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\langle f(t), \color{red}{B_2(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape1s2_res.png"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><span class="math display">\[s_1 = -0.15\]</span></p>
+</section>
+<section id="score-s2-1" class="slide level2">
+<h2>Score s<sub>2</sub></h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(t) + 0.3\)</span></figcaption>
+<p><img data-src="plots/curve_plus03_shape.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\color{red}{B_2(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly2.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\langle f(t) + 0.3, \color{red}{B_2(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape2s2_res.png"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><span class="math display">\[s_2 = -0.15\]</span></p>
+</section>
+<section id="score-s2-2" class="slide level2">
+<h2>Score s<sub>2</sub></h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f(2.0 - t)\)</span></figcaption>
+<p><img data-src="plots/curveRev_shape.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\color{red}{B_2(t)}\)</span></figcaption>
+<p><img data-src="plots/Poly2.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(\langle f(2.0 - t), \color{red}{B_2(t)} \rangle\)</span></figcaption>
+<p><img data-src="plots/shape3s2_res.png"></p>
+</figure>
+</div>
+</div>
+</div>
+<p><span class="math display">\[s_2 = 0.15\]</span></p>
 </section></section>
 <section>
 <section id="statistics-with-orthogonal-projections" class="title-slide slide level1 center">
@@ -1279,8 +1232,8 @@ B-&gt;C
 <section id="fit-a-regression-model-on-s1" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> polyScores)</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> polyScores)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell fragment">
 <div class="cell-output cell-output-stdout">
@@ -1308,8 +1261,8 @@ F-statistic:  2440 on 1 and 96 DF,  p-value: &lt; 2.2e-16</code></pre>
 <section id="model-predictions-on-s1" class="slide level2">
 <h2>Model predictions on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="fu">library</span>(emmeans)</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="fu">library</span>(emmeans)</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$emmeans
  Category  emmean       SE df lower.CL upper.CL
@@ -1341,11 +1294,11 @@ $contrasts
 
 <img data-src="plots/emmCurves_Poly_s1234.png" class="r-stretch"></section></section>
 <section>
-<section id="functional-pca-2" class="title-slide slide level1 center">
+<section id="functional-pca-1" class="title-slide slide level1 center">
 <h1>Functional PCA</h1>
 
 </section>
-<section id="functional-pca-3" class="slide level2">
+<section id="functional-pca-2" class="slide level2">
 <h2>Functional PCA</h2>
 <div>
 <ol type="1">
@@ -1440,8 +1393,8 @@ $contrasts
 <section id="fit-a-regression-model-on-s1-1" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>$emmeans
  Category  emmean      SE df lower.CL upper.CL
@@ -1504,8 +1457,8 @@ $contrasts
 <section id="fit-a-regression-model-on-s1-2" class="slide level2">
 <h2>Fit a regression model on s1</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> pcScores)</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <table>
 <thead>

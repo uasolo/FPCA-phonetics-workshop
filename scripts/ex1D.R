@@ -1,6 +1,5 @@
 library(fda)
 library(funData)
-library(fpca)
 library(tidyverse)
 library(landmarkregUtils)
 library(emmeans)
@@ -10,7 +9,7 @@ library(itsadug)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "forestgreen")
+Category.colors <- c("slategray4", "orangered")
 
 
 plots_dir <- "presentations/plots/"

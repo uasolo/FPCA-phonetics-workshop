@@ -8,7 +8,7 @@ library(emmeans)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "forestgreen")
+Category.colors <- c("slategray4", "orangered")
 
 
 plots_dir <- "presentations/plots/"

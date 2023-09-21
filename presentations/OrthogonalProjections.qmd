@@ -1,5 +1,5 @@
 ---
-title: "Orthogonal Projections and Functional PCA"
+title: "Functional PCA"
 author: "Michele Gubian"
 date: "25 September 2023"
 date-format: long
@@ -24,7 +24,7 @@ tab-cap-location: top
 * What is the shape of the typical curve for each Category?
 * Are the Category levels significantly different?
 * If so, where and how?
-* Are there other systematic shape variations in the dataset?
+* Are there other systematic shape variations across curves?
 :::
 
 :::
@@ -45,47 +45,6 @@ mod <- bam(y ~ Category + s(time, by = Category),
 
 ## GAMMs
 
-```{r}
-#| echo: true
-#| eval: false
-library(mgcv)
-mod <- bam(y ~ Category + s(time, by = Category),
-           data = curves)
-```
-![](plots/plot_diff.png)
-
-## GAMMs 
-
-::: {layout-ncol="2"}
-::: fragment
-### PROs
-
-::: {.incremental}
-* From raw sampled curves to model
-* Native mixed model
-
-:::
-
-:::
-
-::: fragment
-
-### CONs
- 
-::: {.incremental}
-
-* Not easy with multidimensional data
-* No modelling of duration
-* Can be computationally heavy
-
-:::
-:::
-
-:::
-
-## GAMMs
-
-::: fragment
 ```{dot}
 
 digraph G {
@@ -98,11 +57,9 @@ rankdir=LR;
   
 }
 ```
-:::
 
 ## Functional PCA
 
-::: fragment
 ```{dot}
 digraph G {
 rankdir=LR;
@@ -116,43 +73,40 @@ rankdir=LR;
   
 }
 ```
+
+## Results (spoiler)
+
+:::: {.columns}
+
+::: {.column width="45%"}
+::: fragment
+### GAMMs
+![](plots/plot_smooth.png)
 :::
 
-## Functional PCA
+:::
 
-::: {layout-ncol="2"}
+::: {.column width="45%"}
 
 ::: fragment
-
-### PROs
- 
-::: {.incremental}
-
-* Native multidimensional data
-* [Can model duration*]{style="color:red"}
-* Computationally light
-* Produces an intermediate model 
-
-:::
-:::
-
-
-
-
-::: fragment
-### CONs
-
-::: {.incremental}
-* Requires two steps
-* Not native mixed model
-* Intermediate model may not be effective
-
+### FPCA + LMER
+![](plots/emmCurves_PCs1.png)
 :::
 
 :::
 
+::::
 
-:::
+
+## {#compareMethods-id data-menu-title="GAMMs vs. FPCA + LMER"}
+
+|         | GAMMs | FPCA + LMER |
+|-------|------|------| 
+| Complexity | 1 step | 2 steps |
+| Mixed models | yes  | no + yes |
+| Computation  | heavy | light |
+| Multidimensional curves | not really | yes |
+| [Shape + duration analysis]{style="color:red"} | [no]{style="color:red"} | [yes]{style="color:red"} |
 
 
 
@@ -213,105 +167,136 @@ rankdir=LR;
 
 # Operations on functions
 
-## Arithmetic
 
-### Addition
+## Addition
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
+::: {.column width="75%"}
 
-![$g(t)$](plots/add2.png)
-
-::: fragment
-![$f(t) + g(t)$](plots/curve_plus_add2.png)
-:::
+![$f(t) + \color{red}{g(t)}$](plots/add1.png)
 :::
 
-## Arithmetic
+## Addition
 
-### Addition
+::: {.column width="75%"}
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
-
-![$g(t)$](plots/add3.png)
-
-![$f(t) + g(t)$](plots/curve_plus_add3.png)
+![$f(t) + \color{red}{g(t)} = \color{blue}{y(t)}$](plots/add1_res.png)
 :::
 
-## Arithmetic
 
-### Multiplication by a scalar
+## Multiplication by a scalar
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
+::: {.column width="75%"}
 
-::: fragment
-![$0.5 \cdot f(t)$](plots/curve05.png)
+![$\color{red}{0.5} \cdot f(t)$](plots/mul1.png)
 :::
 
-::: fragment
-![$-0.5 \cdot f(t)$](plots/curvem05.png)
-:::
-:::
+## Multiplication by a scalar
 
-## Arithmetic
+::: {.column width="75%"}
 
-### Mean curve
-
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
-
-![$g(t)$](plots/curve2.png)
-
-::: fragment
-![$\mu(t) = \frac{1}{2} \cdot (f(t) + g(t))$](plots/curveMean2.png)
-:::
+![$\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}$](plots/mul1_res.png)
 :::
 
-## Arithmetic
+## Multiplication by a scalar
 
-### Multiplication by a function
+::: {.column width="75%"}
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
-
-![$g(t)$](plots/mul2.png)
-
-::: fragment
-![$f(t) \cdot g(t)$](plots/curve_times_mul2.png)
-:::
+![$\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}$](plots/mul2_res.png)
 :::
 
+
+## Mean curve
+
+::: {.column width="75%"}
+
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})$](plots/mean1.png)
+:::
+
+
+## Mean curve
+
+::: {.column width="75%"}
+
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}$](plots/mean1_res.png)
+:::
+
+
+## Multiplication by a function
+
+::: {.column width="75%"}
+
+![$f(t) \cdot \color{red}{g(t)}$](plots/funmul1.png)
+:::
+
+
+## Multiplication by a function
+
+::: {.column width="75%"}
+
+![$f(t) \cdot \color{red}{g(t)} = \color{blue}{y(t)}$](plots/funmul1_res.png)
+:::
+
+ 
 ## Scalar product [^1]
 
-[^1]: a.k.a. dot prodoct, a.k.a. inner product
+[^1]: a.k.a. dot product, a.k.a. inner product
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
+:::: {.columns}
 
-![$g(t)$](plots/mul2.png)
+::: {.column width="60%"}
+
+![$\langle f(t), \color{red}{g(t)} \rangle$](plots/funmul1.png)
+:::
+
+::::
+
+## Scalar product 
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+![$\langle f(t), \color{red}{g(t)} \rangle$](plots/scalarprod1.png)
+:::
+
+::: {.column width="40%"}
 
 ::: fragment
-![$\langle f(t), g(t) \rangle$](plots/curvePoly2Int.png)
-:::
-:::
+$\langle f(t), \color{red}{g(t)} \rangle =$ 
 
-::: fragment
-$\langle f(t), g(t) \rangle =$ [area above 0]{style="color:#006400;"} $-$ [area below 0]{style="color:#7CFC00;"} $= -0.15$
-:::
+[area above 0]{style="color:#00008B;"}  $-$
 
-## Scalar product
+[area below 0]{style="color:#87CEFA;"} $=$
 
-::: {layout-ncol="3"}
-![$f(t)$](plots/curve.png)
-
-![$g(t)$](plots/mul2.png)
-
-![$\langle f(t), g(t) \rangle$](plots/curvePoly2Int.png)
+$-0.15$
 :::
 
-$\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
+:::
+
+::::
+
+
+## Scalar product 
+
+:::: {.columns}
+
+::: {.column width="60%"}
+
+![$\langle f(t), \color{red}{g(t)} \rangle$](plots/scalarprod1.png)
+:::
+
+::: {.column width="40%"}
+
+$\langle f(t), \color{red}{g(t)} \rangle =$ 
+
+$\int_0^2 f(t) \cdot \color{red}{g(t)} \; dt =$
+
+$-0.15$
+
+:::
+
+::::
+
 
 # Orthogonal basis
 
@@ -322,9 +307,6 @@ $\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
 ## Orthogonal basis
 
 ![Legendre polynomials](plots/Poly2by2.png){height="500"}
-
-
-## Orthogonal basis
 
 
 ## Orthogonal projections
@@ -369,83 +351,129 @@ $\langle f(t), g(t) \rangle = \int_0^2 f(t) \cdot g(t) \; dt = -0.15$
 
 # Scores as shape descriptors
 
-## Scores as shape descriptors
-
+## Score s~1~
 
 :::: {.columns}
 
-::: {.column width="40%"}
+::: {.column width="33%"}
 ![$f(t)$](plots/curve_shape.png)
 :::
 
-::: {.column width="20%"}
-![Basis](plots/PolyAll4.png)
+::: {.column width="33%"}
+![$\color{red}{B_1(t)}$](plots/Poly1.png)
 :::
 
-::: {.column width="40%"}
-| | |
-|-------|------:|
-| $s_1$ |  0.30 |
-| $s_2$ | -0.15 |
-| $s_3$ | -0.05 |
-| $s_4$ |  0.05 |
-
-:  Scores
+::: {.column width="33%"}
+![$\langle f(t), \color{red}{B_1(t)} \rangle$](plots/shape1s1_res.png)
 
 :::
 ::::
 
+$$s_1 = 0.30$$
 
-## Scores as shape descriptors
+## Score s~1~
 
 :::: {.columns}
 
-::: {.column width="40%"}
+::: {.column width="33%"}
 ![$f(t) + 0.3$](plots/curve_plus03_shape.png)
 :::
 
-::: {.column width="20%"}
-![Basis](plots/PolyAll4.png)
+::: {.column width="33%"}
+![$\color{red}{B_1(t)}$](plots/Poly1.png)
 :::
 
-::: {.column width="40%"}
-| | |
-|-------|------:|
-| $s_1$ |  [0.72]{style="color:red"} |
-| $s_2$ | -0.15 |
-| $s_3$ | -0.05 |
-| $s_4$ |  0.05 |
-
-:  Scores
+::: {.column width="33%"}
+![$\langle f(t) + 0.3, \color{red}{B_1(t)} \rangle$](plots/shape2s1_res.png)
 
 :::
 ::::
 
+$$s_1 = 0.72$$
 
-## Scores as shape descriptors
+## Score s~1~
 
 :::: {.columns}
 
-::: {.column width="40%"}
-![$f(2 - t)$](plots/curveRev_shape.png)
+::: {.column width="33%"}
+![$f(2.0 - t)$](plots/curveRev_shape.png)
 :::
 
-::: {.column width="20%"}
-![Basis](plots/PolyAll4.png)
+::: {.column width="33%"}
+![$\color{red}{B_1(t)}$](plots/Poly1.png)
 :::
 
-::: {.column width="40%"}
-| | |
-|-------|------:|
-| $s_1$ |  0.30 |
-| $s_2$ | [+0.15]{style="color:red;"} |
-| $s_3$ | -0.05 |
-| $s_4$ | [-0.05]{style="color:red;"} |
-
-:  Scores
+::: {.column width="33%"}
+![$\langle f(2.0 -  t), \color{red}{B_1(t)} \rangle$](plots/shape3s1_res.png)
 
 :::
 ::::
+
+$$s_1 = 0.30$$
+
+
+
+## Score s~2~
+
+:::: {.columns}
+
+::: {.column width="33%"}
+![$f(t)$](plots/curve_shape.png)
+:::
+
+::: {.column width="33%"}
+![$\color{red}{B_2(t)}$](plots/Poly2.png)
+:::
+
+::: {.column width="33%"}
+![$\langle f(t), \color{red}{B_2(t)} \rangle$](plots/shape1s2_res.png)
+
+:::
+::::
+
+$$s_1 = -0.15$$
+
+## Score s~2~
+
+:::: {.columns}
+
+::: {.column width="33%"}
+![$f(t) + 0.3$](plots/curve_plus03_shape.png)
+:::
+
+::: {.column width="33%"}
+![$\color{red}{B_2(t)}$](plots/Poly2.png)
+:::
+
+::: {.column width="33%"}
+![$\langle f(t) + 0.3, \color{red}{B_2(t)} \rangle$](plots/shape2s2_res.png)
+
+:::
+::::
+
+$$s_2 = -0.15$$
+
+## Score s~2~
+
+:::: {.columns}
+
+::: {.column width="33%"}
+![$f(2.0 - t)$](plots/curveRev_shape.png)
+:::
+
+::: {.column width="33%"}
+![$\color{red}{B_2(t)}$](plots/Poly2.png)
+:::
+
+::: {.column width="33%"}
+![$\langle f(2.0 -  t), \color{red}{B_2(t)} \rangle$](plots/shape3s2_res.png)
+
+:::
+::::
+
+$$s_2 = 0.15$$
+
+
 
 # Statistics with orthogonal projections
 
