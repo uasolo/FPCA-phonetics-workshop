@@ -3,13 +3,25 @@ title: "Functional PCA"
 author: "Michele Gubian"
 date: "25 September 2023"
 date-format: long
+bibliography: references.bib
+nocite: |
+  @*
 format:
   revealjs:
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
     df-print: kable
+    slide-number: true
+    chalkboard: 
+      theme: "whiteboard"
+    theme: [style.scss]
 editor: visual
 fig-cap-location: top
 tab-cap-location: top
 ---
+
+
 
 # Motivation
 
@@ -321,31 +333,31 @@ $-0.15$
 
 ![$\color{blue}{\hat{f}(t)} = s_1 \cdot B1(t)$](plots/curveRecPoly1.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = s_1 \cdot B1(t) + s_2 \cdot B2(t)$](plots/curveRecPoly2.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = s_1 \cdot B1(t) + s_2 \cdot B2(t) + s_3 \cdot B3(t)$](plots/curveRecPoly3.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = s_1 \cdot B1(t) + s_2 \cdot B2(t) + s_3 \cdot B3(t) + s_4 \cdot B4(t)$](plots/curveRecPoly4.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = \sum_{k=1}^8 s_k \cdot Bk(t)$](plots/curveRecPoly8.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = \sum_{k=1}^{12} s_k \cdot Bk(t)$](plots/curveRecPoly12.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = \sum_{k=1}^{16} s_k \cdot Bk(t)$](plots/curveRecPoly16.png){height="500"}
 
-## Reconstruction accuracy
+## Reconstruction accuracy {visibility="uncounted"}
 
 ![$\color{blue}{\hat{f}(t)} = \sum_{k=1}^{20} s_k \cdot Bk(t)$](plots/curveRecPoly20.png){height="500"}
 
@@ -631,7 +643,7 @@ $$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot PC1(t)$$
   - $\mu_{y1}(t)$ and $\mu_{y2}(t)$
 * Each PC is composed of D curves
   - $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
-* [Scores do not increase]{style="color:red"} 
+* [Scores do not split in D]{style="color:red"} 
 * Each score controls a PC, which is made of D 1-dimensional curves
   - $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
 
@@ -676,3 +688,8 @@ $$ y2_{LOW\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y2
 ## Reconstruct predicted curves from s1
 
 ![](plots/ex2D.1.pred_curves.png)
+
+## References
+
+::: {#refs}
+:::

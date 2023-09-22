@@ -95,11 +95,32 @@
     code span.va { color: #111111; } /* Variable */
     code span.vs { color: #20794d; } /* VerbatimString */
     code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
-  </style>
+    /* CSS for citations */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+    }
+    .hanging-indent div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }  </style>
   <link rel="stylesheet" href="OrthogonalProjections_files/libs/revealjs/dist/theme/quarto.css">
   <link href="OrthogonalProjections_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="OrthogonalProjections_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="OrthogonalProjections_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="OrthogonalProjections_files/libs/revealjs/plugin/reveal-chalkboard/font-awesome/css/all.css" rel="stylesheet">
+  <link href="OrthogonalProjections_files/libs/revealjs/plugin/reveal-chalkboard/style.css" rel="stylesheet">
   <link href="OrthogonalProjections_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
 
@@ -402,6 +423,20 @@ Michele Gubian
 </div>
 
   <p class="date">September 25, 2023</p>
+</section><section id="TOC">
+<nav role="doc-toc"> 
+<h2 id="toc-title">Outline</h2>
+<ul>
+<li><a href="#/motivation" id="/toc-motivation">Motivation</a></li>
+<li><a href="#/functions" id="/toc-functions">Functions</a></li>
+<li><a href="#/operations-on-functions" id="/toc-operations-on-functions">Operations on functions</a></li>
+<li><a href="#/orthogonal-basis" id="/toc-orthogonal-basis">Orthogonal basis</a></li>
+<li><a href="#/scores-as-shape-descriptors" id="/toc-scores-as-shape-descriptors">Scores as shape descriptors</a></li>
+<li><a href="#/statistics-with-orthogonal-projections" id="/toc-statistics-with-orthogonal-projections">Statistics with orthogonal projections</a></li>
+<li><a href="#/functional-pca-1" id="/toc-functional-pca-1">Functional PCA</a></li>
+<li><a href="#/multi-dimensional-fpca" id="/toc-multi-dimensional-fpca">Multi-dimensional FPCA</a></li>
+</ul>
+</nav>
 </section>
 <section>
 <section id="motivation" class="title-slide slide level1 center">
@@ -888,7 +923,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-1" class="slide level2">
+<section id="reconstruction-accuracy-1" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -897,7 +932,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-2" class="slide level2">
+<section id="reconstruction-accuracy-2" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -906,7 +941,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-3" class="slide level2">
+<section id="reconstruction-accuracy-3" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -915,7 +950,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-4" class="slide level2">
+<section id="reconstruction-accuracy-4" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -924,7 +959,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-5" class="slide level2">
+<section id="reconstruction-accuracy-5" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -933,7 +968,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-6" class="slide level2">
+<section id="reconstruction-accuracy-6" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -942,7 +977,7 @@ B-&gt;C
 </figure>
 </div>
 </section>
-<section id="reconstruction-accuracy-7" class="slide level2">
+<section id="reconstruction-accuracy-7" class="slide level2" data-visibility="uncounted">
 <h2>Reconstruction accuracy</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -1476,7 +1511,7 @@ $contrasts
 <ul>
 <li class="fragment"><span class="math inline">\(PC1_{y1}(t)\)</span> and <span class="math inline">\(PC1_{y2}(t)\)</span>, <span class="math inline">\(PC2_{y1}(t)\)</span> and <span class="math inline">\(PC2_{y2}(t)\)</span>, etc.</li>
 </ul></li>
-<li class="fragment"><span style="color:red">Scores do not increase</span></li>
+<li class="fragment"><span style="color:red">Scores do not split in D</span></li>
 <li class="fragment">Each score controls a PC, which is made of D 1-dimensional curves
 <ul>
 <li class="fragment"><span class="math inline">\(s_1\)</span> controls (i.e.&nbsp;multiplies) <span class="math inline">\(PC1_{y1}(t)\)</span> and <span class="math inline">\(PC1_{y2}(t)\)</span></li>
@@ -1529,7 +1564,30 @@ $contrasts
 <section id="reconstruct-predicted-curves-from-s1-5" class="slide level2">
 <h2>Reconstruct predicted curves from s1</h2>
 
-<img data-src="plots/ex2D.1.pred_curves.png" class="r-stretch"><div class="footer footer-default">
+<img data-src="plots/ex2D.1.pred_curves.png" class="r-stretch"></section>
+<section id="references" class="slide level2 smaller scrollable">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-asano2018excuse" class="csl-entry" role="listitem">
+Asano, Yuki, and Michele Gubian. 2018. <span>“<span>‘Excuse Meeee!!’</span>:(mis) Coordination of Lexical and Paralinguistic Prosody in L2 Hyperarticulation.”</span> <em>Speech Communication</em> 99: 183–200.
+</div>
+<div id="ref-gubian2011joint" class="csl-entry" role="listitem">
+Gubian, Michele, Lou Boves, and Francesco Cangemi. 2011. <span>“Joint Analysis of f 0 and Speech Rate with Functional Data Analysis.”</span> In <em>2011 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)</em>, 4972–75. IEEE.
+</div>
+<div id="ref-gubian_tracking_2019" class="csl-entry" role="listitem">
+Gubian, Michele, Jonathan Harrington, Mary Stevens, Florian Schiel, and Paul Warren. 2019. <span>“Tracking the <span>New</span> <span>Zealand</span> <span>English</span> <span><span class="smallcaps">near</span></span>/<span><span class="smallcaps">square</span></span> Merger Using Functional Principal Components Analysis.”</span> In <em>Proceedings of the 20th <span>Annual</span> <span>Conference</span> of the <span>International</span> <span>Speech</span> <span>Communication</span> <span>Association</span></em>, 296–300. Graz. <a href="https://doi.org/10.21437/Interspeech.2019-2115">https://doi.org/10.21437/Interspeech.2019-2115</a>.
+</div>
+<div id="ref-gubian2019zooming" class="csl-entry" role="listitem">
+Gubian, Michele, Manfred Pastätter, and Marianne Pouplier. 2019. <span>“Zooming in on Spatiotemporal v-to-c Coarticulation with Functional PCA.”</span> In <em>INTERSPEECH</em>, 889–93.
+</div>
+<div id="ref-gubian_using_2015" class="csl-entry" role="listitem">
+Gubian, Michele, Francisco Torreira, and Lou Boves. 2015. <span>“Using <span>Functional</span> <span>Data</span> <span>Analysis</span> for Investigating Multidimensional Dynamic Phonetic Contrasts.”</span> <em>Journal of Phonetics</em> 49: 16–40. <a href="https://doi.org/10.1016/j.wocn.2014.10.001">https://doi.org/10.1016/j.wocn.2014.10.001</a>.
+</div>
+<div id="ref-ramsay2005functional" class="csl-entry" role="listitem">
+Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></em>. Springer Series in Statistics.
+</div>
+</div>
+<div class="footer footer-default">
 
 </div>
 </section></section>
@@ -1544,6 +1602,7 @@ $contrasts
   <script src="OrthogonalProjections_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
   <script src="OrthogonalProjections_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
   <script src="OrthogonalProjections_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="OrthogonalProjections_files/libs/revealjs/plugin/reveal-chalkboard/plugin.js"></script>
   <script src="OrthogonalProjections_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
@@ -1565,7 +1624,8 @@ $contrasts
 'autoAnimateEasing': "ease",
 'autoAnimateDuration': 1,
 'autoAnimateUnmatched': true,
-'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleChalkboard(event)\"><kbd>b</kbd> Toggle Chalkboard</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleNotesCanvas(event)\"><kbd>c</kbd> Toggle Notes Canvas</a></li>\n<li class=\"slide-tool-item\" data-item=\"6\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.downloadDrawings(event)\"><kbd>d</kbd> Download Drawings</a></li>\n<li class=\"slide-tool-item\" data-item=\"7\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'chalkboard': {"buttons":true,"theme":"whiteboard"},
 'smaller': false,
  
         // Display controls in the bottom right corner
@@ -1586,7 +1646,7 @@ $contrasts
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
@@ -1736,7 +1796,7 @@ $contrasts
         },
 
         // reveal.js plugins
-        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, RevealChalkboard, QuartoSupport,
 
           RevealMath,
           RevealNotes,

@@ -5,7 +5,14 @@ date: "26 September 2023"
 date-format: long
 format:
   revealjs:
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
     df-print: kable
+    slide-number: true
+    chalkboard: 
+      theme: "whiteboard"
+    theme: [style.scss]
 editor: visual
 fig-cap-location: top
 tab-cap-location: top

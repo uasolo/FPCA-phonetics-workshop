@@ -62,7 +62,7 @@ pl <- ggplot(PCcurves) +
   scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
   facet_wrap(~ PC, nrow = 1,
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
-  labs(color = expression(frac(s[k], sigma[k]))) +
+  # labs(color = expression(frac(s[k], sigma[k]))) +
   labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   mytheme +

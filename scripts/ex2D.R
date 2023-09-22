@@ -23,7 +23,7 @@ nCurves <- curves %>% distinct(curveId) %>% nrow()
 
 
 # plot a few curves
-pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 20)) %>%
+pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 10)) %>%
                pivot_longer(starts_with("y"), names_to = "DIM", values_to = "y")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   facet_wrap(~ DIM, ncol = 1) +
@@ -75,7 +75,8 @@ pl <- ggplot(PCcurves) +
              scales = "free_y",
              labeller = labeller(PC = ~ str_glue("PC{.x}"),
                                  DIM = DIMlabels)) +
-  labs(color = expression(frac(s[k], sigma[k]))) +
+  # labs(color = expression(frac(s[k], sigma[k]))) +
+  labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   xlab("registered time") +
   mytheme +
