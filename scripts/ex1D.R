@@ -15,7 +15,7 @@ Category.colors <- c("slategray4", "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 1 # change according to ex number
+ex <- 5 # change according to ex number
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 nCurves <- curves %>% distinct(curveId) %>% nrow()
@@ -24,16 +24,16 @@ nCurves <- curves %>% distinct(curveId) %>% nrow()
 
 
 # plot a few curves
-pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 10))) +
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 10))) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   scale_color_manual(values=Category.colors) +
   mytheme  +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D", ex, "curves", 'png', sep = '.')), pl,
-       width = 1800, height = 1600, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex1D", ex, "curves", 'png', sep = '.')), pl,
+#        width = 1800, height = 1600, units = "px"
+# )
 
 # build a funData object
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
@@ -56,7 +56,7 @@ PCcurves <- expand_grid(PC = 1:2,
                   time = "time", value = "y")
   )
 # Plot
-pl <- ggplot(PCcurves) +
+ggplot(PCcurves) +
   aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
   geom_line() +
   scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
@@ -68,9 +68,9 @@ pl <- ggplot(PCcurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D", ex, "FPCA_curves", 'png', sep = '.')), pl,
-       width = 1800, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex1D", ex, "FPCA_curves", 'png', sep = '.')), pl,
+#        width = 1800, height = 1200, units = "px"
+# )
 
 # collect PC scores
 PCscores <- fpca$scores %>%
@@ -79,16 +79,16 @@ PCscores <- fpca$scores %>%
   bind_cols(curves %>% distinct(curveId, Category), .)
 
 # scatterplot PC scores s1 and s2 by Category
-pl <- ggplot(PCscores) +
+ggplot(PCscores) +
   aes(x = s1, y = s2, color = Category) +
   geom_point() +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "right")
 
-ggsave(file.path(plots_dir, str_c("ex1D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
-       width = 1800, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex1D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
+#        width = 1800, height = 1200, units = "px"
+# )
 
 
 # model s1
@@ -107,13 +107,13 @@ predCurves <- emm %>%
   select(!id) %>% 
   rename(y = value)
 
-pl <- ggplot(predCurves) +
+ggplot(predCurves) +
   aes(time, y, color = Category) +
   geom_line() +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D", ex, "pred_curves", 'png', sep = '.')), pl,
-       width = 1500, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex1D", ex, "pred_curves", 'png', sep = '.')), pl,
+#        width = 1500, height = 1200, units = "px"
+# )

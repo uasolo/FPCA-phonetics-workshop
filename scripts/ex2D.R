@@ -23,7 +23,7 @@ nCurves <- curves %>% distinct(curveId) %>% nrow()
 
 
 # plot a few curves
-pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 10)) %>%
+ggplot(curves %>% filter(curveId %in% sample(nCurves, 10)) %>%
                pivot_longer(starts_with("y"), names_to = "DIM", values_to = "y")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   facet_wrap(~ DIM, ncol = 1) +
@@ -32,9 +32,9 @@ pl <- ggplot(curves %>% filter(curveId %in% sample(nCurves, 10)) %>%
   mytheme  +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex2D", ex, "curves", 'png', sep = '.')), pl,
-       width = 1800, height = 1600, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex2D", ex, "curves", 'png', sep = '.')), pl,
+#        width = 1800, height = 1600, units = "px"
+# )
 
 # build a multiFunData object
 curvesFun2D <- lapply(c("y1", "y2"), function(y)
@@ -67,7 +67,7 @@ PCcurves <- expand_grid(PC = 1:2,
   )
 # Plot
 DIMlabels <- c(`1` = "y1", `2` = "y2")
-pl <- ggplot(PCcurves) +
+ggplot(PCcurves) +
   aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
   geom_line() +
   scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
@@ -82,9 +82,9 @@ pl <- ggplot(PCcurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex2D", ex, "FPCA_curves", 'png', sep = '.')), pl,
-       width = 2000, height = 2000, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex2D", ex, "FPCA_curves", 'png', sep = '.')), pl,
+#        width = 2000, height = 2000, units = "px"
+# )
 
 # collect PC scores
 PCscores <- mfpca$scores %>%
@@ -93,16 +93,16 @@ PCscores <- mfpca$scores %>%
   bind_cols(curves %>% distinct(curveId, Category), .)
 
 # scatterplot PC scores s1 and s2 by Category
-pl <- ggplot(PCscores) +
+ggplot(PCscores) +
   aes(x = s1, y = s2, color = Category) +
   geom_point() +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "right")
 
-ggsave(file.path(plots_dir, str_c("ex2D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
-       width = 1800, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex2D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
+#        width = 1800, height = 1200, units = "px"
+# )
 
 
 # model s1
@@ -122,7 +122,7 @@ predCurves <- expand_grid(emm, DIM = 1:2) %>%
   select(!id) %>% 
   rename(y = value)
 
-pl <- ggplot(predCurves) +
+ggplot(predCurves) +
   aes(time, y, color = Category) +
   geom_line() +
   facet_wrap(~ DIM, ncol = 1, labeller = labeller(DIM = DIMlabels)) +
@@ -130,12 +130,12 @@ pl <- ggplot(predCurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_curves", 'png', sep = '.')), pl,
-       width = 1500, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_curves", 'png', sep = '.')), pl,
+#        width = 1500, height = 1200, units = "px"
+# )
 
 # Trajectory representation
-pl <- ggplot(predCurves %>%
+ggplot(predCurves %>%
                pivot_wider(names_from = "DIM", values_from = "y", names_prefix = "y")) +
   aes(x = y1, y = y2, group = Category, color = Category) +
   geom_path(linewidth = 1, arrow = arrow(length = unit(0.5, "cm"), type = "closed")) +
@@ -144,6 +144,6 @@ pl <- ggplot(predCurves %>%
   theme(text = element_text(size = 16),
         legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_traj", 'png', sep = '.')), pl,
-       width = 1200, height = 1200, units = "px"
-)
+# ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_traj", 'png', sep = '.')), pl,
+#        width = 1200, height = 1200, units = "px"
+# )
