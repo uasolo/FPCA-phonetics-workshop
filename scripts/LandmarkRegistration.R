@@ -26,43 +26,64 @@ land <- read_csv(file.path(data_dir, paste("exLand", ex, "land", "csv", sep = '.
   mutate(curveId = factor(curveId))
 
 
+# generate exLand3 and 4 from ex1D.1
 
-# curves <- curves %>% 
-#   filter(Category == "PEAK") %>% 
-#   select(!Category) %>% 
+# curves <- curves %>%
+#   filter(Category == "PEAK") %>%
+#   select(!Category) %>%
 #   mutate(curveId = factor(curveId))
 # 
 # nCurves <- curves %>% distinct(curveId) %>% nrow()
-# 
-# refLand <- c(0, 0.5, 1.25, 1.5, 2)
-# land <- curves %>% 
-#   distinct(curveId) %>% 
-#   mutate(l1 = 0,
-#          l2 = refLand[2] - 0.1 + abs(rnorm(nCurves, 0, 0.2)),
-#          l3 = l2 + refLand[3] - refLand[2] -0.1 + abs(rnorm(nCurves, 0, 0.2)),
-#          l4 = l3 + refLand[4] - refLand[3] -0.1 + abs(rnorm(nCurves, 0, 0.2)),
-#          l5 = l4 + refLand[5] - refLand[4] -0.1 + abs(rnorm(nCurves, 0, 0.2)))
-# 
-# # reverse landmark registration
-# curves <-  curves %>% 
-#   inner_join(land, by = "curveId") %>% 
-#   group_by(across(c(curveId, starts_with("l")))) %>% 
-#   mutate(time = landmarkreg_timeSamples(time,
-#                                         refLand,
-#                                         cur_group() %>% 
-#                                           select(starts_with("l")) %>% 
-#                                           as.numeric())) %>% 
-#     ungroup() %>% 
-#     select(!starts_with("l"))
 
+refLand <- c(0, 0.5, 1.25, 1.5, 2)
+land <- curves %>%
+  distinct(curveId, Category) %>%
+  mutate(l1 = 0,
+         l2 = refLand[2], # - 0.1 + abs(rnorm(nCurves, 0, 0.2)),
+         l3 = refLand[3], #l2 + refLand[3] - refLand[2] -0.1 + abs(rnorm(nCurves, 0, 0.2)),
+         l4 = l3 + refLand[4] - refLand[3] -0.1 + abs(rnorm(nCurves, 0, 0.2)),
+         l5 = l4 + refLand[5] - refLand[4] -0.1 + abs(rnorm(nCurves, 0, 0.2))) %>% 
+  mutate(longer = runif(n()) > 0.5) %>% 
+  mutate(across(l4:l5, ~ case_when(
+    longer ~  .x + 0.5,
+    # Category == "TWO_PEAKS" ~ .x + 0.5,
+    TRUE ~ .x
+  ))) %>% 
+  select(!longer)
 
+# reverse landmark registration
+curves <-  curves %>%
+  inner_join(land, by = c("curveId", "Category")) %>%
+  group_by(across(c(curveId, Category, starts_with("l")))) %>%
+  mutate(time = landmarkreg_timeSamples(time,
+                                        refLand,
+                                        cur_group() %>%
+                                          select(starts_with("l")) %>%
+                                          as.numeric())) %>%
+    ungroup() %>%
+    select(!starts_with("l"))
+
+curves <- curves %>% 
+  mutate(time = case_when(
+    time < 0 ~ 0,
+    TRUE ~ time
+  ))
+
+ex <- 4
+write_csv(curves, file.path(data_dir, paste("exLand", ex, "csv", sep = '.'))) 
+
+land <- land %>% 
+  select(!c(l2, l4)) %>% 
+  rename(l2 = l3, l3 = l5)
+
+write_csv(land, file.path(data_dir, paste("exLand", ex, "land", "csv", sep = '.'))) 
 
 
 # test
 i <- 6
 land_i <- land %>%
   filter(curveId == i) %>% 
-  select(!curveId) %>% 
+  select(l1:last_col()) %>% 
   as.numeric()
 pl <- ggplot(curves %>% filter(curveId == i)) +
   aes(time, y) +
@@ -88,22 +109,30 @@ ggsave(file.path(plots_dir, str_c("few_unreg_curves", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
+# lin time norm
+
+regLin <- landmarkreg_nocurves(inputMarks = land %>% select(c(l1,l5)))
+curvesRegLin <- applyReg(dat = curves, reg = regLin,
+                      id = "curveId", time = "time", value = "y")
+
+
+
 reg <- landmarkreg_nocurves(inputMarks = land %>% select(!curveId), 
                             njobs = 3)
 curvesReg <- applyReg(dat = curves, reg = reg,
                       id = "curveId", time = "time", value = "y")
 
-pl <- ggplot(curvesReg %>% filter(curveId %in% 1:4)) +
+pl <- ggplot(curvesRegLin %>% filter(curveId %in% 1:4)) +
   aes(time, y, group = curveId, color = curveId) +
   geom_line(linewidth = 1) +
-  geom_vline(xintercept = reg$landmarks) +
-  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
-                                         breaks = reg$landmarks,
-                                         labels = str_c("l", seq_along(reg$landmarks)))) +
+  # geom_vline(xintercept = reg$landmarks) +
+  # scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+  #                                        breaks = reg$landmarks,
+  #                                        labels = str_c("l", seq_along(reg$landmarks)))) +
   mytheme +
   theme(legend.position = 'none')
 
-ggsave(file.path(plots_dir, str_c("few_reg_curves", '.png')), pl,
+ggsave(file.path(plots_dir, str_c("few_regLin_curves", '.png')), pl,
        width = 1500, height = 1200, units = "px"
 )
 
@@ -145,20 +174,24 @@ curves <- curves %>% mutate(curveId = factor(curveId))
 land <- land %>% mutate(curveId = factor(curveId))
 
 curveSample <- c(1:3, 51:53)
-pl <- ggplot(curves %>% filter(curveId %in% curveSample)) +
+pl <- ggplot(curvesNew %>% filter(curveId %in% curveSample)) +
   aes(time, y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
-  geom_vline(data = land %>%
-               filter(curveId %in% curveSample) %>%
-               pivot_longer(cols = starts_with("l")),
-             mapping = aes(xintercept = value, color = Category)) +
+  # geom_vline(data = land %>%
+  #              filter(curveId %in% curveSample) %>%
+  #              pivot_longer(cols = starts_with("l")),
+  #            mapping = aes(xintercept = value, color = Category)) +
+  # facet_wrap(~ Category, nrow = 1) +
   mytheme +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("early_late_unreg_curves", '.png')), pl,
-       width = 1500, height = 1200, units = "px"
+ggsave(file.path(plots_dir, str_c("early_late_unreg_curves_split", '.png')), pl,
+       width = 2000, # 1500,
+       height = 1200, units = "px"
 )
+
+
 
 reg <- landmarkreg_nocurves(inputMarks = land %>% select(starts_with("l")),
                             njobs = 2)

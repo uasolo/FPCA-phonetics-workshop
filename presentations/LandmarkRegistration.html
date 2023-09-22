@@ -30,11 +30,32 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
-  </style>
+    /* CSS for citations */
+    div.csl-bib-body { }
+    div.csl-entry {
+      clear: both;
+    }
+    .hanging-indent div.csl-entry {
+      margin-left:2em;
+      text-indent:-2em;
+    }
+    div.csl-left-margin {
+      min-width:2em;
+      float:left;
+    }
+    div.csl-right-inline {
+      margin-left:2em;
+      padding-left:1em;
+    }
+    div.csl-indent {
+      margin-left: 2em;
+    }  </style>
   <link rel="stylesheet" href="LandmarkRegistration_files/libs/revealjs/dist/theme/quarto.css">
   <link href="LandmarkRegistration_files/libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="LandmarkRegistration_files/libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="LandmarkRegistration_files/libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
+  <link href="LandmarkRegistration_files/libs/revealjs/plugin/reveal-chalkboard/font-awesome/css/all.css" rel="stylesheet">
+  <link href="LandmarkRegistration_files/libs/revealjs/plugin/reveal-chalkboard/style.css" rel="stylesheet">
   <link href="LandmarkRegistration_files/libs/revealjs/plugin/quarto-support/footer.css" rel="stylesheet">
   <style type="text/css">
 
@@ -337,6 +358,15 @@ Michele Gubian
 </div>
 
   <p class="date">September 26, 2023</p>
+</section><section id="TOC">
+<nav role="doc-toc"> 
+<h2 id="toc-title">Outline</h2>
+<ul>
+<li><a href="#/motivation" id="/toc-motivation">Motivation</a></li>
+<li><a href="#/fpca-on-misaligned-curves" id="/toc-fpca-on-misaligned-curves">FPCA on misaligned curves</a></li>
+<li><a href="#/mfpca-on-misaligned-curves" id="/toc-mfpca-on-misaligned-curves">MFPCA on misaligned curves</a></li>
+</ul>
+</nav>
 </section>
 <section>
 <section id="motivation" class="title-slide slide level1 center">
@@ -363,8 +393,8 @@ Michele Gubian
 </ul>
 </div>
 </section>
-<section id="landmark-registration" class="slide level2">
-<h2>Landmark registration</h2>
+<section id="linear-time-registration" class="slide level2">
+<h2>Linear time registration</h2>
 <div class="quarto-layout-panel">
 <div class="quarto-layout-row quarto-layout-valign-top">
 <div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
@@ -376,6 +406,29 @@ Michele Gubian
 </div>
 </div>
 <div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>After</figcaption>
+<p><img data-src="plots/few_regLin_curves.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="landmark-registration" class="slide level2">
+<h2>Landmark registration</h2>
+<div class="quarto-layout-panel">
+<div class="quarto-layout-row quarto-layout-valign-top">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Before</figcaption>
+<p><img data-src="plots/few_unreg_curves.png"></p>
+</figure>
+</div>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption>After</figcaption>
@@ -413,8 +466,13 @@ Michele Gubian
 </section>
 <section id="a-misaligned-curve-dataset" class="slide level2">
 <h2>A misaligned curve dataset</h2>
-
-<img data-src="plots/early_late_unreg_curves.png" class="r-stretch"></section>
+<div class="column" style="width:75%;">
+<div class="r-stack">
+<p><img data-src="plots/early_late_unreg_curves_split.png" class="fragment"></p>
+<p><img data-src="plots/early_late_unreg_curves.png" class="fragment"></p>
+</div>
+</div>
+</section>
 <section id="landmark-registration-2" class="slide level2">
 <h2>Landmark registration</h2>
 
@@ -428,7 +486,7 @@ Michele Gubian
 
 <img data-src="plots/FPCA_curves_early_late_simple.png" class="r-stretch"></section>
 <section id="predicted-curves-based-on-s1" class="slide level2">
-<h2>Predicted curves based on s1</h2>
+<h2>Predicted curves based on s<sub>1</sub></h2>
 
 <img data-src="plots/early_late_pred_curves_simple.png" class="r-stretch"></section>
 <section id="time-warping-function-ht" class="slide level2">
@@ -556,6 +614,29 @@ Michele Gubian
 </div>
 </div>
 </div>
+</section>
+<section id="references" class="slide level2 smaller scrollable">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-asano2018excuse" class="csl-entry" role="listitem">
+Asano, Yuki, and Michele Gubian. 2018. <span>“<span>‘Excuse Meeee!!’</span>:(mis) Coordination of Lexical and Paralinguistic Prosody in L2 Hyperarticulation.”</span> <em>Speech Communication</em> 99: 183–200.
+</div>
+<div id="ref-gubian2011joint" class="csl-entry" role="listitem">
+Gubian, Michele, Lou Boves, and Francesco Cangemi. 2011. <span>“Joint Analysis of f 0 and Speech Rate with Functional Data Analysis.”</span> In <em>2011 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)</em>, 4972–75. IEEE.
+</div>
+<div id="ref-gubian_tracking_2019" class="csl-entry" role="listitem">
+Gubian, Michele, Jonathan Harrington, Mary Stevens, Florian Schiel, and Paul Warren. 2019. <span>“Tracking the <span>New</span> <span>Zealand</span> <span>English</span> <span><span class="smallcaps">near</span></span>/<span><span class="smallcaps">square</span></span> Merger Using Functional Principal Components Analysis.”</span> In <em>Proceedings of the 20th <span>Annual</span> <span>Conference</span> of the <span>International</span> <span>Speech</span> <span>Communication</span> <span>Association</span></em>, 296–300. Graz. <a href="https://doi.org/10.21437/Interspeech.2019-2115">https://doi.org/10.21437/Interspeech.2019-2115</a>.
+</div>
+<div id="ref-gubian2019zooming" class="csl-entry" role="listitem">
+Gubian, Michele, Manfred Pastätter, and Marianne Pouplier. 2019. <span>“Zooming in on Spatiotemporal v-to-c Coarticulation with Functional PCA.”</span> In <em>INTERSPEECH</em>, 889–93.
+</div>
+<div id="ref-gubian_using_2015" class="csl-entry" role="listitem">
+Gubian, Michele, Francisco Torreira, and Lou Boves. 2015. <span>“Using <span>Functional</span> <span>Data</span> <span>Analysis</span> for Investigating Multidimensional Dynamic Phonetic Contrasts.”</span> <em>Journal of Phonetics</em> 49: 16–40. <a href="https://doi.org/10.1016/j.wocn.2014.10.001">https://doi.org/10.1016/j.wocn.2014.10.001</a>.
+</div>
+<div id="ref-ramsay2005functional" class="csl-entry" role="listitem">
+Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></em>. Springer Series in Statistics.
+</div>
+</div>
 <div class="footer footer-default">
 
 </div>
@@ -570,6 +651,7 @@ Michele Gubian
   <script src="LandmarkRegistration_files/libs/revealjs/plugin/pdf-export/pdfexport.js"></script>
   <script src="LandmarkRegistration_files/libs/revealjs/plugin/reveal-menu/menu.js"></script>
   <script src="LandmarkRegistration_files/libs/revealjs/plugin/reveal-menu/quarto-menu.js"></script>
+  <script src="LandmarkRegistration_files/libs/revealjs/plugin/reveal-chalkboard/plugin.js"></script>
   <script src="LandmarkRegistration_files/libs/revealjs/plugin/quarto-support/support.js"></script>
   
 
@@ -591,7 +673,8 @@ Michele Gubian
 'autoAnimateEasing': "ease",
 'autoAnimateDuration': 1,
 'autoAnimateUnmatched': true,
-'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'menu': {"side":"left","useTextContentForMissingTitles":true,"markers":false,"loadIcons":false,"custom":[{"title":"Tools","icon":"<i class=\"fas fa-gear\"></i>","content":"<ul class=\"slide-menu-items\">\n<li class=\"slide-tool-item active\" data-item=\"0\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.fullscreen(event)\"><kbd>f</kbd> Fullscreen</a></li>\n<li class=\"slide-tool-item\" data-item=\"1\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.speakerMode(event)\"><kbd>s</kbd> Speaker View</a></li>\n<li class=\"slide-tool-item\" data-item=\"2\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.overview(event)\"><kbd>o</kbd> Slide Overview</a></li>\n<li class=\"slide-tool-item\" data-item=\"3\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.togglePdfExport(event)\"><kbd>e</kbd> PDF Export Mode</a></li>\n<li class=\"slide-tool-item\" data-item=\"4\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleChalkboard(event)\"><kbd>b</kbd> Toggle Chalkboard</a></li>\n<li class=\"slide-tool-item\" data-item=\"5\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.toggleNotesCanvas(event)\"><kbd>c</kbd> Toggle Notes Canvas</a></li>\n<li class=\"slide-tool-item\" data-item=\"6\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.downloadDrawings(event)\"><kbd>d</kbd> Download Drawings</a></li>\n<li class=\"slide-tool-item\" data-item=\"7\"><a href=\"#\" onclick=\"RevealMenuToolHandlers.keyboardHelp(event)\"><kbd>?</kbd> Keyboard Help</a></li>\n</ul>"}],"openButton":true},
+'chalkboard': {"buttons":true,"theme":"whiteboard"},
 'smaller': false,
  
         // Display controls in the bottom right corner
@@ -612,7 +695,7 @@ Michele Gubian
         progress: true,
 
         // Display the page number of the current slide
-        slideNumber: false,
+        slideNumber: 'c/t',
 
         // 'all', 'print', or 'speaker'
         showSlideNumber: 'all',
@@ -762,7 +845,7 @@ Michele Gubian
         },
 
         // reveal.js plugins
-        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, QuartoSupport,
+        plugins: [QuartoLineHighlight, PdfExport, RevealMenu, RevealChalkboard, QuartoSupport,
 
           RevealMath,
           RevealNotes,

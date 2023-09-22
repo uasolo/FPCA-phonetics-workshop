@@ -3,6 +3,9 @@ title: "Landmark Registration"
 author: "Michele Gubian"
 date: "26 September 2023"
 date-format: long
+bibliography: references.bib
+nocite: |
+  @*
 format:
   revealjs:
     toc: true
@@ -37,7 +40,7 @@ tab-cap-location: top
 
 :::
 
-## Landmark registration
+## Linear time registration
 
 ::: {layout-ncol="2"}
 
@@ -46,11 +49,18 @@ tab-cap-location: top
 :::
 
 ::: fragment
+![After](plots/few_regLin_curves.png)
+:::
+:::
+
+## Landmark registration
+
+::: {layout-ncol="2"}
+
+![Before](plots/few_unreg_curves.png)
+
 ![After](plots/few_reg_curves.png)
 :::
-:::
-
-
 
 ## Landmark registration
 
@@ -71,8 +81,13 @@ tab-cap-location: top
 
 ## A misaligned curve dataset
 
-![](plots/early_late_unreg_curves.png)
+::: {.column width="75%"}
+::: {.r-stack}
+![](plots/early_late_unreg_curves_split.png){.fragment}
 
+![](plots/early_late_unreg_curves.png){.fragment}
+:::
+::: 
 ## Landmark registration
 
 ![](plots/early_late_reg_dur.png)
@@ -85,7 +100,7 @@ tab-cap-location: top
 
 ![](plots/FPCA_curves_early_late_simple.png)
 
-## Predicted curves based on s1
+## Predicted curves based on s~1~
 
 ![](plots/early_late_pred_curves_simple.png)
 
@@ -184,3 +199,7 @@ tab-cap-location: top
 
 ::::
 
+## References
+
+::: {#refs}
+:::
