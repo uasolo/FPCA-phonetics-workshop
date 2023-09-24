@@ -17,7 +17,7 @@ Category.colors <- c("slategray4", "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 1 # change according to ex number
+ex <- 2 # change according to ex number
 curves <- read_csv(file.path(data_dir, paste("ex2D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 nCurves <- curves %>% distinct(curveId) %>% nrow()
@@ -35,9 +35,6 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 10)) %>%
   mytheme  +
   theme(legend.position = "bottom")
 
-# ggsave(file.path(plots_dir, str_c("ex2D", ex, "curves", 'png', sep = '.')), pl,
-#        width = 1800, height = 1600, units = "px"
-# )
 
 # build a multiFunData object
 curvesFun2D <- lapply(c("y1", "y2"), function(y)
@@ -85,9 +82,6 @@ ggplot(PCcurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-# ggsave(file.path(plots_dir, str_c("ex2D", ex, "FPCA_curves", 'png', sep = '.')), pl,
-#        width = 2000, height = 2000, units = "px"
-# )
 
 # collect PC scores
 PCscores <- mfpca$scores %>%
@@ -102,10 +96,6 @@ ggplot(PCscores) +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "right")
-
-# ggsave(file.path(plots_dir, str_c("ex2D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
-#        width = 1800, height = 1200, units = "px"
-# )
 
 
 # model s1
@@ -133,9 +123,6 @@ ggplot(predCurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-# ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_curves", 'png', sep = '.')), pl,
-#        width = 1500, height = 1200, units = "px"
-# )
 
 # Trajectory representation
 ggplot(predCurves %>%
@@ -146,7 +133,3 @@ ggplot(predCurves %>%
   theme_light() +
   theme(text = element_text(size = 16),
         legend.position = "bottom")
-
-# ggsave(file.path(plots_dir, str_c("ex2D", ex, "pred_traj", 'png', sep = '.')), pl,
-#        width = 1200, height = 1200, units = "px"
-# )

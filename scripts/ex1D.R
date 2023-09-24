@@ -1,5 +1,6 @@
 library(fda)
 library(funData)
+library(MFPCA)
 library(tidyverse)
 library(emmeans)
 library(mgcv)
@@ -34,10 +35,6 @@ ggplot(curves %>% filter(curveId %in% sample(nCurves, 10))) +
   mytheme  +
   theme(legend.position = "bottom")
 
-# ggsave(file.path(plots_dir, str_c("ex1D", ex, "curves", 'png', sep = '.')), pl,
-#        width = 1800, height = 1600, units = "px"
-# )
-
 # build a funData object
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
     as.funData()
@@ -71,10 +68,6 @@ ggplot(PCcurves) +
   mytheme +
   theme(legend.position = "bottom")
 
-# ggsave(file.path(plots_dir, str_c("ex1D", ex, "FPCA_curves", 'png', sep = '.')), pl,
-#        width = 1800, height = 1200, units = "px"
-# )
-
 # collect PC scores
 PCscores <- fpca$scores %>%
   `colnames<-`( paste0("s", 1:2)) %>%
@@ -88,10 +81,6 @@ ggplot(PCscores) +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "right")
-
-# ggsave(file.path(plots_dir, str_c("ex1D", ex, "PCscores_scatter", 'png', sep = '.')), pl,
-#        width = 1800, height = 1200, units = "px"
-# )
 
 
 # model s1
@@ -116,7 +105,3 @@ ggplot(predCurves) +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "bottom")
-
-# ggsave(file.path(plots_dir, str_c("ex1D", ex, "pred_curves", 'png', sep = '.')), pl,
-#        width = 1500, height = 1200, units = "px"
-# )
