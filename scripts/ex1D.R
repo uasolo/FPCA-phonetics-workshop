@@ -19,7 +19,7 @@ Category.colors <- c("slategray4", "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 5 # change according to ex number
+ex <- 1 # change according to ex number
 curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 nCurves <- curves %>% distinct(curveId) %>% nrow()
@@ -83,7 +83,7 @@ ggplot(PCscores) +
   theme(legend.position = "right")
 
 
-# model s1
+# model s1 or s2
 mod <- lm(s1 ~ Category, data = PCscores)
 emmeans(mod, pairwise ~ Category)
 
@@ -95,8 +95,7 @@ emm <- emmeans(mod, pairwise ~ Category)$emmeans %>%
 
 predCurves <- emm %>% 
   group_by(Category) %>% 
-  reframe(funData2long(fpca$mu + s1 * fpca$functions[1])) %>%
-  select(!id) %>% 
+  reframe(funData2long1(fpca$mu + s1 * fpca$functions[1])) %>%
   rename(y = value)
 
 ggplot(predCurves) +
