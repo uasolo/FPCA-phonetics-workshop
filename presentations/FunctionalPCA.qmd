@@ -524,6 +524,12 @@ $$ f_{ONE\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, ONE\_PEAK} \cdo
 
 <!-- | 99.59% | 0.24% |  0.11% |  0.05% | -->
 
+## PCs and scores
+
+![](plots/ex1D.1.FPCA_curves.png)
+
+
+
 ## Compute scores
 
 ```{r}
@@ -536,9 +542,6 @@ pcScores %>%
 
 ```
 
-## PCs and scores
-
-![](plots/ex1D.1.FPCA_curves.png)
 
 ## Fit a regression model on s~1~
 
