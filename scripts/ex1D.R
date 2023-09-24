@@ -1,10 +1,13 @@
 library(fda)
 library(funData)
 library(tidyverse)
-library(landmarkregUtils)
 library(emmeans)
 library(mgcv)
 library(itsadug)
+
+# install.packages("devtools")
+# devtools::install_github("uasolo/landmarkregUtils")
+library(landmarkregUtils)
 
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))

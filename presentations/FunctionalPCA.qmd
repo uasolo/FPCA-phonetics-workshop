@@ -21,8 +21,6 @@ fig-cap-location: top
 tab-cap-location: top
 ---
 
-
-
 # Motivation
 
 ## Statistics on a curve dataset
@@ -32,13 +30,12 @@ tab-cap-location: top
 ![](plots/ex1D.1.curves.png)
 :::
 
-::: {.incremental}
-* What is the shape of the typical curve for each Category?
-* Are the Category levels significantly different?
-* If so, where and how?
-* Are there other systematic shape variations across curves?
+::: incremental
+-   What is the shape of the typical curve for each Category?
+-   Are the Category levels significantly different?
+-   If so, where and how?
+-   Are there other systematic shape variations across curves?
 :::
-
 :::
 
 ## GAMMs
@@ -88,40 +85,33 @@ rankdir=LR;
 
 ## Results (spoiler)
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="45%"}
 ::: fragment
 ### GAMMs
+
 ![](plots/plot_smooth.png)
 :::
-
 :::
 
 ::: {.column width="45%"}
-
 ::: fragment
 ### FPCA + LMER
+
 ![](plots/ex1D.1.pred_curves.png)
 :::
-
+:::
 :::
 
-::::
+##  {#compareMethods-id data-menu-title="GAMMs vs. FPCA + LMER"}
 
-
-## {#compareMethods-id data-menu-title="GAMMs vs. FPCA + LMER"}
-
-|         | GAMMs | FPCA + LMER |
-|-------|------|------| 
-| Complexity | 1 step | 2 steps |
-| Mixed models | yes  | no + yes |
-| Computation  | heavy | light |
-| Multidimensional curves | not really | yes |
+|                                                | GAMMs                   | FPCA + LMER              |
+|---------------------------|-----------------------|-----------------------|
+| Complexity                                     | 1 step                  | 2 steps                  |
+| Mixed models                                   | yes                     | no + yes                 |
+| Computation                                    | heavy                   | light                    |
+| Multidimensional curves                        | not really              | yes                      |
 | [Shape + duration analysis]{style="color:red"} | [no]{style="color:red"} | [yes]{style="color:red"} |
-
-
-
 
 # Functions
 
@@ -143,9 +133,6 @@ rankdir=LR;
 }
 ```
 :::
-
-
-
 
 ## Functions
 
@@ -179,136 +166,121 @@ rankdir=LR;
 
 # Operations on functions
 
-
 ## Addition
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$f(t) + \color{red}{g(t)}$](plots/add1.png)
 :::
+:::
+
 
 ## Addition
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$f(t) + \color{red}{g(t)} = \color{blue}{y(t)}$](plots/add1_res.png)
 :::
-
+:::
 
 ## Multiplication by a scalar
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$\color{red}{0.5} \cdot f(t)$](plots/mul1.png)
 :::
+:::
 
 ## Multiplication by a scalar
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}$](plots/mul1_res.png)
 :::
+:::
 
 ## Multiplication by a scalar
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}$](plots/mul2_res.png)
 :::
-
-
+:::
 ## Mean curve
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})$](plots/mean1.png)
 :::
-
+:::
 
 ## Mean curve
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}$](plots/mean1_res.png)
 :::
-
-
+:::
 ## Multiplication by a function
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$f(t) \cdot \color{red}{g(t)}$](plots/funmul1.png)
 :::
-
+:::
 
 ## Multiplication by a function
 
-::: {.column width="75%"}
-
+::: columns
+::: {.column width="65%"}
 ![$f(t) \cdot \color{red}{g(t)} = \color{blue}{y(t)}$](plots/funmul1_res.png)
 :::
-
- 
+:::
 ## Scalar product [^1]
 
 [^1]: a.k.a. dot product, a.k.a. inner product
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="60%"}
-
 ![$\langle f(t), \color{red}{g(t)} \rangle$](plots/funmul1.png)
 :::
+:::
 
-::::
+## Scalar product
 
-## Scalar product 
-
-:::: {.columns}
-
+::: columns
 ::: {.column width="60%"}
-
 ![$\langle f(t), \color{red}{g(t)} \rangle$](plots/scalarprod1.png)
 :::
 
 ::: {.column width="40%"}
-
 ::: fragment
-$\langle f(t), \color{red}{g(t)} \rangle =$ 
+$\langle f(t), \color{red}{g(t)} \rangle =$
 
-[area above 0]{style="color:#00008B;"}  $-$
+[area above 0]{style="color:#00008B;"} $-$
 
 [area below 0]{style="color:#87CEFA;"} $=$
 
 $-0.15$
 :::
-
+:::
 :::
 
-::::
+## Scalar product
 
-
-## Scalar product 
-
-:::: {.columns}
-
+::: columns
 ::: {.column width="60%"}
-
 ![$\langle f(t), \color{red}{g(t)} \rangle$](plots/scalarprod1.png)
 :::
 
 ::: {.column width="40%"}
-
-$\langle f(t), \color{red}{g(t)} \rangle =$ 
+$\langle f(t), \color{red}{g(t)} \rangle =$
 
 $\int_0^2 f(t) \cdot \color{red}{g(t)} \; dt =$
 
 $-0.15$
-
 :::
-
-::::
-
+:::
 
 # Orthogonal basis
 
@@ -319,7 +291,6 @@ $-0.15$
 ## Orthogonal basis
 
 ![Legendre polynomials](plots/Poly2by2.png){height="500"}
-
 
 ## Orthogonal projections
 
@@ -365,8 +336,7 @@ $-0.15$
 
 ## Score s~1~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(t)$](plots/curve_shape.png)
 :::
@@ -377,16 +347,14 @@ $-0.15$
 
 ::: {.column width="33%"}
 ![$\langle f(t), \color{red}{B_1(t)} \rangle$](plots/shape1s1_res.png)
-
 :::
-::::
+:::
 
 $$s_1 = 0.30$$
 
 ## Score s~1~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(t) + 0.3$](plots/curve_plus03_shape.png)
 :::
@@ -397,16 +365,14 @@ $$s_1 = 0.30$$
 
 ::: {.column width="33%"}
 ![$\langle f(t) + 0.3, \color{red}{B_1(t)} \rangle$](plots/shape2s1_res.png)
-
 :::
-::::
+:::
 
 $$s_1 = 0.72$$
 
 ## Score s~1~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(2.0 - t)$](plots/curveRev_shape.png)
 :::
@@ -416,19 +382,15 @@ $$s_1 = 0.72$$
 :::
 
 ::: {.column width="33%"}
-![$\langle f(2.0 -  t), \color{red}{B_1(t)} \rangle$](plots/shape3s1_res.png)
-
+![$\langle f(2.0 - t), \color{red}{B_1(t)} \rangle$](plots/shape3s1_res.png)
 :::
-::::
+:::
 
 $$s_1 = 0.30$$
 
-
-
 ## Score s~2~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(t)$](plots/curve_shape.png)
 :::
@@ -439,16 +401,14 @@ $$s_1 = 0.30$$
 
 ::: {.column width="33%"}
 ![$\langle f(t), \color{red}{B_2(t)} \rangle$](plots/shape1s2_res.png)
-
 :::
-::::
+:::
 
 $$s_1 = -0.15$$
 
 ## Score s~2~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(t) + 0.3$](plots/curve_plus03_shape.png)
 :::
@@ -459,16 +419,14 @@ $$s_1 = -0.15$$
 
 ::: {.column width="33%"}
 ![$\langle f(t) + 0.3, \color{red}{B_2(t)} \rangle$](plots/shape2s2_res.png)
-
 :::
-::::
+:::
 
 $$s_2 = -0.15$$
 
 ## Score s~2~
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="33%"}
 ![$f(2.0 - t)$](plots/curveRev_shape.png)
 :::
@@ -478,14 +436,11 @@ $$s_2 = -0.15$$
 :::
 
 ::: {.column width="33%"}
-![$\langle f(2.0 -  t), \color{red}{B_2(t)} \rangle$](plots/shape3s2_res.png)
-
+![$\langle f(2.0 - t), \color{red}{B_2(t)} \rangle$](plots/shape3s2_res.png)
 :::
-::::
+:::
 
 $$s_2 = 0.15$$
-
-
 
 # Statistics with orthogonal projections
 
@@ -516,12 +471,13 @@ polyScores %>%
 :::
 
 ## Fit a regression model on s~1~
+
 ```{r}
 #| echo: true
 #| output-location: fragment
 mod <- lm(s1 ~ Category, data = polyScores)
 summary(mod)
-``` 
+```
 
 ## Model predictions on s~1~
 
@@ -529,12 +485,11 @@ summary(mod)
 #| echo: true
 library(emmeans)
 emmeans(mod, pairwise ~ Category)
-``` 
+```
 
 ## Reconstruct predicted curves from s~1~
 
-$$ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot B1(t)$$
-$$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot B1(t)$$
+$$ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot B1(t)$$ $$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot B1(t)$$
 
 ## Reconstruct predicted curves from s~1~
 
@@ -542,8 +497,7 @@ $$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot B1(t)$$
 
 ## Reconstruct predicted curves from s~1~, s~2~, s~3~, s~4~
 
-$$ f_{ONE\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, ONE\_PEAK} \cdot Bk(t)$$
-$$ f_{TWO\_PEAKS}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, TWO\_PEAKS} \cdot Bk(t)$$
+$$ f_{ONE\_PEAK}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, ONE\_PEAK} \cdot Bk(t)$$ $$ f_{TWO\_PEAKS}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, TWO\_PEAKS} \cdot Bk(t)$$
 
 ## Reconstruct predicted curves from s~1~, s~2~, s~3~, s~4~
 
@@ -553,9 +507,9 @@ $$ f_{TWO\_PEAKS}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, TWO\_PEAKS} \c
 
 ## Functional PCA
 
-::: {.incremental}
-1. [Construct]{style="color:red"} an orthogonal basis [optimised on your curve dataset]{style="color:red"} 
-2. Compute orthogonal projections (scores)
+::: incremental
+1.  [Construct]{style="color:red"} an orthogonal basis [optimised on your curve dataset]{style="color:red"}
+2.  Compute orthogonal projections (scores)
 :::
 
 ## Principal Components (PCs)
@@ -565,7 +519,9 @@ $$ f_{TWO\_PEAKS}(t) = \mu(t) + \sum_{k \in \{1, 2, 3, 4\}} s_{k, TWO\_PEAKS} \c
 <!-- ## Explained variance -->
 
 <!-- | PC1  | PC2  | PC3  | PC4 | -->
+
 <!-- |------:|------:|------:|------:| -->
+
 <!-- | 99.59% | 0.24% |  0.11% |  0.05% | -->
 
 ## Compute scores
@@ -585,47 +541,45 @@ pcScores %>%
 ![](plots/ex1D.1.FPCA_curves.png)
 
 ## Fit a regression model on s~1~
+
 ```{r}
 #| echo: true
 mod <- lm(s1 ~ Category, data = pcScores)
 emmeans(mod, pairwise ~ Category)
-``` 
-
+```
 
 ## Reconstruct predicted curves from s~1~
 
-$$ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot PC1(t)$$
-$$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot PC1(t)$$
+$$ f_{ONE\_PEAK}(t) = \mu(t) + s_{1, ONE\_PEAK} \cdot PC1(t)$$ $$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot PC1(t)$$
 
 ## Reconstruct predicted curves from s~1~
 
 ![](plots/ex1D.1.pred_curves.png)
 
-
 ## Three Variances
-::: {style="font-size: 80%;"}
-::: {.incremental}
 
-1. PCs are ordered by decreasing prop. of explained variance
-2. Score variance (or st. dev.)
-3. Prop. of variance explained by a regression model predicting  a score ($R^2$)
-* [These three variances are not related to one another]{style="color:red"} 
-  - e.g. PC7 explains 0.1\% of the var. but a LMER predicting $s_7$ from a given set of predictors (unknown to FPCA) explains 90\% of the variance
-  
+::: {style="font-size: 80%;"}
+::: incremental
+1.  PCs are ordered by decreasing prop. of explained variance
+2.  Score variance (or st. dev.)
+3.  Prop. of variance explained by a regression model predicting a score ($R^2$)
+
+-   [These three variances are not related to one another]{style="color:red"}
+    -   e.g. PC7 explains 0.1% of the var. but a LMER predicting $s_7$ from a given set of predictors (unknown to FPCA) explains 90% of the variance
 :::
 :::
+
 ## Relation to PCA
 
-::: {.incremental}
+::: incremental
 ::: {style="font-size: 80%;"}
-* Functional PCA extends PCA from the domain of vectors to the domain of functions
-* The key difference is in the definition of scalar product between functions instead of vectors
-  - PCs are functions instead of vectors
-* All the other concepts stay the same
-  - PCs are ordered by decreasing proportion of explained variance
-  - Input data are approximated by linear combinations of PCs determined by scores
-  - PCs are orthogonal to one another
-  
+-   Functional PCA extends PCA from the domain of vectors to the domain of functions
+-   The key difference is in the definition of scalar product between functions instead of vectors
+    -   PCs are functions instead of vectors
+-   All the other concepts stay the same
+    -   PCs are ordered by decreasing proportion of explained variance
+    -   Input data are approximated by linear combinations of PCs determined by scores
+    -   PCs are orthogonal to one another
 :::
 :::
 
@@ -637,52 +591,46 @@ $$ f_{TWO\_PEAKS}(t) = \mu(t) + s_{1, TWO\_PEAKS} \cdot PC1(t)$$
 
 ## D-dimensional Principal Components
 
-::: {.incremental}
-
-* There are D mean curves
-  - $\mu_{y1}(t)$ and $\mu_{y2}(t)$
-* Each PC is composed of D curves
-  - $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
-* [Scores do not split in D]{style="color:red"} 
-* Each score controls a PC, which is made of D 1-dimensional curves
-  - $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
-
+::: incremental
+-   There are D mean curves
+    -   $\mu_{y1}(t)$ and $\mu_{y2}(t)$
+-   Each PC is composed of D curves
+    -   $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
+-   [Scores do not split in D]{style="color:red"}
+-   Each score controls a PC, which is made of D 1-dimensional curves
+    -   $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
 :::
-
-
 
 ## Principal Components (PCs)
 
 ![](plots/ex2D.1.FPCA_curves.png)
 
-
 ## Compute scores
 
 ![](plots/ex2D.1.PCscores_scatter.png)
 
-
 ## Fit a regression model on s1
+
 ```{r}
 #| echo: true
 #| eval: false
 mod <- lm(s1 ~ Category, data = pcScores)
 emmeans(mod, pairwise ~ Category)
-``` 
-| Category | $s_1$ |
-|-------|------:|
-| HIGH_PEAK  | -0.12 |
-| LOW_PEAK   | 0.12  |
+```
+
+| Category  | $s_1$ |
+|-----------|------:|
+| HIGH_PEAK | -0.12 |
+| LOW_PEAK  |  0.12 |
 
 ## Reconstruct predicted curves from s1
 
 ::: fragment
-$$ y1_{HIGH\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y1}(t)$$
-$$ y2_{HIGH\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y2}(t)$$
+$$ y1_{HIGH\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y1}(t)$$ $$ y2_{HIGH\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, HIGH\_PEAK}} \cdot PC1_{y2}(t)$$
 :::
 
 ::: fragment
-$$ y1_{LOW\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y1}(t)$$
-$$ y2_{LOW\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y2}(t)$$
+$$ y1_{LOW\_PEAK}(t) = \mu_{y1}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y1}(t)$$ $$ y2_{LOW\_PEAK}(t) = \mu_{y2}(t) + \color{red}{s_{1, LOW\_PEAK}} \cdot PC1_{y2}(t)$$
 :::
 
 ## Reconstruct predicted curves from s1

@@ -2,8 +2,11 @@ library(fda)
 library(funData)
 library(MFPCA)
 library(tidyverse)
-library(landmarkregUtils)
 library(emmeans)
+
+# install.packages("devtools")
+# devtools::install_github("uasolo/landmarkregUtils")
+library(landmarkregUtils)
 
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
@@ -62,7 +65,7 @@ curvesReg <- applyReg(dat = curves, reg = reg,
 
 # Explore reg
 reg$h %>% plot()
-reg$logvelfd %>% plot()
+reg$lograte %>% plot()
 reg$landmarks
 
 
@@ -86,7 +89,7 @@ curvesFun <- long2irregFunData(curvesReg, id = "curveId", time = "time", value =
 # put together a 2D fd object: curve and lograte
 yRegMult <- multiFunData(list(
   curvesFun,
-  fd2funData(reg$logvelfd, argvals = curvesFun@argvals[[1]])
+  fd2funData(reg$lograte, argvals = curvesFun@argvals[[1]])
 ))
 
 yRegMult[1] %>% plot()

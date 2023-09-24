@@ -364,7 +364,7 @@ ggsave(file.path(plots_dir, str_c("early_late_two_curves", '.png')), pl,
 )
 
 pl <- bind_rows(
-  h = reg$logvelfd %>% # reg$h
+  h = reg$lograte %>% # reg$h
   fd2funData(seq(0, reg$h$basis$rangeval[2], length.out = 100)) %>% 
   funData2long(id = "curveId", time = "time", value = "y"),
   f = curvesReg %>% 
@@ -390,7 +390,7 @@ ggsave(file.path(plots_dir, str_c("early_late_reg_and_lograte", '.png')), pl,
 # put together a 2D fd object
 yRegMult <- multiFunData(list(
   curvesFun,
-  fd2funData(reg$logvelfd, argvals = curvesFun@argvals[[1]])
+  fd2funData(reg$lograte, argvals = curvesFun@argvals[[1]])
 ))
 
 # multidim FPCA
