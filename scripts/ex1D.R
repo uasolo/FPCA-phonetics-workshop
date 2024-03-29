@@ -13,24 +13,56 @@ library(landmarkregUtils)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "orangered")
+Category.colors <- c(A = "slategray4", B = "orangered")
 
 
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
 ex <- 1 # change according to ex number
-curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
+raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
+# curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
-nCurves <- curves %>% distinct(curveId) %>% nrow()
+# nCurves <- curves %>% distinct(curveId) %>% nrow()
 
+sp <- 0.01 # unified sampling period
+maxT <- max(raw_curves$time)
+grid <- seq(0, maxT, by = sp) # unified sampling grid 
+curves <- raw_curves %>% 
+  group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
+  reframe(approx(time, y, grid) %>% as_tibble()) %>% # linear interpolation on grid 
+  ungroup() %>% 
+  rename(time = x, y = y)
 
+maxFixGap <- 4 * sp
+bigGaps <- raw_curves %>% 
+  group_by(curveId, Category) %>%
+  mutate(time_to = lead(time),
+         bigGap = time_to - time > maxFixGap) %>%
+  filter(bigGap) %>% 
+  select(!c(y, bigGap)) %>% 
+  rename(time_from = time) %>% 
+  ungroup()
+  
+library(rlang)
 
+curves %>% 
+  group_by(curveId, Category) %>%
+  {cond_df <- cur_group() %>%
+    inner_join(bigGaps, by = c("curveId"))
+  # here something like the thing below, then filter(!! )
+  }
+
+# something like:
+bigGaps %>% filter(curveId == 2) %>% select(time_from, time_to) %>% 
+  pmap(\(time_from, time_to) str_c("(time > ", time_from, " & time < ", time_to, ")")) %>% 
+  str_c(collapse = " | ") %>% rlang::parse_expr()
 
 # plot a few curves
-ggplot(curves %>% filter(curveId %in% sample(nCurves, 10))) +
+ggplot(raw_curves %>% filter(curveId %in% sample(nCurves, 20))) +
   aes(x = time, y = y, group = curveId, color = Category) +
-  geom_line() +
+  # geom_line() +
+  geom_point() +
   scale_color_manual(values=Category.colors) +
   mytheme  +
   theme(legend.position = "bottom")
