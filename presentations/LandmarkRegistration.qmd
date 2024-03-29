@@ -29,21 +29,19 @@ tab-cap-location: top
 
 ## Statistics on misaligned contours
 
-::: {.incremental}
-* Anchor across-curves variation to meaningful boundaries (landmarks)
-* Separate variation due to:
-  1. boundary misalignment 
-  2. shape variation anchored to boundaries
-* Boundaries may be intrinsic, e.g. peaks
-* or extrinsic, e.g.  syllable boundaries on a f0 contour
-* [Analyse both sources of variation jointly]{style="color:red"}
-
+::: incremental
+-   Anchor across-curves variation to meaningful boundaries (landmarks)
+-   Separate variation due to:
+    1.  boundary misalignment
+    2.  shape variation anchored to boundaries
+-   Boundaries may be intrinsic, e.g. peaks
+-   or extrinsic, e.g. syllable boundaries on a f0 contour
+-   [Analyse both sources of variation jointly]{style="color:red"}
 :::
 
 ## Linear time registration
 
 ::: {layout-ncol="2"}
-
 ::: fragment
 ![Before](plots/few_unreg_curves.png)
 :::
@@ -56,7 +54,6 @@ tab-cap-location: top
 ## Landmark registration
 
 ::: {layout-ncol="2"}
-
 ![Before](plots/few_unreg_curves.png)
 
 ![After](plots/few_reg_curves.png)
@@ -66,15 +63,14 @@ tab-cap-location: top
 
 ![](plots/few_reg_dur.png)
 
-## Landmark reg. does not... 
+## Landmark reg. does not...
 
-::: {.incremental}
-* Does not compute landmark positions on the input curves
-  - Depends on landmarks given by the user
-* Does not align curves based on their shapes
-  - It is not DTW
-* Does not use the curves at all, only the landmarks
-
+::: incremental
+-   Does not compute landmark positions on the input curves
+    -   Depends on landmarks given by the user
+-   Does not align curves based on their shapes
+    -   It is not DTW
+-   Does not use the curves at all, only the landmarks
 :::
 
 # FPCA on misaligned curves
@@ -82,12 +78,13 @@ tab-cap-location: top
 ## A misaligned curve dataset
 
 ::: {.column width="75%"}
-::: {.r-stack}
+::: r-stack
 ![](plots/early_late_unreg_curves_split.png){.fragment}
 
 ![](plots/early_late_unreg_curves.png){.fragment}
 :::
-::: 
+:::
+
 ## Landmark registration
 
 ![](plots/early_late_reg_dur.png)
@@ -107,7 +104,6 @@ tab-cap-location: top
 ## Time warping function h(t)
 
 ::: {layout-ncol="2"}
-
 ::: fragment
 ![Landmark shifting](plots/early_late_reg_dur.png)
 :::
@@ -119,12 +115,11 @@ tab-cap-location: top
 
 ## Equivalent representations
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="45%"}
 ::: fragment
 ![Original time axis](plots/early_late_two_curves.png)
-::: 
+:::
 :::
 
 ::: {.column width="10%"}
@@ -135,13 +130,11 @@ tab-cap-location: top
 ![Registered time and h(t)](plots/early_late_reg_and_h.png)
 :::
 :::
-
-::::
+:::
 
 ## Equivalent representations
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="45%"}
 ![Original time axis](plots/early_late_two_curves.png)
 :::
@@ -152,43 +145,35 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![Registered time and log rate(t)](plots/early_late_reg_and_lograte.png)
 :::
-
-::::
+:::
 
 # MFPCA on misaligned curves
 
 ## MFPCA on curves and log rate
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="65%"}
-
 ::: fragment
 ![](plots/FPCA_curves_early_late_2D.png)
 :::
 :::
-
-::::
+:::
 
 ## From log rate to landmarks
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="50%"}
 ![Curve dimension](plots/FPCA_curves_early_late_2D_y.png)
 :::
 
-
 ::: {.column width="50%"}
 ![Duration dimension](plots/early_late_PCdur.png)
 :::
-
-::::
+:::
 
 ## Predictions based on s1
 
-:::: {.columns}
-
+::: columns
 ::: {.column width="50%"}
 ![Curve dimension](plots/early_late_pred_curves_simple.png)
 :::
@@ -196,8 +181,7 @@ tab-cap-location: top
 ::: {.column width="50%"}
 ![Duration dimension](plots/early_late_predDur.png)
 :::
-
-::::
+:::
 
 ## References
 
