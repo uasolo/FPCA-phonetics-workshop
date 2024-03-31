@@ -26,6 +26,13 @@ modelCurves <- bind_rows(
          y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5))
 )
 
+ggplot(modelCurves) +
+  aes(t0, y, group = Category, color = Category) +
+  geom_point() + 
+  geom_line() +
+  scale_color_manual(values=Category.colors) +
+  mytheme
+
 # copy NcurvesPerCategory
 # add vertical jitter
 # store fd smooth object
@@ -45,7 +52,7 @@ fdCurves <- modelCurves %>%
   
 # plot a smooth curve from fdObj           
 fdCurves %>%
-  filter(curveId == 7) %>% 
+  filter(curveId == 77) %>% 
   pull(fdObj) %>% 
   `[[`(1) %>% 
   plot()
@@ -56,12 +63,21 @@ curves <- fdCurves %>%
   group_by(Category, curveId) %>% 
   reframe(t1 = t1,
           y1 = eval.fd(t1, fdObj[[1]]) %>% as.numeric()
-          )
+          ) %>% 
+  ungroup()
 
-ggplot(curves) +
+subset_curveId <- curves %>%
+  ungroup() %>% 
+  distinct(curveId) %>%
+  slice_sample(n = 20)
+
+# ggplot(curves) +
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(t2, y2, color = Category, group = curveId) +
-  geom_line() +
+  # geom_line() +
+  geom_point() +
   scale_color_manual(values=Category.colors) +
+  facet_wrap(~ curveId, nrow = 4) +
   mytheme  +
   theme(legend.position = "bottom")
 
@@ -76,6 +92,14 @@ curves <- curves %>%
          y2 = y1 + signal::filter(filt = 1, a = c(1, -rho1), x = n1) + n0
   ) %>% 
   select(!c(n0, n1))
+
+# remove random segments
+P_gap <- 0.5
+curves <- curves %>% 
+  group_by(Category, curveId) %>%
+  mutate(gap = runif(1) < P_gap) %>% 
+  filter(t1 < MeanT * 0.1 | t1 > MeanT * runif(1, 0.3, 0.4) | !gap) %>% 
+  select(!gap)
 
 # produce category/curve specific landmarks, move time around.
 modelLand <- tribble(
@@ -95,22 +119,17 @@ curves <- curves %>%
       as.numeric()
     targetMarks <- c(0, jitter(inputMarks[-1], amount = jitter_land))
     landmarkreg_timeSamples(t1, inputMarks, targetMarks)
-    }) %>% 
-  mutate(t2 = case_when(
-    t2 == min(t2) ~ 0,
-    TRUE ~ t2
-  ))
+    }) 
+  # mutate(t2 = case_when(
+  #   t2 == min(t2) ~ 0,
+  #   TRUE ~ t2
+  # ))
 
 curves <- curves %>%
   ungroup() %>% 
   rename(time = t2, y = y2) %>% 
   select(Category, curveId, time, y)
 
-# remove random segments
-curves <- curves %>% 
-  group_by(Category, curveId) %>%
-  {if (TRUE) filter(., time < 0.05 | time > runif(1, 0.15, 0.2)) else .} %>% 
-  {if (TRUE) filter(., time < 0.38 | time > 0.44) else .}
 
 
 data_dir <- "data/"

@@ -41,28 +41,42 @@ bigGaps <- raw_curves %>%
          bigGap = time_to - time > maxFixGap) %>%
   filter(bigGap) %>% 
   select(!c(y, bigGap)) %>% 
-  rename(time_from = time) %>% 
+  rename(time_from = time) %>%
+  reframe(cond = cur_data() %>%
+            pmap(\(time_from, time_to) str_c("(time > ", time_from, " & time < ", time_to, ")")) %>% 
+            str_c(collapse = " | ")
+  ) %>% 
   ungroup()
+
+
   
 library(rlang)
 
-curves %>% 
+curves <- curves %>%
+  # filter(curveId %in% 1:10) %>% 
+  nest(curve = c(time, y)) %>% 
+  left_join(bigGaps, by = c("Category", "curveId")) %>% 
   group_by(curveId, Category) %>%
-  {cond_df <- cur_group() %>%
-    inner_join(bigGaps, by = c("curveId"))
-  # here something like the thing below, then filter(!! )
-  }
-
-# something like:
-bigGaps %>% filter(curveId == 2) %>% select(time_from, time_to) %>% 
-  pmap(\(time_from, time_to) str_c("(time > ", time_from, " & time < ", time_to, ")")) %>% 
-  str_c(collapse = " | ") %>% rlang::parse_expr()
+  mutate(curve = case_when(
+    !is.na(cond) ~ str_c("curve[[1]] %>% filter(!(", cond[[1]], ")) %>% list()") %>% 
+      parse_expr() %>% eval(),
+    TRUE ~ curve
+  )) %>% 
+  select(!cond) %>% 
+  unnest(curve) %>% 
+  ungroup()
 
 # plot a few curves
-ggplot(raw_curves %>% filter(curveId %in% sample(nCurves, 20))) +
+subset_curveId <- raw_curves %>%
+  ungroup() %>% 
+  distinct(curveId) %>%
+  slice_sample(n = 20)
+
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   # geom_line() +
   geom_point() +
+  facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
   mytheme  +
   theme(legend.position = "bottom")
