@@ -43,8 +43,8 @@ bigGaps <- raw_curves %>%
   select(!c(y, bigGap)) %>% 
   rename(time_from = time) %>%
   reframe(cond = cur_data() %>%
-            pmap(\(time_from, time_to) str_c("(time > ", time_from, " & time < ", time_to, ")")) %>% 
-            str_c(collapse = " | ")
+            pmap(\(time_from, time_to) str_c("(time < ", time_from, " | time > ", time_to, ")")) %>% 
+            str_c(collapse = " & ")
   ) %>% 
   ungroup()
 
@@ -58,7 +58,7 @@ curves <- curves %>%
   left_join(bigGaps, by = c("Category", "curveId")) %>% 
   group_by(curveId, Category) %>%
   mutate(curve = case_when(
-    !is.na(cond) ~ str_c("curve[[1]] %>% filter(!(", cond[[1]], ")) %>% list()") %>% 
+    !is.na(cond) ~ str_c("curve[[1]] %>% filter(", cond[[1]], ") %>% list()") %>% 
       parse_expr() %>% eval(),
     TRUE ~ curve
   )) %>% 

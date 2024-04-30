@@ -15,7 +15,7 @@ Category.colors <- c("slategray4", "orangered")
 
 # All curves sampled on t0, one curve per category, 
 
-MeanT <- 0.5
+MeanT <- 0.5 # mean curve duration
 t0 <- seq(0, MeanT, length.out = 11)
 modelCurves <- bind_rows(
   tibble(Category = "A",
@@ -48,6 +48,7 @@ fdCurves <- modelCurves %>%
   group_by(Category, curveId) %>% 
   mutate(y = jitter(y, amount = jitter_y)) %>% 
   reframe(fdObj = list(Data2fd(t0, matrix(y)))) %>% 
+  ungroup() %>% 
   mutate(across(c(Category, curveId), ~ factor(.x))) 
   
 # plot a smooth curve from fdObj           
@@ -98,7 +99,10 @@ P_gap <- 0.5
 curves <- curves %>% 
   group_by(Category, curveId) %>%
   mutate(gap = runif(1) < P_gap) %>% 
-  filter(t1 < MeanT * 0.1 | t1 > MeanT * runif(1, 0.3, 0.4) | !gap) %>% 
+  filter(t1 < MeanT * 0.1 |
+           (t1 > MeanT * runif(1, 0.3, 0.4) & t1 < MeanT * 0.6) |
+           t1 > MeanT * runif(1, 0.8, 0.9) |
+           !gap) %>% 
   select(!gap)
 
 # produce category/curve specific landmarks, move time around.
