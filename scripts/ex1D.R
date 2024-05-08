@@ -86,7 +86,7 @@ curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y
     as.funData()
 
 # Compute FPCA
-fpca <- PACE(curvesFun, npc = 2)
+fpca <- PACE(curvesFun)
 
 # Prop of explained var
 fpca$values  / sum( fpca$values)

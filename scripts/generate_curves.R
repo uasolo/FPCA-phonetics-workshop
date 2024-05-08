@@ -100,8 +100,12 @@ curves <- curves %>%
   group_by(Category, curveId) %>%
   mutate(gap = runif(1) < P_gap) %>% 
   filter(t1 < MeanT * 0.1 |
-           (t1 > MeanT * runif(1, 0.3, 0.4) & t1 < MeanT * 0.6) |
-           t1 > MeanT * runif(1, 0.8, 0.9) |
+           # (
+             t1 > MeanT * runif(1, 0.3, 0.4)
+             # & t1 < MeanT * 0.6
+             # )
+         |
+           # t1 > MeanT * runif(1, 0.8, 0.9) |
            !gap) %>% 
   select(!gap)
 
