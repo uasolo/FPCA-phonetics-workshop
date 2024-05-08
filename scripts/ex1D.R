@@ -70,7 +70,7 @@ curves <- curves %>%
 subset_curveId <- raw_curves %>%
   ungroup() %>% 
   distinct(curveId) %>%
-  slice_sample(n = 20)
+  slice_sample(n = 8)
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
@@ -88,13 +88,20 @@ curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y
 # Compute FPCA
 fpca <- PACE(curvesFun)
 
+# how many PCs?
+fpca$npc
+
+# var of PC scores 
+fpca$values # eigenvalues of covariance operator
+fpca$scores %>% apply(2, var) # same 
+
 # Prop of explained var
-fpca$values  / sum( fpca$values)
+round(fpca$values  / sum( fpca$values) , digits = 3)
 
 # scores st. dev.
-sdFun <- fpca$scores %>% apply(2, sd) 
+sdFun <- fpca$values %>% sqrt()
 # PC curves to be plotted
-PCcurves <- expand_grid(PC = 1:2,
+PCcurves <- expand_grid(PC = 1:3,
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, fractionOfStDev) %>%
   reframe(
@@ -116,7 +123,7 @@ ggplot(PCcurves) +
 
 # collect PC scores
 PCscores <- fpca$scores %>%
-  `colnames<-`( paste0("s", 1:2)) %>%
+  `colnames<-`( paste0("s", 1:fpca$npc)) %>%
   as_tibble() %>%
   bind_cols(curves %>% distinct(curveId, Category), .)
 
@@ -128,25 +135,89 @@ ggplot(PCscores) +
   mytheme +
   theme(legend.position = "right")
 
-
-# model s1 or s2
-mod <- lm(s1 ~ Category, data = PCscores)
-emmeans(mod, pairwise ~ Category)
-
-# reconstruct predicted curves
-emm <- emmeans(mod, pairwise ~ Category)$emmeans %>%
-  as_tibble() %>% 
-  select(Category, emmean) %>% 
-  rename(s1= emmean)
-
-predCurves <- emm %>% 
-  group_by(Category) %>% 
-  reframe(funData2long1(fpca$mu + s1 * fpca$functions[1])) %>%
-  rename(y = value)
-
-ggplot(predCurves) +
-  aes(time, y, color = Category) +
-  geom_line() +
+# boxplots PC scores by Category
+PCscores %>% 
+  pivot_longer(cols = s1:s9, names_to = "PC", values_to = "score") %>% 
+  filter(PC %in% str_c("s", 1:3)) %>% 
+  ggplot() +
+  aes(x = Category, y = score, color = Category) +
+  geom_boxplot() +
+  facet_wrap(~ PC) +
   scale_color_manual(values=Category.colors) +
   mytheme +
   theme(legend.position = "bottom")
+  
+
+    
+# model scores with linear regression
+
+s <- 2 # score index
+model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
+mod <- lm(model_eq, data = PCscores)
+emmeans(mod, pairwise ~ Category)
+
+# model predictions with error bars
+emmeans(mod, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>% 
+  ggplot() +
+  aes(x = Category, y = emmean, color = Category) +
+  geom_point(size = 2) +
+  geom_errorbar(aes(ymin=lower.CL, ymax=upper.CL), width = .2) +
+  scale_color_manual(values=Category.colors) +
+  ylab(str_glue("s{s}")) +
+  ggtitle(str_glue("Predicted scores according to regr model: s{s} ~ Category")) +
+  mytheme 
+  
+
+# reconstruct predicted curves
+predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>%  
+  group_by(Category) %>% 
+  reframe(bind_cols(
+    funData2long1(fpca$mu + emmean * fpca$functions[s], value = "y"),
+    funData2long1(fpca$mu + lower.CL * fpca$functions[s], value = "yl") %>% 
+      select(yl),
+    funData2long1(fpca$mu + upper.CL * fpca$functions[s], value = "yu") %>% 
+      select(yu)
+    ))
+    
+ 
+ggplot(predCurves) +
+  aes(time, y, color = Category) +
+  geom_line() +
+  geom_ribbon(aes(x = time, ymin = yl, ymax = yu, fill = Category),
+              alpha = 0.3, inherit.aes = FALSE) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
+  mytheme +
+  theme(legend.position = "bottom")
+
+# diff curve B - A 
+diffCurve <- emmeans(mod, pairwise ~ Category)$contrasts %>% 
+  as_tibble() %>% 
+  reframe(bind_cols(
+# emmeans computes A - B, so we need to invert the sign of all curves
+    funData2long1(-estimate * fpca$functions[s], value = "y"),
+    funData2long1(-(estimate - 1.96 * SE) * fpca$functions[s], value = "yl") %>% 
+      select(yl),
+    funData2long1(-(estimate + 1.96 * SE) * fpca$functions[s], value = "yu") %>% 
+      select(yu)
+  ))
+
+ggplot(diffCurve) +
+  aes(time, y) +
+  geom_line() +
+  geom_ribbon(aes(x = time, ymin = yl, ymax = yu),
+              alpha = 0.3, inherit.aes = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = 'red') +
+  ggtitle(str_glue("Difference B - A according to regr model: s{s} ~ Category")) +
+  mytheme 
+
+# GAM
+
+GAM <- bam(y ~ Category + s(time, by = Category), data = curves)
+summary(GAM)
+plot_smooth(GAM, view = "time", plot_all = "Category",
+            print.summary = FALSE, col = Category.colors)
+plot_diff(GAM, view = "time", comp = list(Category = c("B", "A")))

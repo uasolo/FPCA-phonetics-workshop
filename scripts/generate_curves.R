@@ -16,15 +16,30 @@ Category.colors <- c("slategray4", "orangered")
 # All curves sampled on t0, one curve per category, 
 
 MeanT <- 0.5 # mean curve duration
-t0 <- seq(0, MeanT, length.out = 11)
-modelCurves <- bind_rows(
+ex1D_curves <- list()
+ex1D_curves[[1]] <- bind_rows(
   tibble(Category = "A",
-         t0 = t0,
          y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 0, 0, 0, -1.5, -2.5)),
   tibble(Category = "B",
-         t0 = t0,
          y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5))
 )
+
+ex1D_land <- list()
+ex1D_land[[1]] <- tribble(
+  ~Category, ~l1, ~l2, ~l3, ~l4,
+  "A", 0, .5, .7, 1,
+  "B", 0, .5, .7, 1,
+) 
+
+
+ex <- 1
+modelCurves <- ex1D_curves[[ex]] %>% 
+  group_by(Category) %>% 
+  mutate(t0 = seq(0, MeanT, length.out = n())) %>% 
+  ungroup() %>%
+  relocate(t0, .after = Category)
+  
+
 
 ggplot(modelCurves) +
   aes(t0, y, group = Category, color = Category) +
@@ -47,7 +62,7 @@ fdCurves <- modelCurves %>%
   arrange(curveId, t0) %>% 
   group_by(Category, curveId) %>% 
   mutate(y = jitter(y, amount = jitter_y)) %>% 
-  reframe(fdObj = list(Data2fd(t0, matrix(y)))) %>% 
+  reframe(fdObj = list(Data2fd(t0, matrix(y)))) %>% # matrix() because of a bug in Data2fd
   ungroup() %>% 
   mutate(across(c(Category, curveId), ~ factor(.x))) 
   
@@ -110,11 +125,7 @@ curves <- curves %>%
   select(!gap)
 
 # produce category/curve specific landmarks, move time around.
-modelLand <- tribble(
-  ~Category, ~l1, ~l2, ~l3, ~l4,
-  "A", 0, .5, .7, 1,
-  "B", 0, .5, .7, 1,
-) %>% 
+modelLand <- ex1D_land[[ex]] %>% 
   mutate(across(starts_with("l"), ~ MeanT * .x))
 
 jitter_land <- 0.04 * MeanT
@@ -141,7 +152,6 @@ curves <- curves %>%
 
 
 data_dir <- "data/"
-ex <- 1
 saveRDS(curves, file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.')))
 
 #### interp
