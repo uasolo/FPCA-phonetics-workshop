@@ -70,13 +70,13 @@ curves <- curves %>%
 subset_curveId <- raw_curves %>%
   ungroup() %>% 
   distinct(curveId) %>%
-  slice_sample(n = 8)
+  slice_sample(n = 20)
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
-  # geom_line() +
-  geom_point() +
-  facet_wrap(~ curveId) +
+  geom_line() +
+  # geom_point() +
+  # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
   mytheme  +
   theme(legend.position = "bottom")
@@ -137,8 +137,9 @@ ggplot(PCscores) +
 
 # boxplots PC scores by Category
 PCscores %>% 
-  pivot_longer(cols = s1:s9, names_to = "PC", values_to = "score") %>% 
-  filter(PC %in% str_c("s", 1:3)) %>% 
+  pivot_longer(cols = s1:all_of(str_glue("s{fpca$npc}")), 
+               names_to = "PC", values_to = "score") %>% 
+  filter(PC %in% str_c("s", 1:5)) %>% 
   ggplot() +
   aes(x = Category, y = score, color = Category) +
   geom_boxplot() +
@@ -154,6 +155,7 @@ PCscores %>%
 s <- 2 # score index
 model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
 mod <- lm(model_eq, data = PCscores)
+mod %>% summary()
 emmeans(mod, pairwise ~ Category)
 
 # model predictions with error bars
