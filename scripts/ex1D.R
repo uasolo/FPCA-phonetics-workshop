@@ -19,7 +19,7 @@ Category.colors <- c(A = "slategray4", B = "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 1 # change according to ex number
+ex <- 4 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
 # curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
@@ -152,7 +152,7 @@ PCscores %>%
     
 # model scores with linear regression
 
-s <- 2 # score index
+s <- 1 # score index
 model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
 mod <- lm(model_eq, data = PCscores)
 mod %>% summary()

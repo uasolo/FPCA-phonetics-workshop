@@ -69,7 +69,7 @@ ex1D_land[[4]] <- list(A = ex1D_land[[1]][['A']],
                                 target = c(.2, .4, .75, .9, 1.15) * RefT
 ))
 
-ex <- 1
+ex <- 4
 modelCurves <- ex1D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
