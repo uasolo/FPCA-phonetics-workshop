@@ -34,6 +34,7 @@ curves <- raw_curves %>%
   ungroup() %>% 
   rename(time = x, y = y)
 
+#### TODO: move to function
 maxFixGap <- 4 * sp
 bigGaps <- raw_curves %>% 
   group_by(curveId, Category) %>%
@@ -65,6 +66,9 @@ curves <- curves %>%
   select(!cond) %>% 
   unnest(curve) %>% 
   ungroup()
+
+########
+
 
 # plot a few curves
 subset_curveId <- raw_curves %>%
@@ -217,7 +221,7 @@ ggplot(diffCurve) +
   mytheme 
 
 # GAM
-
+# basic form (no AR1, no curve-specific random smooths)
 GAM <- bam(y ~ Category + s(time, by = Category), data = curves)
 summary(GAM)
 plot_smooth(GAM, view = "time", plot_all = "Category",

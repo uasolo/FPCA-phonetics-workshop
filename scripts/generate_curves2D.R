@@ -62,52 +62,55 @@ shift_y[[3]] <- function(y, Category, Dim, u) {
 
 ex2D_land <- list()
 ex2D_land[[1]] <- function(Category, Dim, u, role) {
-  baseLand <- c(0, .2, .4, .6, .7, .8, 1) * RefT
-  nLand <- length(baseLand)
-  land <- baseLand
-  if (role == 'target' & Dim == 'y1') {
+  inputLand <- c(0, .2, .4, .6, .7, .8, 1) * RefT
+  if (role == 'input') return(inputLand)
+  nLand <- length(inputLand)
+  targetLand <- inputLand
+  if (Dim == 'y1') {
     if (Category == 'A') {
       shift <- 0.02 * u * RefT
     } else {
-      shift <- (0.02 * u + 0.05) * RefT
+      shift <- (0.02 * u + 0.1) * RefT
     }
     # truncate shift such that landmarks do not cross
     shift <- shift %>% max(-.18 * RefT) %>% min(.18 * RefT)
-    land[4:6] <- land[4:6] + shift
+    targetLand[4:6] <- targetLand[4:6] + shift
   }
   jitter_land <- 0.02 * RefT 
   # hope they do not cross
-  land[2:(nLand-1)] <- land[2:(nLand-1)] %>%
+  targetLand[2:(nLand-1)] <- targetLand[2:(nLand-1)] %>%
     jitter(amount = jitter_land)
-  return(land)
+  return(targetLand)
 }
 
 ex2D_land[[2]] <- function(Category, Dim, u, role) {
-  baseLand <- c(0, .2, .4, .6, .7, .8, 1) * RefT
-  nLand <- length(baseLand)
-  land <- baseLand
-  if (role == 'target' & Dim == 'y1') {
-    shift <- 0.03 * rnorm(1, 0, 1) * RefT # indep of u and Category
+  inputLand <- c(0, .2, .4, .6, .7, .8, 1) * RefT
+  if (role == 'input') return(inputLand)
+  nLand <- length(inputLand)
+  targetLand <- inputLand
+  if (Dim == 'y1') {
+    shift <- 0.05 * rnorm(1, 0, 1) * RefT # indep of u and Category
     # truncate shift such that landmarks do not cross
     shift <- shift %>% max(-.18 * RefT) %>% min(.18 * RefT)
-    land[4:6] <- land[4:6] + shift
+    targetLand[4:6] <- targetLand[4:6] + shift
   }
-  jitter_land <- 0.02 * RefT 
+  jitter_land <- 0.01 * RefT 
   # hope they do not cross
-  land[2:(nLand-1)] <- land[2:(nLand-1)] %>%
+  targetLand[2:(nLand-1)] <- targetLand[2:(nLand-1)] %>%
     jitter(amount = jitter_land)
-  return(land)
+  return(targetLand)
 }
 
 ex2D_land[[3]] <- function(Category, Dim, u, role) {
-  baseLand <- c(0, .2, .4, .6, .8, 1) * RefT
-  nLand <- length(baseLand)
-  land <- baseLand
+  inputLand <- c(0, .2, .4, .6, .8, 1) * RefT
+  if (role == 'input') return(inputLand)
+  nLand <- length(inputLand)
+  targetLand <- inputLand
   jitter_land <- 0.02 * RefT 
   # hope they do not cross
-  land[2:(nLand-1)] <- land[2:(nLand-1)] %>%
+  targetLand[2:(nLand-1)] <- targetLand[2:(nLand-1)] %>%
     jitter(amount = jitter_land)
-  return(land)
+  return(targetLand)
 }
 
 
@@ -174,21 +177,35 @@ fdCurves <- fdCurves %>%
 # apply landmark reg
 curves <- fdCurves %>% #slice_head(n = 6) %>% 
   group_by(Category, curveId, Dim) %>% 
+  mutate(inputMarks = list(ex2D_land[[ex]](Category %>% as.character(),
+                                           Dim %>% as.character(),
+                                           u,
+                                           'input')),
+         targetMarks = list(ex2D_land[[ex]](Category %>% as.character(),
+                                            Dim %>% as.character(),
+                                            u,
+                                            'target'))
+  ) %>% 
   reframe(x1 = eval.fd(one_landmarkreg_nocurves(
-      inputMarks = ex2D_land[[ex]](Category %>% as.character(),
-                                 Dim %>% as.character(),
-                                 u,
-                                 'input'),
-    
-      targetMarks = ex2D_land[[ex]](Category %>% as.character(),
-                                  Dim %>% as.character(),
-                                  u,
-                                  'target')
-    ), fdObj[[1]]) %>% as.numeric()
-  ) %>%
-  group_by(Category, curveId, Dim) %>% 
-  mutate(t1 = seq(0, RefT, length.out = n())) %>% 
-  ungroup()
+    inputMarks = inputMarks[[1]],
+    targetMarks = targetMarks[[1]]
+  ), fdObj[[1]]) %>% as.numeric(),
+  t1 = seq(0, last(targetMarks[[1]]), length.out = length(x1))
+  )
+  # reframe(x1 = eval.fd(one_landmarkreg_nocurves(
+  #     inputMarks = ex2D_land[[ex]](Category %>% as.character(),
+  #                                Dim %>% as.character(),
+  #                                u,
+  #                                'input'),
+  #     targetMarks = ex2D_land[[ex]](Category %>% as.character(),
+  #                                 Dim %>% as.character(),
+  #                                 u,
+  #                                 'target')
+  #   ), fdObj[[1]]) %>% as.numeric()
+  # ) %>%
+  # group_by(Category, curveId, Dim) %>% 
+  # mutate(t1 = seq(0, RefT, length.out = n())) %>% 
+  # ungroup()
 
 subset_curveId <- curves %>%
   ungroup() %>% 
