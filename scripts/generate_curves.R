@@ -49,20 +49,6 @@ shift_y[[3]] <- function(y, Category, u) {
   return (y)
 }
 shift_y[[4]] <- shift_y[[1]]
-# shift_y[[1]] <- list('A' = \(y) return (y),
-#                      'B' = \(y) return (y)
-#                      )
-# shift_y[[2]] <- list('A' = \(y) {
-#   y[1:3] <- y[1:3] + rnorm(1, 0, 1)
-#   return (y)
-# })
-# shift_y[[2]][['B']] <- shift_y[[2]][['A']]
-# shift_y[[3]] <- list('A' = \(y) {
-#   y[1:3] <- y[1:3] + rnorm(1, 0, 1)
-#   y[7] <- y[7] + rnorm(1, 0, 1)
-#   return (y)
-# })
-# shift_y[[3]][['B']] <- shift_y[[3]][['A']]
 
 ex1D_land <- list() 
 ex1D_land[[1]] <- function(Category, u, role) {
@@ -78,12 +64,6 @@ ex1D_land[[1]] <- function(Category, u, role) {
   return(targetLand)
 }
 
-# baseLand <- c(.5, .7, 1) * RefT
-# ex1D_land[[1]] <- list(A = list(input = baseLand,
-#                                 target = baseLand),
-#                        B = list(input = baseLand,
-#                                 target = baseLand)
-# )
 ex1D_land[[2]] <- ex1D_land[[1]]
 ex1D_land[[3]] <- ex1D_land[[1]]
 ex1D_land[[4]] <- function(Category, u, role) {
@@ -91,22 +71,22 @@ ex1D_land[[4]] <- function(Category, u, role) {
   if (role == 'input') return(inputLand)
   nLand <- length(inputLand)
   if (Category == 'A') {
-    targetLand <- c(0, .2, .4, .75, .9, 1.15) * RefT
+    targetLand <- c(0, .2, .4, .9, 1.1, 1.3) * RefT
   } else {
     targetLand <- inputLand
   }
   stopifnot("`inputLand` and `targetLand` have different landmark counts" =
               length(inputLand) == length(targetLand))
+  shift <- 0.1 * u * RefT
+  # truncate shift such that landmarks do not cross
+  shift <- shift %>% max(-.18 * RefT) %>% min(.18 * RefT)
+  targetLand[4:6] <- targetLand[4:6] + shift
   jitter_land <- 0.02 * RefT 
   # hope they do not cross
   targetLand[2:nLand] <- targetLand[2:nLand] %>%
     jitter(amount = jitter_land)
   return(targetLand)
 }
-# ex1D_land[[4]] <- list(A = ex1D_land[[1]][['A']],
-#   B = list(input = c(.2, .4, .6, .8 ,1) * RefT,
-#                                 target = c(.2, .4, .75, .9, 1.15) * RefT
-# ))
 
 ex <- 4
 modelCurves <- ex1D_curves[[ex]] %>% 
@@ -129,7 +109,7 @@ ggplot(modelCurves) +
 # add vertical jitter
 # store fd smooth object
 NcurvesPerCategory <- 50
-jitter_y <- 0.4
+jitter_y <- 0.2
 fdCurves <- modelCurves %>%
   group_by(Category) %>% 
   expand_grid(id_ = 1:NcurvesPerCategory) %>% 
@@ -143,7 +123,6 @@ fdCurves <- modelCurves %>%
   mutate(y = shift_y[[ex]](y,
                            cur_group()$Category %>% as.character(),
                            u[1])) %>% 
-  # mutate(y = shift_y[[ex]][[cur_group()$Category]](y)) %>% 
   mutate(y = jitter(y, amount = jitter_y))
 
 ggplot(fdCurves) +
@@ -176,10 +155,7 @@ curves <- fdCurves %>% #slice_head(n = 6) %>%
     targetMarks = targetMarks[[1]]
   ), fdObj[[1]]) %>% as.numeric(),
   t1 = seq(0, last(targetMarks[[1]]), length.out = length(x1))
-  ) #%>%
-  # group_by(Category, curveId) %>% 
-  # mutate(t1 = seq(0, RefT, length.out = n())) %>% 
-  # ungroup()
+  )
 
 subset_curveId <- curves %>%
   ungroup() %>% 

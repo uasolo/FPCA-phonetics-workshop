@@ -21,9 +21,8 @@ data_dir <- "data/"
 
 ex <- 4 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
-# curves <- read_csv(file.path(data_dir, paste("ex1D", ex, "csv", sep = '.'))) %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
-# nCurves <- curves %>% distinct(curveId) %>% nrow()
+
 
 sp <- 0.01 # unified sampling period
 maxT <- max(raw_curves$time)
@@ -76,7 +75,7 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   # geom_point() +

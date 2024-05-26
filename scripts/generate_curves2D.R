@@ -192,20 +192,6 @@ curves <- fdCurves %>% #slice_head(n = 6) %>%
   ), fdObj[[1]]) %>% as.numeric(),
   t1 = seq(0, last(targetMarks[[1]]), length.out = length(x1))
   )
-  # reframe(x1 = eval.fd(one_landmarkreg_nocurves(
-  #     inputMarks = ex2D_land[[ex]](Category %>% as.character(),
-  #                                Dim %>% as.character(),
-  #                                u,
-  #                                'input'),
-  #     targetMarks = ex2D_land[[ex]](Category %>% as.character(),
-  #                                 Dim %>% as.character(),
-  #                                 u,
-  #                                 'target')
-  #   ), fdObj[[1]]) %>% as.numeric()
-  # ) %>%
-  # group_by(Category, curveId, Dim) %>% 
-  # mutate(t1 = seq(0, RefT, length.out = n())) %>% 
-  # ungroup()
 
 subset_curveId <- curves %>%
   ungroup() %>% 
