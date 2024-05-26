@@ -75,7 +75,7 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   # geom_point() +

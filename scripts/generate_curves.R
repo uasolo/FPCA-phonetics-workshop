@@ -36,6 +36,7 @@ ex1D_curves[[4]] <- bind_rows(
   tibble(Category = "B",
          y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5))
 )
+ex1D_curves[[5]] <- ex1D_curves[[4]]
 
 shift_y <- list()
 shift_y[[1]] <- function(y, Category, u) {return (y)}
@@ -49,6 +50,8 @@ shift_y[[3]] <- function(y, Category, u) {
   return (y)
 }
 shift_y[[4]] <- shift_y[[1]]
+shift_y[[5]] <- shift_y[[1]]
+
 
 ex1D_land <- list() 
 ex1D_land[[1]] <- function(Category, u, role) {
@@ -87,6 +90,7 @@ ex1D_land[[4]] <- function(Category, u, role) {
     jitter(amount = jitter_land)
   return(targetLand)
 }
+ex1D_land[[5]] <- ex1D_land[[1]]
 
 ex <- 4
 modelCurves <- ex1D_curves[[ex]] %>% 
@@ -214,6 +218,34 @@ curves <- curves %>%
 
 data_dir <- "data/"
 saveRDS(curves, file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.')))
+
+#### landmark reg
+
+generate_land <- function(curves, ex) {
+  if (ex == 4) {
+    land <- curves %>% 
+      group_by(curveId, Category) %>% 
+      reframe(l1 = 0,
+             l2 = jitter(0.2, amount = 0.02),
+             l3 = max(time))
+  } else if (ex == 5) {
+    boundary <- c(A = 0.15, B = 0.25)
+    land <- curves %>% 
+      group_by(curveId, Category) %>% 
+      reframe(l1 = 0,
+             l2 = jitter(boundary[cur_group()$Category], amount = 0.02),
+             l3 = max(time))  }
+  return(land)
+}
+
+land <- generate_land(curves, ex)
+
+saveRDS(land, file.path(data_dir, str_c("land1D", ex, "rds", sep = '.')))
+
+
+
+
+
 
 #### interp
 
