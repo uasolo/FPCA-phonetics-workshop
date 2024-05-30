@@ -3,6 +3,7 @@ library(funData)
 library(MFPCA)
 library(tidyverse)
 library(emmeans)
+library(gridExtra)
 
 # install.packages("devtools")
 # devtools::install_github("uasolo/landmarkregUtils")
@@ -17,7 +18,7 @@ Category.colors <- c("slategray4", "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 4 # change according to ex number
+ex <- 5 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
@@ -30,33 +31,11 @@ curves <- raw_curves %>%
   reframe(approx(time, y, grid) %>% as_tibble()) %>% # linear interpolation on grid 
   ungroup() %>% 
   rename(time = x, y = y) %>% 
-  filter(!is.na(y))
+  filter(!is.na(y)) # otherwise applyReg fails
 
 land <- readRDS(file.path(data_dir, str_c("land1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
-
-# curves <- read_csv(file.path(data_dir, paste("exLand", ex, "csv", sep = '.')))
-# land <- read_csv(file.path(data_dir,  paste("exLand", ex, "land", "csv", sep = '.')))
-# 
-# curves <- curves %>% mutate(across(c(curveId, Category), ~ factor(.x)))
-# land <- land %>% mutate(across(c(curveId, Category), ~ factor(.x)))
-# 
-# nCurves <- curves %>% distinct(curveId) %>% nrow()
-# curveSample <- sample(nCurves, 10)
-
-
-# plot a few curves
-# ggplot(curves %>% filter(curveId %in% curveSample)) +
-#   aes(time, y, group = curveId, color = Category) +
-#   geom_line(linewidth = 0.8) +
-#   scale_color_manual(values=Category.colors) +
-#   # geom_vline(data = land %>%
-#   #              filter(curveId %in% curveSample) %>%
-#   #              pivot_longer(cols = starts_with("l")),
-#   #            mapping = aes(xintercept = value, color = Category)) +
-#   mytheme +
-#   theme(legend.position = "bottom")
 
 # plot a few curves
 subset_curveId <- raw_curves %>%
@@ -66,7 +45,7 @@ subset_curveId <- raw_curves %>%
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
-  geom_line() +
+  geom_line(linewidth = 0.8) +
   # geom_point() +
   # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
@@ -84,7 +63,7 @@ Cat_id <- land_id %>% pull(Category)
 
 ggplot(curves %>% filter(curveId == id)) +
   aes(time, y) +
-  geom_line() +
+  geom_line(linewidth = 0.8) +
   geom_vline(xintercept = landmarks 
              , color = 'red') +
   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
@@ -125,7 +104,7 @@ curvesFun <- long2irregFunData(curvesReg, id = "curveId", time = "time", value =
   as.funData()
 
 
-# Here you can jump to ex1D.R and proceed with FPCA (and GAM)...
+# Here you can jump to ex1D.R and proceed with FPCA (and/or GAM)...
 # .. or continue below for joint curve/duration FPCA
 
 # put together a 2D fd object: curve and lograte
@@ -134,7 +113,7 @@ yRegMult <- multiFunData(list(
   fd2funData(reg$lograte, argvals = curvesFun@argvals[[1]])
 ))
 
-yRegMult[1] %>% plot()
+yRegMult[61] %>% plot()
 
 # multidim FPCA
 nPC <- 3
@@ -148,8 +127,10 @@ mfpca$values  / sum( mfpca$values)
 # scores st. dev.
 sdFun <- mfpca$values %>% sqrt()
 # PC curves to be plotted
+DimCurves <- c(1)
+DimLograte <- 2 # lograte is the second dimension in mfpca
 PCcurves <- expand_grid(PC = 1:nPC,
-                        Dim = 1:2, # 1:2 or 1
+                        Dim = c(DimCurves), # DimLograte),
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, Dim, fractionOfStDev) %>%
   reframe(time = mfpca$meanFunction[[Dim]]@argvals[[1]],
@@ -158,7 +139,7 @@ PCcurves <- expand_grid(PC = 1:nPC,
   )
 # Plot
 DimLabels <- c(`1` = "y", `2` = "log rate")
-ggplot(PCcurves) +
+PCcurves_plot <- ggplot(PCcurves) +
   aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
   geom_line() +
   scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
@@ -169,12 +150,14 @@ ggplot(PCcurves) +
   labs(color = expression(frac(s[k], sigma[k]))) +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   geom_vline(xintercept = reg$landmarks) +
-  xlab("registered time") +
+  xlab("registered time") + 
   mytheme +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right",
+        axis.title.y = element_blank())
+
+PCcurves_plot
 
 # PC durations to be plotted
-DimLograte <- 2 # lograte is the second dimension in mfpca
 
 PCdur <- expand_grid(PC = 1:nPC,
                      fractionOfStDev = seq(-1, 1, by=.5),
@@ -188,11 +171,11 @@ PCdur <- expand_grid(PC = 1:nPC,
   ungroup() %>% 
   select(!c(from, to, id))
 
-ggplot(PCdur) +
+PCdur_plot <- ggplot(PCdur) +
   aes(x = fractionOfStDev %>% factor(labels = ""),
       y = duration, color = fractionOfStDev) + 
   geom_bar(stat="identity", fill = 'white') +
-  geom_text(aes(label = duration %>% round(digits = 2)), size = 3.5,
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 5,
             position = position_stack(vjust = 0.5), show.legend = FALSE) +
   facet_grid(~ PC, labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
   scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
@@ -200,11 +183,14 @@ ggplot(PCdur) +
   ylab("time") +
   coord_flip() + 
   mytheme +
-  theme(legend.position = "bottom",
+  theme(legend.position = "right",
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
 
+PCdur_plot
+
+grid.arrange(PCcurves_plot, PCdur_plot, nrow=2)
 
 # collect PC scores
 PCscores <- mfpca$scores %>%
@@ -214,7 +200,7 @@ PCscores <- mfpca$scores %>%
 
 # scatterplot PC scores s1 and s2 by Category
 ggplot(PCscores) +
-  aes(x = s1, y = s3, color = Category) +
+  aes(x = s1, y = s2, color = Category) +
   geom_point() +
   scale_color_manual(values=Category.colors) +
   mytheme +
@@ -241,10 +227,9 @@ emmeans(mod, pairwise ~ Category)
 
 # reconstruct predicted curves
 
-DIMy <- 1
 predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>%
   as_tibble() %>%
-  expand_grid(Dim = DIMy) %>% 
+  expand_grid(Dim = DimCurves) %>% 
   group_by(Category, Dim) %>% 
   reframe(bind_cols(
     funData2long1(mfpca$meanFunction[[Dim]] +
@@ -257,10 +242,10 @@ predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>%
       select(yu)
   ))
 
-predCurves %>% 
+predCurves_plot <- predCurves %>% 
   ggplot() +
   aes(time, y, color = Category) +
-  geom_line() +
+  geom_line(linewidth = 0.8) +
   geom_ribbon(aes(x = time, ymin = yl, ymax = yu, fill = Category),
               alpha = 0.3, inherit.aes = FALSE) +
   scale_color_manual(values=Category.colors) +
@@ -274,44 +259,24 @@ predCurves %>%
   mytheme +
   theme(legend.position = "bottom")
 
-
-
-# predCurves <- emm %>% 
-#   group_by(Category) %>% 
-#   reframe(funData2long(mfpca$meanFunction[[DIMy]] + s2 * mfpca$functions[[DIMy]][2])) %>%
-#   select(!id) %>% 
-#   rename(`registered time` = time, y = value)
-# 
-# 
-# # plot pred. curves
-# ggplot(predCurves) +
-#   aes(`registered time`, y, color = Category) +
-#   geom_line() +
-#   scale_color_manual(values=Category.colors) +
-#   geom_vline(xintercept = reg$landmarks) + 
-#   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
-#                                          breaks = reg$landmarks,
-#                                          labels = str_c("l", seq_along(reg$landmarks)))) +
-#   mytheme +
-#   theme(legend.position = "bottom")
+predCurves_plot
 
 # pred. durations
-DIMlograte <- 2
 predDur <- expand_grid(emmeans(mod, pairwise ~ Category)$emmeans %>% 
                          as_tibble()
                        , landmarks2long(reg$landmarks)) %>% 
   group_by(Category, leftBoundary) %>% 
   mutate(duration = lograte2duration(
-    lograte = mfpca$meanFunction[[DIMlograte]] +
-      emmean * mfpca$functions[[DIMlograte]][s],
+    lograte = mfpca$meanFunction[[DimLograte]] +
+      emmean * mfpca$functions[[DimLograte]][s],
     from = from, to = to)) %>% 
   ungroup() %>% 
   select(!c(from, to, id))
 
-ggplot(predDur) +
+predDur_plot <- ggplot(predDur) +
   aes(x = Category, y = duration, color = Category) + 
   geom_bar(stat="identity", fill = 'white') +
-  geom_text(aes(label = duration %>% round(digits = 2)), size = 3.5,
+  geom_text(aes(label = duration %>% round(digits = 2)), size = 5,
             position = position_stack(vjust = 0.5), show.legend = FALSE) +
   ylab("time") +
   scale_color_manual(values=Category.colors) +
@@ -321,3 +286,58 @@ ggplot(predDur) +
         axis.title.y=element_blank(),
         axis.text.y=element_blank(),
         axis.ticks.y=element_blank())
+
+predDur_plot
+
+grid.arrange(predCurves_plot, predDur_plot, nrow=2)
+
+# Predicted curves on the original time axis
+
+# add landmark position (except for the first one at time = 0)
+predDur <- predDur %>% 
+  group_by(Category) %>% 
+  mutate(land = cumsum(duration))
+
+# compute original time samples from registered time samples
+predCurves <- predCurves %>% 
+  group_by(Category) %>% 
+  mutate(origTime = {
+    landmarks <- c(0, # first landmark at time = 0
+                   predDur %>% 
+                     inner_join(cur_group(), by = "Category") %>% 
+                     pull(land))
+    landmarkreg_timeSamples(timeSamples = time,
+                            inputMarks = reg$landmarks,
+                            targetMarks = landmarks)
+  })
+
+# compute (time, y) coordinates of landmark points on predicted curves
+predLand <- predDur %>% 
+  group_by(Category) %>% 
+  mutate(land = cumsum(duration)) %>% 
+  select(Category, land) %>% 
+  reframe(land = list(c(0, land))) %>% 
+  inner_join(predCurves %>% select(Category, origTime, y),
+             by = 'Category',
+             multiple = "all") %>% 
+  nest(.by = c(Category, land), .key = "curves") %>% 
+  group_by(Category) %>%
+  mutate(y = list(approx(curves[[1]]$origTime, curves[[1]]$y, land[[1]], rule = 2)$y)) %>% 
+  select(!curves) %>% 
+  unnest(cols = c(land, y))
+  
+
+
+ggplot(predCurves) +
+  aes(origTime, y, color = Category) +
+  geom_line(linewidth = 0.8) +
+  geom_point(data = predLand,
+             mapping = aes(land, y, color = Category),
+             inherit.aes = FALSE,
+             size = 3
+            ) +
+  scale_color_manual(values=Category.colors) +
+  xlab("time") +
+  ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
+  mytheme +
+  theme(legend.position = "bottom")
