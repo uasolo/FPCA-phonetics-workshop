@@ -1,0 +1,141 @@
+---
+title: "Functional PCA"
+author: "Michele Gubian"
+date: "July 1st, 2024"
+date-format: long
+bibliography: references.bib
+nocite: |
+  @*
+format:
+  revealjs:
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
+    df-print: kable
+    slide-number: true
+    chalkboard: 
+      theme: "whiteboard"
+    theme: [style.scss]
+editor: visual
+fig-cap-location: top
+tab-cap-location: top
+---
+
+# Operations on functions
+
+## From time samples to functions
+
+::: {layout-ncol="2"}
+![Sampled curve](plots/curve_points.png)
+
+::: fragment
+![Function $f(t)$](plots/arith_curve.png)
+:::
+:::
+
+
+
+## Addition
+
+::: columns
+::: {.column width="65%"}
+![$f(t) + \color{red}{g(t)}$](plots/arith_sum.png)
+:::
+:::
+
+## Addition
+
+::: columns
+::: {.column width="65%"}
+![$f(t) + \color{red}{g(t)} = \color{blue}{y(t)}$](plots/arith_sum_res.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{0.5} \cdot f(t)$](plots/arith_curve.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar_neg.png)
+:::
+:::
+
+## Mean curve
+
+::: columns
+::: {.column width="65%"}
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})$](plots/arith_curve2.png)
+:::
+:::
+
+## Mean function
+
+::: columns
+::: {.column width="65%"}
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}$](plots/arith_curve2mean.png)
+:::
+:::
+
+
+## FPC curves
+
+![](plots/ex1D.1_PC.png){height="500"}
+
+
+## FPC-based curve reconstruction
+
+![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve3_mean.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t)$](plots/ex1D.1_curve3_mean_PC1.png){height="500"}
+
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t)$](plots/ex1D.1_curve3_mean_PC12.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t) + \color{red}{0.14} \cdot PC3(t)$](plots/ex1D.1_curve3_mean_PC123.png){height="500"}
+
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve51_mean.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t)$](plots/ex1D.1_curve51_mean_PC1.png){height="500"}
+
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t)$](plots/ex1D.1_curve51_mean_PC12.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t) + \color{red}{0.37} \cdot PC3(t)$](plots/ex1D.1_curve51_mean_PC123.png){height="500"}
+
+
+
+
+## References
+
+::: {#refs}
+:::
