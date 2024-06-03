@@ -10,7 +10,7 @@ filter <- dplyr::filter # conflict with signal
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "orangered")
+Category.colors <-c( "darkslategray",  "orangered") 
 
 
 # All curves sampled on t0, one curve per category, 
@@ -60,7 +60,7 @@ ex1D_land[[1]] <- function(Category, u, role) {
   nLand <- length(inputLand)
   targetLand <- inputLand
     
-  jitter_land <- 0.04 * RefT 
+  jitter_land <- 0.03 * RefT 
   # hope they do not cross
   targetLand[2:nLand] <- targetLand[2:nLand] %>%
     jitter(amount = jitter_land)
@@ -92,7 +92,8 @@ ex1D_land[[4]] <- function(Category, u, role) {
 }
 ex1D_land[[5]] <- ex1D_land[[1]]
 
-ex <- 5
+set.seed(123)
+ex <- 1
 modelCurves <- ex1D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
