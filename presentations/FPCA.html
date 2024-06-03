@@ -8,9 +8,10 @@
 <link href="FPCA_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <link href="FPCA_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
 <link href="FPCA_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.3.450">
+  <meta name="generator" content="quarto-1.4.553">
 
   <meta name="author" content="Michele Gubian">
+  <meta name="dcterms.date" content="2024-07-01">
   <title>Functional PCA</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,10 +30,76 @@
       margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
       vertical-align: middle;
     }
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      { color: #003b4f; background-color: #f1f3f5; }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span { color: #003b4f; } /* Normal */
+    code span.al { color: #ad0000; } /* Alert */
+    code span.an { color: #5e5e5e; } /* Annotation */
+    code span.at { color: #657422; } /* Attribute */
+    code span.bn { color: #ad0000; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #003b4f; } /* ControlFlow */
+    code span.ch { color: #20794d; } /* Char */
+    code span.cn { color: #8f5902; } /* Constant */
+    code span.co { color: #5e5e5e; } /* Comment */
+    code span.cv { color: #5e5e5e; font-style: italic; } /* CommentVar */
+    code span.do { color: #5e5e5e; font-style: italic; } /* Documentation */
+    code span.dt { color: #ad0000; } /* DataType */
+    code span.dv { color: #ad0000; } /* DecVal */
+    code span.er { color: #ad0000; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #ad0000; } /* Float */
+    code span.fu { color: #4758ab; } /* Function */
+    code span.im { color: #00769e; } /* Import */
+    code span.in { color: #5e5e5e; } /* Information */
+    code span.kw { color: #003b4f; } /* Keyword */
+    code span.op { color: #5e5e5e; } /* Operator */
+    code span.ot { color: #003b4f; } /* Other */
+    code span.pp { color: #ad0000; } /* Preprocessor */
+    code span.sc { color: #5e5e5e; } /* SpecialChar */
+    code span.ss { color: #20794d; } /* SpecialString */
+    code span.st { color: #20794d; } /* String */
+    code span.va { color: #111111; } /* Variable */
+    code span.vs { color: #20794d; } /* VerbatimString */
+    code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
     /* CSS for citations */
     div.csl-bib-body { }
     div.csl-entry {
       clear: both;
+      margin-bottom: 0em;
     }
     .hanging-indent div.csl-entry {
       margin-left:2em;
@@ -177,7 +244,8 @@
   }
 
   .callout.callout-titled .callout-body > .callout-content > :last-child {
-    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0;
   }
 
   .callout.callout-titled .callout-icon::before {
@@ -356,12 +424,13 @@ Michele Gubian
 </div>
 </div>
 
-  <p class="date">Invalid Date</p>
+  <p class="date">July 1, 2024</p>
 </section><section id="TOC">
 <nav role="doc-toc"> 
 <h2 id="toc-title">Outline</h2>
 <ul>
 <li><a href="#/operations-on-functions" id="/toc-operations-on-functions">Operations on functions</a></li>
+<li><a href="#/functional-pca" id="/toc-functional-pca">Functional PCA</a></li>
 </ul>
 </nav>
 </section>
@@ -372,9 +441,9 @@ Michele Gubian
 </section>
 <section id="from-time-samples-to-functions" class="slide level2">
 <h2>From time samples to functions</h2>
-<div class="quarto-layout-panel">
-<div class="quarto-layout-row quarto-layout-valign-top">
-<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div class="quarto-layout-panel" data-layout-ncol="2">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption>Sampled curve</figcaption>
@@ -382,7 +451,7 @@ Michele Gubian
 </figure>
 </div>
 </div>
-<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: center;">
+<div class="fragment quarto-layout-cell" style="flex-basis: 50.0%;justify-content: flex-start;">
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption>Function <span class="math inline">\(f(t)\)</span></figcaption>
@@ -483,17 +552,121 @@ Michele Gubian
 </div>
 </div>
 </div>
+</section></section>
+<section>
+<section id="functional-pca" class="title-slide slide level1 center">
+<h1>Functional PCA</h1>
+
+</section>
+<section id="a-curve-dataset" class="slide level2">
+<h2>A curve dataset</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>100 curves, two categories</figcaption>
+<p><img data-src="plots/ex1D.1_curves.png" height="500"></p>
+</figure>
+</div>
+</section>
+<section id="remove-factors" class="slide level2">
+<h2>Remove factors</h2>
+<p><img data-src="plots/ex1D.1_curves_black.png" height="500"></p>
+</section>
+<section id="subtract-mean-curve" class="slide level2">
+<h2>Subtract mean curve</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Mean <span class="math inline">\(\mu(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.1_mean.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(f_i(t) - \mu(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.1_curves_demean.png"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="fpc-curves" class="slide level2">
 <h2>FPC curves</h2>
 <p><img data-src="plots/ex1D.1_PC.png" height="500"></p>
+</section>
+<section id="fpc-scores" class="slide level2">
+<h2>FPC scores</h2>
+<div class="fragment">
+<div class="cell">
+<div class="cell-output-display">
+<div class="kable-table">
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: right;">curveId</th>
+<th style="text-align: left;">Category</th>
+<th style="text-align: right;">s1</th>
+<th style="text-align: right;">s2</th>
+<th style="text-align: right;">s3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">-0.21</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">-0.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">-0.20</td>
+<td style="text-align: right;">-0.07</td>
+<td style="text-align: right;">0.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">A</td>
+<td style="text-align: right;">-0.15</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">51</td>
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">52</td>
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">-0.03</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">53</td>
+<td style="text-align: left;">B</td>
+<td style="text-align: right;">0.27</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.06</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
 </section>
 <section id="fpc-based-curve-reconstruction" class="slide level2">
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
 <figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t)\)</span></figcaption>
-<p><img data-src="plots/ex1D.1_curve3_mean.png" height="500"></p>
+<p><img data-src="plots/ex1D.1_curve1_mean.png" height="500"></p>
 </figure>
 </div>
 </section>
@@ -501,8 +674,8 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t)\)</span></figcaption>
-<p><img data-src="plots/ex1D.1_curve3_mean_PC1.png" height="500"></p>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.1_curve1_mean_PC1.png" height="500"></p>
 </figure>
 </div>
 </section>
@@ -510,8 +683,8 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t)\)</span></figcaption>
-<p><img data-src="plots/ex1D.1_curve3_mean_PC12.png" height="500"></p>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.1_curve1_mean_PC12.png" height="500"></p>
 </figure>
 </div>
 </section>
@@ -519,8 +692,8 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t) + \color{red}{0.14} \cdot PC3(t)\)</span></figcaption>
-<p><img data-src="plots/ex1D.1_curve3_mean_PC123.png" height="500"></p>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t) + \color{red}{(-0.02)} \cdot PC3(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.1_curve1_mean_PC123.png" height="500"></p>
 </figure>
 </div>
 </section>
@@ -537,7 +710,7 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t)\)</span></figcaption>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t)\)</span></figcaption>
 <p><img data-src="plots/ex1D.1_curve51_mean_PC1.png" height="500"></p>
 </figure>
 </div>
@@ -546,7 +719,7 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t)\)</span></figcaption>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t)\)</span></figcaption>
 <p><img data-src="plots/ex1D.1_curve51_mean_PC12.png" height="500"></p>
 </figure>
 </div>
@@ -555,14 +728,89 @@ Michele Gubian
 <h2>FPC-based curve reconstruction</h2>
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t) + \color{red}{0.37} \cdot PC3(t)\)</span></figcaption>
+<figcaption><span class="math inline">\(\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t) + \color{red}{0.05} \cdot PC3(t)\)</span></figcaption>
 <p><img data-src="plots/ex1D.1_curve51_mean_PC123.png" height="500"></p>
 </figure>
 </div>
 </section>
+<section id="fpc-scores-controlling-fpc-curves" class="slide level2">
+<h2>FPC scores controlling FPC curves</h2>
+<p><img data-src="plots/ex1D.1_PCcolor.png" height="500"></p>
+</section>
+<section id="reintroduce-factors" class="slide level2">
+<h2>Reintroduce factors</h2>
+<p><img data-src="plots/ex1D.1_PCscores_scatter.png" height="500"></p>
+</section>
+<section id="fit-a-regression-model-on-s1" class="slide level2">
+<h2>Fit a regression model on s<sub>1</sub></h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href=""></a>mod <span class="ot">&lt;-</span> <span class="fu">lm</span>(s1 <span class="sc">~</span> Category, <span class="at">data =</span> PCscores)</span>
+<span id="cb1-2"><a href=""></a><span class="fu">summary</span>(mod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell fragment">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+lm(formula = s1 ~ Category, data = PCscores)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.137063 -0.031294 -0.004309  0.032838  0.119646 
+
+Coefficients:
+             Estimate Std. Error t value Pr(&gt;|t|)    
+(Intercept) -0.198269   0.007122  -27.84   &lt;2e-16 ***
+CategoryB    0.395197   0.010072   39.24   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Residual standard error: 0.05036 on 98 degrees of freedom
+Multiple R-squared:  0.9402,    Adjusted R-squared:  0.9395 
+F-statistic:  1540 on 1 and 98 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+</section>
+<section id="model-predictions-on-s1" class="slide level2">
+<h2>Model predictions on s<sub>1</sub></h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href=""></a><span class="fu">library</span>(emmeans)</span>
+<span id="cb3-2"><a href=""></a><span class="fu">emmeans</span>(mod, pairwise <span class="sc">~</span> Category)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$emmeans
+ Category emmean      SE df lower.CL upper.CL
+ A        -0.198 0.00712 98   -0.212   -0.184
+ B         0.197 0.00712 98    0.183    0.211
+
+Confidence level used: 0.95 
+
+$contrasts
+ contrast estimate     SE df t.ratio p.value
+ A - B      -0.395 0.0101 98 -39.237  &lt;.0001</code></pre>
+</div>
+</div>
+</section>
+<section id="reconstruct-predicted-curves-from-s1" class="slide level2">
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
+<p><span class="math display">\[ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)\]</span> <span class="math display">\[ f_B(t) = \mu(t) + s_{1, B} \cdot PC1(t)\]</span></p>
+</section>
+<section id="reconstruct-predicted-curves-from-s1-1" class="slide level2">
+<h2>Reconstruct predicted curves from s<sub>1</sub></h2>
+
+<img data-src="plots/ex1D.1_pred_curves.png" class="r-stretch"></section>
+<section id="gamms" class="slide level2">
+<h2>GAMMs</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">library</span>(mgcv)</span>
+<span id="cb5-2"><a href=""></a>mod <span class="ot">&lt;-</span> <span class="fu">bam</span>(y <span class="sc">~</span> Category <span class="sc">+</span> <span class="fu">s</span>(time, <span class="at">by =</span> Category),</span>
+<span id="cb5-3"><a href=""></a>           <span class="at">data =</span> curves)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="fragment">
+<p><img data-src="plots/ex1D.1_GAM_smooth.png" height="500"></p>
+</div>
+</section>
 <section id="references" class="slide level2 smaller scrollable">
 <h2>References</h2>
-<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-asano2018excuse" class="csl-entry" role="listitem">
 Asano, Yuki, and Michele Gubian. 2018. <span>“<span>‘Excuse Meeee!!’</span>:(mis) Coordination of Lexical and Paralinguistic Prosody in L2 Hyperarticulation.”</span> <em>Speech Communication</em> 99: 183–200.
 </div>
@@ -582,8 +830,10 @@ Gubian, Michele, Francisco Torreira, and Lou Boves. 2015. <span>“Using <span>F
 Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></em>. Springer Series in Statistics.
 </div>
 </div>
+<div class="quarto-auto-generated-content">
 <div class="footer footer-default">
 
+</div>
 </div>
 </section></section>
     </div>
@@ -613,7 +863,6 @@ Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></e
       Reveal.initialize({
 'controlsAuto': true,
 'previewLinksAuto': false,
-'smaller': false,
 'pdfSeparateFragments': false,
 'autoAnimateEasing': "ease",
 'autoAnimateDuration': 1,
@@ -799,6 +1048,44 @@ Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></e
         ]
       });
     </script>
+    
+    <script>
+      // htmlwidgets need to know to resize themselves when slides are shown/hidden.
+      // Fire the "slideenter" event (handled by htmlwidgets.js) when the current
+      // slide changes (different for each slide format).
+      (function () {
+        // dispatch for htmlwidgets
+        function fireSlideEnter() {
+          const event = window.document.createEvent("Event");
+          event.initEvent("slideenter", true, true);
+          window.document.dispatchEvent(event);
+        }
+
+        function fireSlideChanged(previousSlide, currentSlide) {
+          fireSlideEnter();
+
+          // dispatch for shiny
+          if (window.jQuery) {
+            if (previousSlide) {
+              window.jQuery(previousSlide).trigger("hidden");
+            }
+            if (currentSlide) {
+              window.jQuery(currentSlide).trigger("shown");
+            }
+          }
+        }
+
+        // hookup for slidy
+        if (window.w3c_slidy) {
+          window.w3c_slidy.add_observer(function (slide_num) {
+            // slide_num starts at position 1
+            fireSlideChanged(null, w3c_slidy.slides[slide_num - 1]);
+          });
+        }
+
+      })();
+    </script>
+
     <script id="quarto-html-after-body" type="application/javascript">
     window.document.addEventListener("DOMContentLoaded", function (event) {
       const toggleBodyColorMode = (bsSheetEl) => {
@@ -875,10 +1162,27 @@ Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></e
         // clear code selection
         e.clearSelection();
       });
-      function tippyHover(el, contentFn) {
+        var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+        var mailtoRegex = new RegExp(/^mailto:/);
+          var filterRegex = new RegExp('/' + window.location.host + '/');
+        var isInternal = (href) => {
+            return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+        }
+        // Inspect non-navigation links and adorn them if external
+     	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+        for (var i=0; i<links.length; i++) {
+          const link = links[i];
+          if (!isInternal(link.href)) {
+            // undo the damage that might have been done by quarto-nav.js in the case of
+            // links that we want to consider external
+            if (link.dataset.originalHref !== undefined) {
+              link.href = link.dataset.originalHref;
+            }
+          }
+        }
+      function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
         const config = {
           allowHTML: true,
-          content: contentFn,
           maxWidth: 500,
           delay: 100,
           arrow: false,
@@ -888,8 +1192,17 @@ Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></e
           interactive: true,
           interactiveBorder: 10,
           theme: 'light-border',
-          placement: 'bottom-start'
+          placement: 'bottom-start',
         };
+        if (contentFn) {
+          config.content = contentFn;
+        }
+        if (onTriggerFn) {
+          config.onTrigger = onTriggerFn;
+        }
+        if (onUntriggerFn) {
+          config.onUntrigger = onUntriggerFn;
+        }
           config['offset'] = [0,0];
           config['maxWidth'] = 700;
         window.tippy(el, config); 
@@ -903,7 +1216,11 @@ Ramsay, J., and B. Silverman. 2005. <em><span>Functional Data Analysis</span></e
           try { href = new URL(href).hash; } catch {}
           const id = href.replace(/^#\/?/, "");
           const note = window.document.getElementById(id);
-          return note.innerHTML;
+          if (note) {
+            return note.innerHTML;
+          } else {
+            return "";
+          }
         });
       }
       const findCites = (el) => {

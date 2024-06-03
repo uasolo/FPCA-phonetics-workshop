@@ -1,7 +1,7 @@
 ---
 title: "Functional PCA"
 author: "Michele Gubian"
-date: "July 1st, 2024"
+date: "01 07 2024"
 date-format: long
 bibliography: references.bib
 nocite: |
@@ -32,8 +32,6 @@ tab-cap-location: top
 ![Function $f(t)$](plots/arith_curve.png)
 :::
 :::
-
-
 
 ## Addition
 
@@ -91,29 +89,73 @@ tab-cap-location: top
 :::
 :::
 
+# Functional PCA
+
+## A curve dataset
+
+![100 curves, two categories](plots/ex1D.1_curves.png){height="500"}
+
+
+## Remove factors
+
+![](plots/ex1D.1_curves_black.png){height="500"}
+
+## Subtract mean curve
+
+::: columns
+::: {.column width="45%"}
+![Mean $\mu(t)$](plots/ex1D.1_mean.png)
+:::
+
+::: {.column width="45%"}
+![$f_i(t) - \mu(t)$](plots/ex1D.1_curves_demean.png)
+:::
+
+:::
+
+
+
+
+
 
 ## FPC curves
 
 ![](plots/ex1D.1_PC.png){height="500"}
 
+## FPC scores
+
+::: fragment
+```{r}
+#| echo: false
+library(tidyverse)
+PCscores <- read_csv("data/ex1D.1_PCscores.csv")
+PCscores %>% 
+  filter(curveId %in% c(1,2,3,51, 52, 53)) %>% 
+  mutate(across(starts_with("s"), ~ round(.x, 2))) %>% 
+  select(!(s4:last_col()))
+
+
+```
+:::
+
+
+
 
 ## FPC-based curve reconstruction
 
-![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve3_mean.png){height="500"}
+![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve1_mean.png){height="500"}
 
 ## FPC-based curve reconstruction {visibility="uncounted"}
 
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t)$](plots/ex1D.1_curve3_mean_PC1.png){height="500"}
-
-
-## FPC-based curve reconstruction {visibility="uncounted"}
-
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t)$](plots/ex1D.1_curve3_mean_PC12.png){height="500"}
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t)$](plots/ex1D.1_curve1_mean_PC1.png){height="500"}
 
 ## FPC-based curve reconstruction {visibility="uncounted"}
 
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.20} \cdot PC1(t) + \color{red}{(-0.10)} \cdot PC2(t) + \color{red}{0.14} \cdot PC3(t)$](plots/ex1D.1_curve3_mean_PC123.png){height="500"}
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t)$](plots/ex1D.1_curve1_mean_PC12.png){height="500"}
 
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t) + \color{red}{(-0.02)} \cdot PC3(t)$](plots/ex1D.1_curve1_mean_PC123.png){height="500"}
 
 ## FPC-based curve reconstruction {visibility="uncounted"}
 
@@ -121,17 +163,67 @@ tab-cap-location: top
 
 ## FPC-based curve reconstruction {visibility="uncounted"}
 
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t)$](plots/ex1D.1_curve51_mean_PC1.png){height="500"}
-
-
-## FPC-based curve reconstruction {visibility="uncounted"}
-
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t)$](plots/ex1D.1_curve51_mean_PC12.png){height="500"}
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t)$](plots/ex1D.1_curve51_mean_PC1.png){height="500"}
 
 ## FPC-based curve reconstruction {visibility="uncounted"}
 
-![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.05)} \cdot PC1(t) + \color{red}{0.10} \cdot PC2(t) + \color{red}{0.37} \cdot PC3(t)$](plots/ex1D.1_curve51_mean_PC123.png){height="500"}
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t)$](plots/ex1D.1_curve51_mean_PC12.png){height="500"}
 
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t) + \color{red}{0.05} \cdot PC3(t)$](plots/ex1D.1_curve51_mean_PC123.png){height="500"}
+
+
+## FPC scores controlling FPC curves
+
+![](plots/ex1D.1_PCcolor.png){height="500"}
+
+
+## Reintroduce factors
+
+![](plots/ex1D.1_PCscores_scatter.png){height="500"}
+
+
+## Fit a regression model on s~1~
+
+```{r}
+#| echo: true
+#| output-location: fragment
+mod <- lm(s1 ~ Category, data = PCscores)
+summary(mod)
+```
+
+## Model predictions on s~1~
+
+```{r}
+#| echo: true
+library(emmeans)
+emmeans(mod, pairwise ~ Category)
+```
+
+## Reconstruct predicted curves from s~1~
+
+$$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot PC1(t)$$
+
+## Reconstruct predicted curves from s~1~
+
+![](plots/ex1D.1_pred_curves.png)
+
+
+## GAM
+
+```{r}
+#| echo: true
+#| eval: false
+library(mgcv)
+mod <- bam(y ~ Category + s(time, by = Category),
+           data = curves)
+```
+
+
+::: fragment
+![](plots/ex1D.1_GAM_smooth.png){height="500"}
+:::
 
 
 

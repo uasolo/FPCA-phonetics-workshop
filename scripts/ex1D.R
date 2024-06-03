@@ -13,13 +13,13 @@ library(landmarkregUtils)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c(A = "slategray4", B = "orangered")
+Category.colors <- c(A = "darkslategray", B = "orangered")
 
 
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 4 # change according to ex number
+ex <- 1 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
@@ -75,12 +75,14 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
+ylim <- c(-3.8, 4)
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line() +
   # geom_point() +
   # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
+  ylim(ylim) +
   mytheme  +
   theme(legend.position = "bottom")
 
@@ -115,11 +117,12 @@ PCcurves <- expand_grid(PC = 1:3,
 ggplot(PCcurves) +
   aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
   geom_line() +
-  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
   facet_wrap(~ PC, nrow = 1,
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
-  # labs(color = expression(frac(s[k], sigma[k]))) +
-  labs(color = "Norm. scores") +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  # labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   mytheme +
   theme(legend.position = "bottom")
@@ -142,7 +145,7 @@ ggplot(PCscores) +
 PCscores %>% 
   pivot_longer(cols = s1:all_of(str_glue("s{fpca$npc}")), 
                names_to = "PC", values_to = "score") %>% 
-  filter(PC %in% str_c("s", 1:5)) %>% 
+  filter(PC %in% str_c("s", 1:3)) %>% 
   ggplot() +
   aes(x = Category, y = score, color = Category) +
   geom_boxplot() +
@@ -194,7 +197,7 @@ ggplot(predCurves) +
               alpha = 0.3, inherit.aes = FALSE) +
   scale_color_manual(values=Category.colors) +
   scale_fill_manual(values=Category.colors) +
-  ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
+  # ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
   theme(legend.position = "bottom")
 

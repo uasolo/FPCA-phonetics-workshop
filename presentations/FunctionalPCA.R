@@ -70,18 +70,15 @@ tx <- curvesFun %>% argvals() %>% `[[`(1)
 f2 <- funData(tx, matrix(10 * (tx - 0.25), nrow = 1))
 plot(f2)
 
-id <- 3
+id <- 51
 operands <- list( # change operands here
   curvesFun[id],
   fpca$mu 
-  # + fpca$scores[id, 1] * fpca$functions[1] 
-    # + fpca$scores[id, 2] * fpca$functions[2]
-    # + fpca$scores[id, 3] * fpca$functions[3]
+  # + fpca$scores[id, 1] * fpca$functions[1]
+  # + fpca$scores[id, 2] * fpca$functions[2]
+  # + fpca$scores[id, 3] * fpca$functions[3]
   # 0.5 * (curvesFun[51] + curvesFun[1])
   # f2,
-  # curvesFun[51] + f2
-  # 0.5 * curvesFun[51], # repeat op2 and res when there is only one op
-  # 0.5 * curvesFun[51]
 ) %>% 
   lapply(function(f) {
     funData2long(f) %>% select(!id)
@@ -89,8 +86,8 @@ operands <- list( # change operands here
   bind_rows(.id = "id") %>% 
   mutate(id = factor(id))
 
-ylim <- c(-3.5, 3.8)
-pl <- ggplot(operands) +
+ylim <- c(-3.8, 4)
+ggplot(operands) +
   aes(time , value, group = id, color = id) +
   geom_line(linewidth = 1) +
   scale_color_manual(values=arith.colors) +
@@ -100,9 +97,9 @@ pl <- ggplot(operands) +
   mytheme +
   theme(legend.position = "none")
 
-pl
 
-ggsave(file.path(plots_dir, str_c("ex1D.1_curve3_mean", '.png')), pl,
+
+ggsave(file.path(plots_dir, str_c("ex1D.1_GAM_smooth", '.png')), # pl,
        width = 1500, height = 1200, units = "px"
 )
 
@@ -113,12 +110,12 @@ subset_curveId <- raw_curves %>%
   slice_sample(n = 20)
 
 pl <- ggplot(
-  fpca$mu %>%
+  # fpca$mu %>%
   # fpca$functions[3] %>% 
-    funData2long(time = "time", value = "y", id = "curveId")
-  # curves %>% inner_join(subset_curveId, by = "curveId") # %>% 
-               # group_by(curveId) %>% 
-               # mutate(y = y - fpca$mu %>% funData2long1() %>% pull(value))
+    # funData2long(time = "time", value = "y", id = "curveId")
+  curves %>% inner_join(subset_curveId, by = "curveId")  %>%
+               group_by(curveId) %>%
+               mutate(y = y - fpca$mu %>% funData2long1() %>% pull(value))
              ) +
   aes(x = time, y = y, group = curveId) + #, color = Category) +
   ylim(ylim) +
@@ -132,7 +129,7 @@ pl
 
 fpca <- PACE(curvesFun)
 
-id <- 3
+id <- 1
 fpca$scores[id, 1:3] %>% round(2)
 
 pl <- fpca$functions[1:3] %>% 
@@ -147,6 +144,14 @@ pl <- fpca$functions[1:3] %>%
   mytheme  +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D.1_PC", '.png')), pl,
+ggsave(file.path(plots_dir, str_c("ex1D.1_PCcolor", '.png')), #pl,
        width = 2500, height = 1200, units = "px"
 )
+
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+  aes(x = time, y = y, group = curveId) +
+  geom_line() +
+  ylim(ylim) +
+  mytheme
+
+
