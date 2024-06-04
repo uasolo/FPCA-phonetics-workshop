@@ -12,13 +12,13 @@ library(landmarkregUtils)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "orangered")
+Category.colors <- c("darkslategray", "orangered")
 
 
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 5 # change according to ex number
+ex <- 6 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
@@ -30,8 +30,8 @@ curves <- raw_curves %>%
   group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
   reframe(approx(time, y, grid) %>% as_tibble()) %>% # linear interpolation on grid 
   ungroup() %>% 
-  rename(time = x, y = y) %>% 
-  filter(!is.na(y)) # otherwise applyReg fails
+  rename(time = x, y = y) #%>% 
+  # filter(!is.na(y)) # otherwise applyReg fails
 
 land <- readRDS(file.path(data_dir, str_c("land1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
@@ -46,16 +46,44 @@ subset_curveId <- raw_curves %>%
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
-  # geom_point() +
-  # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
   mytheme  +
   theme(legend.position = "bottom")
 
 
 
+# with landmark position
+land_y <- land %>%
+  pivot_longer(l1:last_col(), names_to = "landmark", values_to = "time") %>% 
+  inner_join(subset_curveId, by = "curveId") %>% 
+  group_by(curveId) %>% 
+  mutate(y = {
+    y <- curves %>%
+      inner_join(cur_group(), by = 'curveId') %>% 
+      pull(y)
+    approx(grid, y, time, rule = 2)$y
+  }) 
+           
+
+
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+  aes(x = time, y = y, group = curveId) +
+  geom_line(linewidth = 0.6, color = 'slategray4') +
+  geom_point(data = land_y,
+             mapping = aes(time, y, color = landmark, group = curveId),
+             inherit.aes = FALSE,
+             size = 2) +
+  # facet_wrap(~ curveId) +
+  scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
+  mytheme  +
+  theme(legend.position = "bottom")
+
+
+
+
+
 # plot one curve with labelled landmarks
-id <- 73
+id <- 3
 land_id <- land %>% filter(curveId == id)
 landmarks <- land_id %>% select(l1:last_col()) %>% as.numeric()
 landlabels <- land_id %>% select(l1:last_col()) %>% colnames()
@@ -72,10 +100,15 @@ ggplot(curves %>% filter(curveId == id)) +
   ggtitle(str_glue("CurveId: {id}; Category: {Cat_id}")) +
   mytheme
 
+
+
+
+
 # Landmark reg
 reg <- landmarkreg_nocurves(inputMarks = land %>% select(starts_with("l")),
                             njobs = 2)
-curvesReg <- applyReg(dat = curves, reg = reg,
+curvesReg <- applyReg(dat = curves %>% filter(!is.na(y)),
+                      reg = reg,
                       grid = seq(0, last(reg$landmarks), length.out = 100),
                       id = "curveId", time = "time", value = "y") %>% 
   left_join(curves %>% distinct(curveId, Category), by = "curveId")
@@ -219,7 +252,7 @@ PCscores %>%
   theme(legend.position = "bottom")
 
 # Model
-s <- 1 # score index
+s <- 2 # score index
 model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
 mod <- lm(model_eq, data = PCscores)
 mod %>% summary()
