@@ -16,8 +16,8 @@ mytheme <- theme_light() +
 Category.colors <- c(A = "darkslategray", B = "orangered")
 
 
-plots_dir <- "presentations/plots/"
-data_dir <- "data/"
+plots_dir <- "presentations/plots"
+data_dir <- "data"
 
 ex <- 1 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 

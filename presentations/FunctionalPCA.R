@@ -99,7 +99,7 @@ ggplot(operands) +
 
 
 
-ggsave(file.path(plots_dir, str_c("ex1D.1_GAM_smooth", '.png')), # pl,
+ggsave(file.path(plots_dir, str_c("ex1D.6_pred_curves_lands", '.png')), # pl,
        width = 1500, height = 1200, units = "px"
 )
 

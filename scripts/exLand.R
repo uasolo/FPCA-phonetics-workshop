@@ -4,6 +4,7 @@ library(MFPCA)
 library(tidyverse)
 library(emmeans)
 library(gridExtra)
+library(RColorBrewer)
 
 # install.packages("devtools")
 # devtools::install_github("uasolo/landmarkregUtils")
@@ -15,8 +16,8 @@ mytheme <- theme_light() +
 Category.colors <- c("darkslategray", "orangered")
 
 
-plots_dir <- "presentations/plots/"
-data_dir <- "data/"
+plots_dir <- "presentations/plots"
+data_dir <- "data"
 
 ex <- 6 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
@@ -74,7 +75,8 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
              inherit.aes = FALSE,
              size = 2) +
   # facet_wrap(~ curveId) +
-  scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
+  scale_color_brewer(palette = "Dark2") + 
+  # scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
   mytheme  +
   theme(legend.position = "bottom")
 

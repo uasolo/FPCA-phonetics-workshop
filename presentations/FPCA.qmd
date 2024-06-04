@@ -1,5 +1,5 @@
 ---
-title: "Functional PCA"
+title: "Simultaneous analysis of contours and durations"
 author: "Michele Gubian"
 date: "01 07 2024"
 date-format: long
@@ -20,6 +20,48 @@ editor: visual
 fig-cap-location: top
 tab-cap-location: top
 ---
+
+# Motivation
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+::: fragment
+![](plots/ex1D.6_curves_Cat.png)
+:::
+
+::: fragment
+![](plots/ex1D.6_curves_land.png)
+:::
+:::
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+![](plots/ex1D.6_curve3.png)
+
+
+![](plots/ex1D.6_curve73.png)
+
+:::
+
+## Predicted curves and boundary positions
+
+![](plots/ex1D.6_pred_curves_lands.png){height="500"}
+
+
+## Predicted curves and durations
+
+::: {layout-ncol="2"}
+![Time-aligned curves](plots/ex1D.6_pred_curves.png)
+
+![Interval durations](plots/ex1D.6_pred_dur.png)
+
+:::
+
+
+
+
 
 # Operations on functions
 
