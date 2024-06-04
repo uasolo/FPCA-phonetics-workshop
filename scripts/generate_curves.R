@@ -31,12 +31,13 @@ ex1D_curves[[3]] <- bind_rows(
          y = c(0.5, 1, 0.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5))
 )
 ex1D_curves[[4]] <- bind_rows(
-  tibble(Category = "A",
-         y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5)),
   tibble(Category = "B",
+         y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5)),
+  tibble(Category = "A",
          y = c(2.5, 3, 2.5, 0.5, -0.3, 0.5, 2, 0, -.5, -1.5, -2.5))
 )
 ex1D_curves[[5]] <- ex1D_curves[[4]]
+ex1D_curves[[6]] <- ex1D_curves[[1]]
 
 shift_y <- list()
 shift_y[[1]] <- function(y, Category, u) {return (y)}
@@ -51,7 +52,7 @@ shift_y[[3]] <- function(y, Category, u) {
 }
 shift_y[[4]] <- shift_y[[1]]
 shift_y[[5]] <- shift_y[[1]]
-
+shift_y[[6]] <- shift_y[[1]]
 
 ex1D_land <- list() 
 ex1D_land[[1]] <- function(Category, u, role) {
@@ -73,7 +74,7 @@ ex1D_land[[4]] <- function(Category, u, role) {
   inputLand <- c(0, .2, .4, .6, .8 ,1) * RefT
   if (role == 'input') return(inputLand)
   nLand <- length(inputLand)
-  if (Category == 'A') {
+  if (Category == 'B') {
     targetLand <- c(0, .2, .4, .9, 1.1, 1.3) * RefT
   } else {
     targetLand <- inputLand
@@ -91,9 +92,10 @@ ex1D_land[[4]] <- function(Category, u, role) {
   return(targetLand)
 }
 ex1D_land[[5]] <- ex1D_land[[1]]
+ex1D_land[[6]] <- ex1D_land[[4]]
 
 set.seed(123)
-ex <- 1
+ex <- 6
 modelCurves <- ex1D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
@@ -230,12 +232,21 @@ generate_land <- function(curves, ex) {
              l2 = jitter(0.2, amount = 0.02),
              l3 = max(time))
   } else if (ex == 5) {
-    boundary <- c(A = 0.15, B = 0.25)
+    boundary <- c(A = 0.5, B = 0.3) * refT
     land <- curves %>% 
       group_by(curveId, Category) %>% 
       reframe(l1 = 0,
              l2 = jitter(boundary[cur_group()$Category], amount = 0.02),
-             l3 = max(time))  }
+             l3 = max(time))
+  } else if (ex == 6) {
+    boundary <- c(A = 0.8, B = 1.1) * RefT
+    land <- curves %>% 
+      group_by(curveId, Category) %>% 
+      reframe(l1 = 0,
+              l2 = jitter(0.4 * RefT, amount = 0.02),
+              l3 = jitter(boundary[cur_group()$Category], amount = 0.02),
+              l4 = max(time))
+    }
   return(land)
 }
 
