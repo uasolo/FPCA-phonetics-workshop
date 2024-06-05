@@ -60,8 +60,33 @@ tab-cap-location: top
 :::
 
 
+## A suite of methods
 
+::: incremental
+-   Functional PCA
+-   Landmark Registration
+-   Linear (Mixed Effects) Regression
+:::
 
+## Applications (beyond f0 contours)
+
+::: incremental
+-   f0 and intensity
+-   formants
+-   multiple articulatory tracks (EMA)
+-   any time-varying (bundle of) measurement ...
+-   ... with or without boundary information
+:::
+
+## Examples
+
+## What's new?
+
+::: incremental
+-   recent R libraries (`funData`, `MFPCA`)
+-   a (work in progress) library written by me (`landmarkregUtils`)
+
+:::
 
 # Operations on functions
 
@@ -131,6 +156,40 @@ tab-cap-location: top
 :::
 :::
 
+# Uni-dimensional curves
+
+## Procedure overview
+
+```{dot}
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label="sampled curves"]
+  B[shape = box label="FPCA" style = rounded]
+  C[shape = box label="L(ME)R" style = rounded]
+  D[shape = plaintext label = "model"]
+  A -> B;
+  B -> C;
+  C -> D;
+  
+}
+```
+
+## GAM
+
+```{dot}
+
+digraph G {
+rankdir=LR;
+  A[shape = plaintext label="sampled curves"]
+  B[shape = box label="GA(M)M" style = rounded]
+  C[shape = plaintext label = "model"]
+  A -> B;
+  B -> C;
+  
+}
+```
+
+
 # Functional PCA
 
 ## A curve dataset
@@ -138,9 +197,9 @@ tab-cap-location: top
 ![100 curves, two categories](plots/ex1D.1_curves.png){height="500"}
 
 
-## Remove factors
+## A curve dataset
 
-![](plots/ex1D.1_curves_black.png){height="500"}
+![100 curves, remove factor information](plots/ex1D.1_curves_black.png){height="500"}
 
 ## Subtract mean curve
 
@@ -156,8 +215,13 @@ tab-cap-location: top
 :::
 
 
+## FPCA outcome
 
-
+::: incremental
+-   the mean curve $\mu(t)$
+-   a number of Principal Component curves, $PC1(t), PC2(t), \cdots$
+-   a set of corresponding scores, $s_1, s_2, \cdots$ **different for each curve**
+:::
 
 
 ## FPC curves

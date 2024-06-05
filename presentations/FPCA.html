@@ -431,6 +431,7 @@ Michele Gubian
 <ul>
 <li><a href="#/motivation" id="/toc-motivation">Motivation</a></li>
 <li><a href="#/operations-on-functions" id="/toc-operations-on-functions">Operations on functions</a></li>
+<li><a href="#/uni-dimensional-curves" id="/toc-uni-dimensional-curves">Uni-dimensional curves</a></li>
 <li><a href="#/functional-pca" id="/toc-functional-pca">Functional PCA</a></li>
 </ul>
 </nav>
@@ -491,6 +492,40 @@ Michele Gubian
 </div>
 </div>
 </div>
+</div>
+</section>
+<section id="a-suite-of-methods" class="slide level2">
+<h2>A suite of methods</h2>
+<div>
+<ul>
+<li class="fragment">Functional PCA</li>
+<li class="fragment">Landmark Registration</li>
+<li class="fragment">Linear (Mixed Effects) Regression</li>
+</ul>
+</div>
+</section>
+<section id="applications-beyond-f0-contours" class="slide level2">
+<h2>Applications (beyond f0 contours)</h2>
+<div>
+<ul>
+<li class="fragment">f0 and intensity</li>
+<li class="fragment">formants</li>
+<li class="fragment">multiple articulatory tracks (EMA)</li>
+<li class="fragment">any time-varying (bundle of) measurement …</li>
+<li class="fragment">… with or without boundary information</li>
+</ul>
+</div>
+</section>
+<section id="examples" class="slide level2">
+<h2>Examples</h2>
+</section>
+<section id="whats-new" class="slide level2">
+<h2>What’s new?</h2>
+<div>
+<ul>
+<li class="fragment">recent R libraries (<code>funData</code>, <code>MFPCA</code>)</li>
+<li class="fragment">a (work in progress) library written by me (<code>landmarkregUtils</code>)</li>
+</ul>
 </div>
 </section></section>
 <section>
@@ -613,6 +648,117 @@ Michele Gubian
 </div>
 </section></section>
 <section>
+<section id="uni-dimensional-curves" class="title-slide slide level1 center">
+<h1>Uni-dimensional curves</h1>
+
+</section>
+<section id="procedure-overview" class="slide level2">
+<h2>Procedure overview</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<svg width="960" height="480" viewbox="0.00 0.00 390.91 44.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 40)">
+<title>G</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-40 386.91,-40 386.91,4 -4,4"></polygon>
+<!-- A -->
+<g id="node1" class="node">
+<title>A</title>
+<text text-anchor="middle" x="51.35" y="-13.8" font-family="Times,serif" font-size="14.00">sampled curves</text>
+</g>
+<!-- B -->
+<g id="node2" class="node">
+<title>B</title>
+<path fill="none" stroke="black" d="M180.69,-36C180.69,-36 150.69,-36 150.69,-36 144.69,-36 138.69,-30 138.69,-24 138.69,-24 138.69,-12 138.69,-12 138.69,-6 144.69,0 150.69,0 150.69,0 180.69,0 180.69,0 186.69,0 192.69,-6 192.69,-12 192.69,-12 192.69,-24 192.69,-24 192.69,-30 186.69,-36 180.69,-36"></path>
+<text text-anchor="middle" x="165.69" y="-13.8" font-family="Times,serif" font-size="14.00">FPCA</text>
+</g>
+<!-- A&#45;&gt;B -->
+<g id="edge1" class="edge">
+<title>A-&gt;B</title>
+<path fill="none" stroke="black" d="M102.61,-18C111.31,-18 120.21,-18 128.46,-18"></path>
+<polygon fill="black" stroke="black" points="128.48,-21.5 138.48,-18 128.48,-14.5 128.48,-21.5"></polygon>
+</g>
+<!-- C -->
+<g id="node3" class="node">
+<title>C</title>
+<path fill="none" stroke="black" d="M281.01,-36C281.01,-36 240.59,-36 240.59,-36 234.59,-36 228.59,-30 228.59,-24 228.59,-24 228.59,-12 228.59,-12 228.59,-6 234.59,0 240.59,0 240.59,0 281.01,0 281.01,0 287.01,0 293.01,-6 293.01,-12 293.01,-12 293.01,-24 293.01,-24 293.01,-30 287.01,-36 281.01,-36"></path>
+<text text-anchor="middle" x="260.8" y="-13.8" font-family="Times,serif" font-size="14.00">L(ME)R</text>
+</g>
+<!-- B&#45;&gt;C -->
+<g id="edge2" class="edge">
+<title>B-&gt;C</title>
+<path fill="none" stroke="black" d="M193.13,-18C201,-18 209.82,-18 218.41,-18"></path>
+<polygon fill="black" stroke="black" points="218.69,-21.5 228.69,-18 218.69,-14.5 218.69,-21.5"></polygon>
+</g>
+<!-- D -->
+<g id="node4" class="node">
+<title>D</title>
+<text text-anchor="middle" x="355.91" y="-13.8" font-family="Times,serif" font-size="14.00">model</text>
+</g>
+<!-- C&#45;&gt;D -->
+<g id="edge3" class="edge">
+<title>C-&gt;D</title>
+<path fill="none" stroke="black" d="M293.06,-18C301.33,-18 310.31,-18 318.81,-18"></path>
+<polygon fill="black" stroke="black" points="318.85,-21.5 328.85,-18 318.85,-14.5 318.85,-21.5"></polygon>
+</g>
+</g>
+</svg>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section>
+<section id="gam" class="slide level2">
+<h2>GAM</h2>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class=""><p></p>
+<div>
+<svg width="960" height="480" viewbox="0.00 0.00 307.13 44.00" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" style="; max-width: none; max-height: none; display: block; margin: auto auto auto auto">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 40)">
+<title>G</title>
+<polygon fill="white" stroke="transparent" points="-4,4 -4,-40 303.13,-40 303.13,4 -4,4"></polygon>
+<!-- A -->
+<g id="node1" class="node">
+<title>A</title>
+<text text-anchor="middle" x="51.35" y="-13.8" font-family="Times,serif" font-size="14.00">sampled curves</text>
+</g>
+<!-- B -->
+<g id="node2" class="node">
+<title>B</title>
+<path fill="none" stroke="black" d="M197.36,-36C197.36,-36 150.47,-36 150.47,-36 144.47,-36 138.47,-30 138.47,-24 138.47,-24 138.47,-12 138.47,-12 138.47,-6 144.47,0 150.47,0 150.47,0 197.36,0 197.36,0 203.36,0 209.36,-6 209.36,-12 209.36,-12 209.36,-24 209.36,-24 209.36,-30 203.36,-36 197.36,-36"></path>
+<text text-anchor="middle" x="173.91" y="-13.8" font-family="Times,serif" font-size="14.00">GA(M)M</text>
+</g>
+<!-- A&#45;&gt;B -->
+<g id="edge1" class="edge">
+<title>A-&gt;B</title>
+<path fill="none" stroke="black" d="M102.78,-18C111.22,-18 119.92,-18 128.21,-18"></path>
+<polygon fill="black" stroke="black" points="128.42,-21.5 138.42,-18 128.42,-14.5 128.42,-21.5"></polygon>
+</g>
+<!-- C -->
+<g id="node3" class="node">
+<title>C</title>
+<text text-anchor="middle" x="272.13" y="-13.8" font-family="Times,serif" font-size="14.00">model</text>
+</g>
+<!-- B&#45;&gt;C -->
+<g id="edge2" class="edge">
+<title>B-&gt;C</title>
+<path fill="none" stroke="black" d="M209.38,-18C217.65,-18 226.5,-18 234.84,-18"></path>
+<polygon fill="black" stroke="black" points="235.06,-21.5 245.06,-18 235.06,-14.5 235.06,-21.5"></polygon>
+</g>
+</g>
+</svg>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+</section></section>
+<section>
 <section id="functional-pca" class="title-slide slide level1 center">
 <h1>Functional PCA</h1>
 
@@ -626,9 +772,14 @@ Michele Gubian
 </figure>
 </div>
 </section>
-<section id="remove-factors" class="slide level2">
-<h2>Remove factors</h2>
+<section id="a-curve-dataset-1" class="slide level2">
+<h2>A curve dataset</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>100 curves, remove factor information</figcaption>
 <p><img data-src="plots/ex1D.1_curves_black.png" height="500"></p>
+</figure>
+</div>
 </section>
 <section id="subtract-mean-curve" class="slide level2">
 <h2>Subtract mean curve</h2>
@@ -648,6 +799,16 @@ Michele Gubian
 </figure>
 </div>
 </div>
+</div>
+</section>
+<section id="fpca-outcome" class="slide level2">
+<h2>FPCA outcome</h2>
+<div>
+<ul>
+<li class="fragment">the mean curve <span class="math inline">\(\mu(t)\)</span></li>
+<li class="fragment">a number of Principal Component curves, <span class="math inline">\(PC1(t), PC2(t), \cdots\)</span></li>
+<li class="fragment">a set of corresponding scores, <span class="math inline">\(s_1, s_2, \cdots\)</span> <strong>different for each curve</strong></li>
+</ul>
 </div>
 </section>
 <section id="fpc-curves" class="slide level2">
@@ -856,7 +1017,7 @@ $contrasts
 <h2>Reconstruct predicted curves from s<sub>1</sub></h2>
 
 <img data-src="plots/ex1D.1_pred_curves.png" class="r-stretch"></section>
-<section id="gam" class="slide level2">
+<section id="gam-1" class="slide level2">
 <h2>GAM</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href=""></a><span class="fu">library</span>(mgcv)</span>
@@ -872,6 +1033,12 @@ $contrasts
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
 <div id="ref-asano2018excuse" class="csl-entry" role="listitem">
 Asano, Yuki, and Michele Gubian. 2018. <span>“<span>‘Excuse Meeee!!’</span>:(mis) Coordination of Lexical and Paralinguistic Prosody in L2 Hyperarticulation.”</span> <em>Speech Communication</em> 99: 183–200.
+</div>
+<div id="ref-cronenberg2020dynamic" class="csl-entry" role="listitem">
+Cronenberg, Johanna, Michele Gubian, Jonathan Harrington, and Hanna Ruch. 2020. <span>“A Dynamic Model of the Change from Pre-to Post-Aspiration in Andalusian Spanish.”</span> <em>Journal of Phonetics</em> 83: 101016.
+</div>
+<div id="ref-el2024prosody" class="csl-entry" role="listitem">
+El Zarka, Dina, Anneliese Kelterer, Michele Gubian, and Barbara Schuppler. 2024. <span>“The Prosody of Theme, Rheme and Focus in Egyptian Arabic: A Quantitative Investigation of Tunes, Configurations and Speaker Variability.”</span> <em>Speech Communication</em>, 103082.
 </div>
 <div id="ref-gubian2011joint" class="csl-entry" role="listitem">
 Gubian, Michele, Lou Boves, and Francesco Cangemi. 2011. <span>“Joint Analysis of f 0 and Speech Rate with Functional Data Analysis.”</span> In <em>2011 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)</em>, 4972–75. IEEE.
