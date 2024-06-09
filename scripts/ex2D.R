@@ -11,7 +11,7 @@ library(landmarkregUtils)
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
 
-Category.colors <- c("slategray4", "orangered")
+Category.colors <- c("darkslategray", "orangered")
 
 
 plots_dir <- "presentations/plots/"
@@ -30,13 +30,14 @@ subset_curveId <- curves %>%
   slice_sample(n = 20)
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
-  # aes(x = time, y = y, group = curveId, color = Category) +
-  # facet_wrap(~ Dim, ncol = 1) +
-  aes(x = time, y = y, group = interaction(curveId, Dim), color = Category) +
-  geom_line() +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  facet_grid(Dim ~ .) +
+  # aes(x = time, y = y, group = interaction(curveId, Dim), color = Category) +
+  geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
   mytheme  +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.title.y = element_blank())
 
 
 
@@ -46,13 +47,12 @@ curvesFun2D <- lapply(c("y1", "y2"), function(y)
                     id = "curveId",
                     time = "time",
                     value = "y") %>% 
-  # long2irregFunData(curves, id = "curveId", time = "time", value = {{y}}) %>% 
     as.funData()
 ) %>% 
   multiFunData()
 
 # Compute FPCA
-nPC <- 3
+nPC <- 2
 mfpca <- MFPCA(curvesFun2D,
                M = nPC,
                uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
@@ -79,17 +79,17 @@ PCcurves <- expand_grid(PC = 1:nPC,
 ggplot(PCcurves) +
   aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
   geom_line() +
-  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
   facet_grid(Dim ~ PC,
              scales = "free_y",
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) + #,
                                  # Dim = Dimlabels)) +
-  # labs(color = expression(frac(s[k], sigma[k]))) +
-  labs(color = "Norm. scores") +
+  labs(color = expression(frac(s[k], sigma[k]))) +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
-  xlab("registered time") +
   mytheme +
-  theme(legend.position = "bottom")
+  theme(legend.position = "right",
+        axis.title.y = element_blank())
 
 
 # collect PC scores
@@ -160,12 +160,13 @@ predCurves %>%
   geom_line() +
   geom_ribbon(aes(x = time, ymin = yl, ymax = yu, fill = Category),
               alpha = 0.3, inherit.aes = FALSE) +
-  facet_wrap(~ Dim, ncol = 1) +
+  facet_grid(Dim ~ .) +
   scale_color_manual(values=Category.colors) +
   scale_fill_manual(values=Category.colors) +
   ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        axis.title.y = element_blank())
 
 
 # Trajectory representation (mock formants)

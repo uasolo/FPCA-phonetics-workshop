@@ -8,6 +8,8 @@ nocite: |
   @*
 format:
   revealjs:
+    mermaid:
+      theme: neutral
     toc: true
     toc-depth: 1
     toc-title: Outline
@@ -158,43 +160,65 @@ tab-cap-location: top
 
 # Uni-dimensional curves
 
+## A curve dataset
+
+![100 curves, two categories](plots/ex1D.1_curves.png){height="500"}
+
 ## Procedure overview
 
-```{dot}
-digraph G {
-rankdir=LR;
-  A[shape = plaintext label="sampled curves"]
-  B[shape = box label="FPCA" style = rounded]
-  C[shape = box label="L(ME)R" style = rounded]
-  D[shape = plaintext label = "model"]
-  A -> B;
-  B -> C;
-  C -> D;
-  
-}
+```{mermaid}
+%%| fig-width: 10
+%%| fig-height: 4
+graph LR
+   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
+  classDef textbox stroke:null,stroke-width:0px,fill:white
 ```
+
+
+
+## Outcome
+
+::: incremental
+- Compact model of modes of shape variations
+- Compact parametrisation of each curve in the dataset
+- Regression model predicting curve shapes from factors
+
+:::
+
 
 ## GAM
 
-```{dot}
-
-digraph G {
-rankdir=LR;
-  A[shape = plaintext label="sampled curves"]
-  B[shape = box label="GA(M)M" style = rounded]
-  C[shape = plaintext label = "model"]
-  A -> B;
-  B -> C;
-  
-}
+```{mermaid}
+%%| fig-width: 10
+%%| fig-height: 4
+graph LR
+   A["sampled<br>contours"]:::textbox --> B(GAM) --> D["model"]:::textbox
+  classDef textbox stroke:null,stroke-width:0px,fill:white
 ```
+
+
+
+## GAM Outcome
+
+- ~~Compact model of modes of shape variations~~
+- ~~Compact parametrisation of each curve in the dataset~~
+- Regression model predicting curve shapes from factors
+
+
 
 
 # Functional PCA
 
-## A curve dataset
+## Procedure overview
 
-![100 curves, two categories](plots/ex1D.1_curves.png){height="500"}
+```{mermaid}
+%%| fig-width: 10
+%%| fig-height: 4
+graph LR
+   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
+  classDef textbox stroke:null,stroke-width:0px,fill:white
+  style B stroke:green,stroke-width:4px,fill:greenyellow
+```
 
 
 ## A curve dataset
@@ -285,6 +309,18 @@ PCscores %>%
 ![](plots/ex1D.1_PCcolor.png){height="500"}
 
 
+## Procedure overview
+
+```{mermaid}
+%%| fig-width: 10
+%%| fig-height: 4
+graph LR
+   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
+  classDef textbox stroke:null,stroke-width:0px,fill:white
+  style C stroke:green,stroke-width:4px,fill:greenyellow
+```
+
+
 ## Reintroduce factors
 
 ![](plots/ex1D.1_PCscores_scatter.png){height="500"}
@@ -330,6 +366,60 @@ mod <- bam(y ~ Category + s(time, by = Category),
 ::: fragment
 ![](plots/ex1D.1_GAM_smooth.png){height="500"}
 :::
+
+# Multi-dimensional curves
+
+## A 2-dimensional curve dataset
+
+![100 pairs of curves, two categories](plots/ex2D.1_curves_Cat.png){height="500"}
+
+## D-dimensional Principal Components
+
+::: incremental
+-   There are D mean curves
+    -   $\mu_{y1}(t)$ and $\mu_{y2}(t)$
+-   Each PC is composed of D curves
+    -   $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
+-   [Scores do not split in D]{style="color:red"}
+-   Each score controls a PC, which is made of D 1-dimensional curves
+    -   $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
+:::
+
+## Principal Components (PCs)
+
+![](plots/ex2D.1_PCcolor.png)
+
+## PC scores v. Category
+
+![](plots/ex2D.1_PCscores_scatter.png)
+
+## Fit a regression model on s1
+
+```{r}
+#| echo: true
+#| eval: false
+mod <- lm(s1 ~ Category, data = PCscores)
+emmeans(mod, pairwise ~ Category)
+```
+
+| Category  | $s_1$ |
+|-----------|------:|
+| A |  0.134 |
+| B  | -0.134 |
+
+## Reconstruct predicted curves from s1
+
+::: fragment
+$$ y1_A(t) = \mu_{y1}(t) + \color{red}{s_{1, A}} \cdot PC1_{y1}(t)$$ $$ y2_A(t) = \mu_{y2}(t) + \color{red}{s_{1, A}} \cdot PC1_{y2}(t)$$
+:::
+
+::: fragment
+$$ y1_B(t) = \mu_{y1}(t) + \color{red}{s_{1, B}} \cdot PC1_{y1}(t)$$ $$ y2_B(t) = \mu_{y2}(t) + \color{red}{s_{1, B}} \cdot PC1_{y2}(t)$$
+:::
+
+## Reconstruct predicted curves from s1
+
+![](plots/ex2D.1_pred_curves.png)
 
 
 

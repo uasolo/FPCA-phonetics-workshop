@@ -114,13 +114,13 @@ ex2D_land[[3]] <- function(Category, Dim, u, role) {
 }
 
 
+set.seed(123)
 ex <- 3
 modelCurves <- ex2D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
   ungroup() %>%
   relocate(t0, .after = Category) 
-
 
 modelCurves %>% 
   pivot_longer(c(y1, y2), names_to = "Dim", values_to = "y") %>% 
