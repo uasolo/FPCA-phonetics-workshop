@@ -1,0 +1,141 @@
+---
+title: "Simultaneous analysis of contours and durations"
+subtitle: "Landmark Registration"
+author: "Michele Gubian"
+date: "01 07 2024"
+date-format: long
+bibliography: references.bib
+nocite: |
+  @*
+format:
+  revealjs:
+    mermaid:
+      theme: neutral
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
+    df-print: kable
+    slide-number: true
+    chalkboard: 
+      theme: "whiteboard"
+    theme: [style.scss]
+editor: visual
+fig-cap-location: top
+tab-cap-location: top
+---
+
+# Motivation
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+::: {.column width="45%"}
+![](plots/ex1D.4_curves_Cat.png)
+:::
+::: {.column width="45%"}
+
+![](plots/ex1D.4_curves_land.png)
+:::
+:::
+
+## Apply FPCA
+
+![](plots/ex1D.4_null_PCcolor.png)
+
+## PC scores vs. Category
+
+![](plots/ex1D.4_null_PCscores_box.png){height="500"}
+
+
+## Fit a regression model on s~1~
+
+![](plots/ex1D.4_null_pred_curves.png)
+
+
+
+# Linear time normalisation
+
+## Linear time normalisation
+
+::: {layout-ncol="2"}
+::: {.column width="45%"}
+![Before](plots/ex1D.4_curves_Cat.png)
+:::
+::: {.column width="45%"}
+
+![After](plots/ex1D.4_lin_curves_Cat.png)
+:::
+:::
+
+## Linear time normalisation
+
+::: {layout-ncol="2"}
+::: {.column width="45%"}
+![Before](plots/ex1D.4_curves_land.png)
+:::
+::: {.column width="45%"}
+
+![After](plots/ex1D.4_lin_curves_land.png)
+:::
+:::
+
+
+## Apply FPCA to linearly normalised curves
+
+![](plots/ex1D.4_lin_PCcolor.png)
+
+## PC scores vs. Category
+
+![](plots/ex1D.4_lin_PCscores_box.png){height="500"}
+
+
+## Fit a regression model on s~1~
+
+![](plots/ex1D.4_lin_pred_curves.png)
+
+# Landmark registration
+
+## Landmark registration
+
+::: {layout-ncol="2"}
+::: {.column width="45%"}
+![Before](plots/ex1D.4_curves_Cat.png)
+:::
+::: {.column width="45%"}
+
+![After](plots/ex1D.4_land_curves_Cat.png)
+:::
+:::
+
+## Landmark registration
+
+::: {layout-ncol="2"}
+::: {.column width="45%"}
+![Before](plots/ex1D.4_curves_land.png)
+:::
+::: {.column width="45%"}
+
+![After](plots/ex1D.4_land_curves_land.png)
+:::
+:::
+
+## Apply FPCA to linearly normalised curves
+
+![](plots/ex1D.4_land_PCcolor.png)
+
+## PC scores vs. Category
+
+![](plots/ex1D.4_land_PCscores_box.png){height="500"}
+
+
+## Fit a regression model on s~1~
+
+![](plots/ex1D.4_land_pred_curves.png)
+
+
+
+## References
+
+::: {#refs}
+:::
+

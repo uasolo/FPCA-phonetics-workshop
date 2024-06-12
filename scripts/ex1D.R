@@ -19,9 +19,14 @@ Category.colors <- c(A = "darkslategray", B = "orangered")
 plots_dir <- "presentations/plots"
 data_dir <- "data"
 
-ex <- 1 # change according to ex number
+ex <- 4 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
+
+# lin time norm
+raw_curves <- raw_curves %>%
+  group_by(curveId) %>%
+  mutate(time = time/max(time))
 
 
 sp <- 0.01 # unified sampling period
@@ -78,13 +83,16 @@ subset_curveId <- raw_curves %>%
 ylim <- c(-3.8, 4)
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
-  geom_line() +
+  geom_line(linewidth = 0.8) +
   # geom_point() +
   # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
-  ylim(ylim) +
+  # ylim(ylim) +
+  # xlab("Linearly norm. time") +
   mytheme  +
   theme(legend.position = "bottom")
+
+# lin time norm
 
 # build a funData object
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
@@ -106,7 +114,7 @@ round(fpca$values  / sum( fpca$values) , digits = 3)
 # scores st. dev.
 sdFun <- fpca$values %>% sqrt()
 # PC curves to be plotted
-PCcurves <- expand_grid(PC = 1:3,
+PCcurves <- expand_grid(PC = 1:2,
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, fractionOfStDev) %>%
   reframe(
@@ -122,6 +130,7 @@ ggplot(PCcurves) +
   facet_wrap(~ PC, nrow = 1,
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
   labs(color = expression(frac(s[k], sigma[k]))) +
+  xlab("registered time") +
   # labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   mytheme +
@@ -145,7 +154,7 @@ ggplot(PCscores) +
 PCscores %>% 
   pivot_longer(cols = s1:all_of(str_glue("s{fpca$npc}")), 
                names_to = "PC", values_to = "score") %>% 
-  filter(PC %in% str_c("s", 1:3)) %>% 
+  filter(PC %in% str_c("s", 1:2)) %>% 
   ggplot() +
   aes(x = Category, y = score, color = Category) +
   geom_boxplot() +
@@ -199,6 +208,7 @@ ggplot(predCurves) +
   scale_fill_manual(values=Category.colors) +
   # ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
+  xlab("Registered time") +
   theme(legend.position = "bottom")
 
 # diff curve B - A 

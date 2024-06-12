@@ -232,7 +232,7 @@ generate_land <- function(curves, ex) {
              l2 = jitter(0.2, amount = 0.02),
              l3 = max(time))
   } else if (ex == 5) {
-    boundary <- c(A = 0.5, B = 0.3) * refT
+    boundary <- c(A = 0.5, B = 0.3) * RefT
     land <- curves %>% 
       group_by(curveId, Category) %>% 
       reframe(l1 = 0,

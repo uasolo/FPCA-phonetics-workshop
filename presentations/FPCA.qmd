@@ -1,5 +1,6 @@
 ---
 title: "Simultaneous analysis of contours and durations"
+subtitle: "Functional PCA"
 author: "Michele Gubian"
 date: "01 07 2024"
 date-format: long

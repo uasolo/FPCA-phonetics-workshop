@@ -19,7 +19,7 @@ Category.colors <- c("darkslategray", "orangered")
 plots_dir <- "presentations/plots"
 data_dir <- "data"
 
-ex <- 6 # change according to ex number
+ex <- 4 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
@@ -58,6 +58,7 @@ land_y <- land %>%
   pivot_longer(l1:last_col(), names_to = "landmark", values_to = "time") %>% 
   inner_join(subset_curveId, by = "curveId") %>% 
   group_by(curveId) %>% 
+  mutate(time = time/max(time)) %>% # lin norm
   mutate(y = {
     y <- curves %>%
       inner_join(cur_group(), by = 'curveId') %>% 
@@ -76,6 +77,7 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
              size = 2) +
   # facet_wrap(~ curveId) +
   scale_color_brewer(palette = "Dark2") + 
+  # xlab("Linear norm. time") +
   # scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
   mytheme  +
   theme(legend.position = "bottom")
@@ -151,7 +153,7 @@ yRegMult <- multiFunData(list(
 yRegMult[61] %>% plot()
 
 # multidim FPCA
-nPC <- 3
+nPC <- 2
 mfpca <- MFPCA(yRegMult,
                M = nPC,
                uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
@@ -254,7 +256,7 @@ PCscores %>%
   theme(legend.position = "bottom")
 
 # Model
-s <- 2 # score index
+s <- 1 # score index
 model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
 mod <- lm(model_eq, data = PCscores)
 mod %>% summary()

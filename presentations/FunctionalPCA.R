@@ -99,7 +99,7 @@ ggplot(operands) +
 
 
 
-ggsave(file.path(plots_dir, str_c("ex1D.1_GAM_smooth", '.png')), # pl,
+ggsave(file.path(plots_dir, str_c("ex1D.4_land_pred_curves", '.png')), # pl,
        width = 1500, height = 1200, units = "px"
 )
 
@@ -144,7 +144,7 @@ pl <- fpca$functions[1:3] %>%
   mytheme  +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D.1_PCcolor", '.png')), #pl,
+ggsave(file.path(plots_dir, str_c("ex1D.4_land_curves_land", '.png')), #pl,
        width = 2500, height = 1200, units = "px"
 )
 
@@ -154,4 +154,65 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   ylim(ylim) +
   mytheme
 
+
+#### land reg ex1D 4
+
+# lin norm 
+
+land_y <- land %>%
+  pivot_longer(l1:last_col(), names_to = "landmark", values_to = "time") %>% 
+  inner_join(subset_curveId, by = "curveId") %>% 
+  group_by(curveId) %>% 
+  mutate(time = time/max(time)) %>% # lin norm
+  mutate(y = {
+    y <- curves %>%
+      inner_join(cur_group(), by = 'curveId') %>% 
+      pull(y)
+    approx(grid, y, time, rule = 2)$y
+  }) 
+
+
+#### land reg ex 4 
+# plot aligned landmarks in color dots
+
+land_y <- tibble(landmark = reg$landmarks %>% names, time = reg$landmarks) %>% 
+  expand_grid(subset_curveId) %>% 
+  group_by(curveId) %>% 
+  mutate(y = {
+    y <- curvesReg %>%
+      inner_join(cur_group(), by = 'curveId') %>% 
+      pull(y)
+    approx(seq(0, last(reg$landmarks), length.out = 100), y, time, rule = 2)$y
+  }) 
+  
+ggplot(curvesReg %>% inner_join(subset_curveId, by = "curveId")) +
+  aes(x = time, y = y, group = curveId) +
+  geom_line(linewidth = 0.6, color = 'slategray4') +
+  geom_point(data = land_y,
+             mapping = aes(time, y, color = landmark, group = curveId),
+             inherit.aes = FALSE,
+             size = 2) +
+  # facet_wrap(~ curveId) +
+  scale_color_brewer(palette = "Dark2") + 
+  xlab("Registered time") +
+  # scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
+  mytheme  +
+  theme(legend.position = "bottom")
+
+
+ggplot(predCurves) +
+  aes(time, y, color = Category) +
+  geom_line() +
+  geom_ribbon(aes(x = time, ymin = yl, ymax = yu, fill = Category),
+              alpha = 0.3, inherit.aes = FALSE) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_vline(xintercept = reg$landmarks) + 
+  xlab("registered time") +
+  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+                                         breaks = reg$landmarks,
+                                         labels = reg$landmarks %>% names())) +
+  
+  mytheme +
+  theme(legend.position = "bottom")
 
