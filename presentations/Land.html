@@ -363,18 +363,20 @@ Michele Gubian
 <nav role="doc-toc"> 
 <h2 id="toc-title">Outline</h2>
 <ul>
-<li><a href="#/motivation" id="/toc-motivation">Motivation</a></li>
-<li><a href="#/linear-time-normalisation" id="/toc-linear-time-normalisation">Linear time normalisation</a></li>
-<li><a href="#/landmark-registration" id="/toc-landmark-registration">Landmark registration</a></li>
+<li><a href="#/f0-contours-and-syllable-boundaries" id="/toc-f0-contours-and-syllable-boundaries">f0 contours and (syllable) boundaries</a></li>
+<li><a href="#/original-time-axis" id="/toc-original-time-axis">1. Original time axis</a></li>
+<li><a href="#/linear-time-normalisation" id="/toc-linear-time-normalisation">2. Linear time normalisation</a></li>
+<li><a href="#/landmark-registration" id="/toc-landmark-registration">3. Landmark registration</a></li>
+<li><a href="#/landmark-registration-time-warping-curves" id="/toc-landmark-registration-time-warping-curves">Landmark registration + time warping curves</a></li>
 </ul>
 </nav>
 </section>
 <section>
-<section id="motivation" class="title-slide slide level1 center">
-<h1>Motivation</h1>
+<section id="f0-contours-and-syllable-boundaries" class="title-slide slide level1 center">
+<h1>f0 contours and (syllable) boundaries</h1>
 
 </section>
-<section id="f0-contours-and-syllable-boundaries" class="slide level2">
+<section id="f0-contours-and-syllable-boundaries-1" class="slide level2">
 <h2>f0 contours and (syllable) boundaries</h2>
 <div class="quarto-layout-panel">
 <div class="quarto-layout-row quarto-layout-valign-top">
@@ -387,6 +389,47 @@ Michele Gubian
 </div>
 </div>
 </section>
+<section id="modelling-misaligned-contours" class="slide level2">
+<h2>Modelling misaligned contours</h2>
+<div>
+<ul>
+<li class="fragment">Anchor across-curves variation to meaningful boundaries (landmarks)</li>
+<li class="fragment">Separate variation due to:
+<ol type="1">
+<li class="fragment">boundary misalignment</li>
+<li class="fragment">shape variation anchored to boundaries</li>
+</ol></li>
+<li class="fragment">Boundaries may be intrinsic, e.g.&nbsp;peaks</li>
+<li class="fragment">or extrinsic, e.g.&nbsp;syllable boundaries on a f0 contour</li>
+<li class="fragment"><span style="color:red">Analyse both sources of variation jointly</span></li>
+</ul>
+</div>
+</section>
+<section id="general-strategy" class="slide level2">
+<h2>General strategy</h2>
+<div>
+<ol type="1">
+<li class="fragment">Pre-process contours’ time axis</li>
+<li class="fragment">Apply FPCA (or GAM)</li>
+</ol>
+</div>
+</section>
+<section id="four-approaches-to-time-axis-pre-processing" class="slide level2">
+<h2>Four approaches to time axis pre-processing</h2>
+<div>
+<ol type="1">
+<li class="fragment">Original time axis (i.e.&nbsp;do nothing)</li>
+<li class="fragment">Linear time normalisation</li>
+<li class="fragment">Landmark registration</li>
+<li class="fragment"><span style="color:red">Landmark registration + time warping curves</span></li>
+</ol>
+</div>
+</section></section>
+<section>
+<section id="original-time-axis" class="title-slide slide level1 center">
+<h1>1. Original time axis</h1>
+
+</section>
 <section id="apply-fpca" class="slide level2">
 <h2>Apply FPCA</h2>
 
@@ -398,10 +441,19 @@ Michele Gubian
 <section id="fit-a-regression-model-on-s1" class="slide level2">
 <h2>Fit a regression model on s<sub>1</sub></h2>
 
-<img data-src="plots/ex1D.4_null_pred_curves.png" class="r-stretch"></section></section>
+<img data-src="plots/ex1D.4_null_pred_curves.png" class="r-stretch"></section>
+<section id="comments" class="slide level2">
+<h2>Comments</h2>
+<div>
+<ul>
+<li class="fragment">Predicted curves do not show duration variation</li>
+<li class="fragment">Landmakrs are missing</li>
+</ul>
+</div>
+</section></section>
 <section>
 <section id="linear-time-normalisation" class="title-slide slide level1 center">
-<h1>Linear time normalisation</h1>
+<h1>2. Linear time normalisation</h1>
 
 </section>
 <section id="linear-time-normalisation-1" class="slide level2">
@@ -450,8 +502,8 @@ Michele Gubian
 </div>
 </div>
 </section>
-<section id="apply-fpca-to-linearly-normalised-curves" class="slide level2">
-<h2>Apply FPCA to linearly normalised curves</h2>
+<section id="apply-fpca-to-linearly-time-normalised-curves" class="slide level2">
+<h2>Apply FPCA to linearly time-normalised curves</h2>
 
 <img data-src="plots/ex1D.4_lin_PCcolor.png" class="r-stretch"></section>
 <section id="pc-scores-vs.-category-1" class="slide level2">
@@ -461,10 +513,20 @@ Michele Gubian
 <section id="fit-a-regression-model-on-s1-1" class="slide level2">
 <h2>Fit a regression model on s<sub>1</sub></h2>
 
-<img data-src="plots/ex1D.4_lin_pred_curves.png" class="r-stretch"></section></section>
+<img data-src="plots/ex1D.4_lin_pred_curves.png" class="r-stretch"></section>
+<section id="comments-1" class="slide level2">
+<h2>Comments</h2>
+<div>
+<ul>
+<li class="fragment">Curve shape distorted</li>
+<li class="fragment">Predicted curves do not show duration variation</li>
+<li class="fragment">Landmakrs are missing</li>
+</ul>
+</div>
+</section></section>
 <section>
 <section id="landmark-registration" class="title-slide slide level1 center">
-<h1>Landmark registration</h1>
+<h1>3. Landmark registration</h1>
 
 </section>
 <section id="landmark-registration-1" class="slide level2">
@@ -513,8 +575,36 @@ Michele Gubian
 </div>
 </div>
 </section>
-<section id="apply-fpca-to-linearly-normalised-curves-1" class="slide level2">
-<h2>Apply FPCA to linearly normalised curves</h2>
+<section id="landmark-registration-3" class="slide level2">
+<h2>Landmark registration</h2>
+<div>
+<ul>
+<li class="fragment">Aligns all curves to the given landmarks</li>
+<li class="fragment">Curves are smoothly distorted</li>
+</ul>
+</div>
+</section>
+<section id="landmark-reg.-does-not" class="slide level2">
+<h2>Landmark reg. does not …</h2>
+<div>
+<ul>
+<li class="fragment">Does not compute landmark positions on the input curves
+<ul>
+<li class="fragment">Depends on landmarks given by the user</li>
+</ul></li>
+<li class="fragment">Does not align curves based on their shapes
+<ul>
+<li class="fragment">It is not DTW</li>
+</ul></li>
+<li class="fragment">Does not depend on the curves at all
+<ul>
+<li class="fragment">It acts on the time axis on the basis of the landmarks</li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="apply-fpca-to-landmark-registered-curves" class="slide level2">
+<h2>Apply FPCA to landmark-registered curves</h2>
 
 <img data-src="plots/ex1D.4_land_PCcolor.png" class="r-stretch"></section>
 <section id="pc-scores-vs.-category-2" class="slide level2">
@@ -525,6 +615,212 @@ Michele Gubian
 <h2>Fit a regression model on s<sub>1</sub></h2>
 
 <img data-src="plots/ex1D.4_land_pred_curves.png" class="r-stretch"></section>
+<section id="comments-2" class="slide level2">
+<h2>Comments</h2>
+<div>
+<ul>
+<li class="fragment">Curve shape distorted</li>
+<li class="fragment">Predicted curves do not show duration variation</li>
+<li class="fragment"><span style="color:green">Landmakrs are preserved</span>
+<ul>
+<li class="fragment"><span style="color:green">we know where they are</span></li>
+<li class="fragment"><span style="color:green">we interpret curve shapes against landmark position</span></li>
+</ul></li>
+</ul>
+</div>
+</section></section>
+<section>
+<section id="landmark-registration-time-warping-curves" class="title-slide slide level1 center">
+<h1>Landmark registration + time warping curves</h1>
+
+</section>
+<section id="inside-landmark-registration" class="slide level2">
+<h2>Inside landmark registration</h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="fragment">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Original curves + landmarks</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_time.png"></p>
+</figure>
+</div>
+</div>
+</div><div class="column" style="width:33%;">
+
+</div><div class="column" style="width:33%;">
+<div class="fragment">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Registered curves</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_regtime.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="inside-landmark-registration-1" class="slide level2">
+<h2>Inside landmark registration</h2>
+<div class="columns">
+<div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Original curves + landmarks</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_time.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Time warping curves <span class="math inline">\(h(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_h.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:33%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Registered curves</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_regtime.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="time-warping-curves" class="slide level2">
+<h2>Time warping curves</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(h(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_h.png" height="500"></p>
+</figure>
+</div>
+</section>
+<section id="time-warping-curves-as-log-rates" class="slide level2">
+<h2>Time warping curves as log rates</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(- log \frac{dh(t)}{dt}\)</span></figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_lograte.png" height="500"></p>
+</figure>
+</div>
+</section>
+<section id="equivalent-representations-1" class="slide level2">
+<h2>Equivalent representations (1)</h2>
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Original curves + landmarks</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_time.png" height="500"></p>
+</figure>
+</div>
+</section>
+<section id="equivalent-representations-2" class="slide level2">
+<h2>Equivalent representations (2)</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Registered curves</figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_regtime.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption><span class="math inline">\(h(t)\)</span></figcaption>
+<p><img data-src="plots/ex1D.4_two_curves_h.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="procedure" class="slide level2 smaller">
+<h2>Procedure</h2>
+<div>
+<ul>
+<li class="fragment">Compute landmark registration</li>
+<li class="fragment"><span style="color:red">Pull out time warping curves <span class="math inline">\(h(t)\)</span></span></li>
+<li class="fragment"><span style="color:red">Transform them into log rates <span class="math inline">\(r(t) = - log \frac{dh(t)}{dt}\)</span></span></li>
+<li class="fragment"><span style="color:red">Compose 2-dimensional curves from</span>
+<ol type="1">
+<li class="fragment"><span style="color:red">Landmark registered curves</span></li>
+<li class="fragment"><span style="color:red">Respective log rates</span></li>
+</ol></li>
+<li class="fragment">Apply multidimensional FPCA</li>
+<li class="fragment">Apply linear regression on a PC score</li>
+<li class="fragment"><span style="color:red">Reverse log rate predicted curves to inter-landmark durations</span></li>
+</ul>
+</div>
+</section>
+<section id="apply-multidimensional-fpca" class="slide level2">
+<h2>Apply Multidimensional FPCA</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Curve dimension</figcaption>
+<p><img data-src="plots/ex1D.4_land2D_PCcolor_y.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Log rate dimension</figcaption>
+<p><img data-src="plots/ex1D.4_land2D_PCcolor_lograte.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="apply-fpca-1" class="slide level2">
+<h2>Apply FPCA</h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Curve dimension</figcaption>
+<p><img data-src="plots/ex1D.4_land2D_PCcolor_y.png"></p>
+</figure>
+</div>
+</div><div class="column" style="width:45%;">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<figcaption>Duration dimension</figcaption>
+<p><img data-src="plots/ex1D.4_land2D_PCcolor_dur.png"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="pc-scores-vs.-category-3" class="slide level2">
+<h2>PC scores vs.&nbsp;Category</h2>
+<p><img data-src="plots/ex1D.4_land2D_PCscores_box.png" height="500"></p>
+</section>
+<section id="fit-a-regression-model-on-s1-3" class="slide level2">
+<h2>Fit a regression model on s<sub>1</sub></h2>
+<div class="columns">
+<div class="column" style="width:45%;">
+<p><img data-src="plots/ex1D.4_land2D_pred_curves.png"></p>
+</div><div class="column" style="width:45%;">
+<p><img data-src="plots/ex1D.4_land2D_pred_dur.png"></p>
+</div>
+</div>
+</section>
+<section id="fit-a-regression-model-on-s1-4" class="slide level2">
+<h2>Fit a regression model on s<sub>1</sub></h2>
+<p><img data-src="plots/ex1D.4_land2D_pred_curve_land.png" height="500"></p>
+</section>
+<section id="comments-3" class="slide level2">
+<h2>Comments</h2>
+<div>
+<ul>
+<li class="fragment"><span style="color:green">Landmarks preserved</span></li>
+<li class="fragment"><span style="color:green">FPCA captures co-variation of shape and inter-landmark durations</span></li>
+<li class="fragment"><span style="color:green">Regression model predicts both curve shape and inter-landmark durations</span></li>
+<li class="fragment"><span style="color:green">No information loss</span></li>
+</ul>
+</div>
+</section>
 <section id="references" class="slide level2 smaller scrollable">
 <h2>References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" role="list">

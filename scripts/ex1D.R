@@ -208,7 +208,7 @@ ggplot(predCurves) +
   scale_fill_manual(values=Category.colors) +
   # ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
-  xlab("Registered time") +
+  # xlab("Registered time") +
   theme(legend.position = "bottom")
 
 # diff curve B - A 

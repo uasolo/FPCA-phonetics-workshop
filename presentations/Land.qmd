@@ -24,7 +24,7 @@ fig-cap-location: top
 tab-cap-location: top
 ---
 
-# Motivation
+# f0 contours and (syllable) boundaries
 
 ## f0 contours and (syllable) boundaries
 
@@ -37,6 +37,37 @@ tab-cap-location: top
 ![](plots/ex1D.4_curves_land.png)
 :::
 :::
+
+## Modelling misaligned contours
+
+::: incremental
+-   Anchor across-curves variation to meaningful boundaries (landmarks)
+-   Separate variation due to:
+    1.  boundary misalignment
+    2.  shape variation anchored to boundaries
+-   Boundaries may be intrinsic, e.g. peaks
+-   or extrinsic, e.g. syllable boundaries on a f0 contour
+-   [Analyse both sources of variation jointly]{style="color:red"}
+:::
+
+## General strategy
+
+::: incremental
+1. Pre-process contours' time axis
+2. Apply FPCA (or GAM)
+:::
+
+## Four approaches to time axis pre-processing 
+
+::: incremental
+1. Original time axis (i.e. do nothing)
+2. Linear time normalisation
+3. Landmark registration
+4. [Landmark registration + time warping curves]{style="color:red"}
+
+:::
+
+# 1. Original time axis
 
 ## Apply FPCA
 
@@ -51,9 +82,15 @@ tab-cap-location: top
 
 ![](plots/ex1D.4_null_pred_curves.png)
 
+## Comments
+
+::: incremental
+- Predicted curves do not show duration variation
+- Landmakrs are missing
+:::
 
 
-# Linear time normalisation
+# 2. Linear time normalisation
 
 ## Linear time normalisation
 
@@ -80,7 +117,7 @@ tab-cap-location: top
 :::
 
 
-## Apply FPCA to linearly normalised curves
+## Apply FPCA to linearly time-normalised curves
 
 ![](plots/ex1D.4_lin_PCcolor.png)
 
@@ -93,7 +130,16 @@ tab-cap-location: top
 
 ![](plots/ex1D.4_lin_pred_curves.png)
 
-# Landmark registration
+## Comments
+
+::: incremental
+- Curve shape distorted
+- Predicted curves do not show duration variation
+- Landmakrs are missing
+:::
+
+
+# 3. Landmark registration
 
 ## Landmark registration
 
@@ -119,7 +165,25 @@ tab-cap-location: top
 :::
 :::
 
-## Apply FPCA to linearly normalised curves
+## Landmark registration
+
+::: incremental
+-   Aligns all curves to the given landmarks
+-   Curves are smoothly distorted
+:::
+
+## Landmark reg. does not ...
+
+::: incremental
+-   Does not compute landmark positions on the input curves
+    -   Depends on landmarks given by the user
+-   Does not align curves based on their shapes
+    -   It is not DTW
+-   Does not depend on the curves at all
+    -   It acts on the time axis on the basis of the landmarks
+:::
+
+## Apply FPCA to landmark-registered curves
 
 ![](plots/ex1D.4_land_PCcolor.png)
 
@@ -131,6 +195,158 @@ tab-cap-location: top
 ## Fit a regression model on s~1~
 
 ![](plots/ex1D.4_land_pred_curves.png)
+
+
+## Comments
+
+::: incremental
+- Curve shape distorted
+- Predicted curves do not show duration variation
+- [Landmakrs are preserved]{style="color:green"}
+  - [we know where they are]{style="color:green"}
+  - [we interpret curve shapes against landmark position]{style="color:green"}
+:::
+
+# Landmark registration + time warping curves
+
+## Inside landmark registration
+
+::: columns
+::: {.column width="33%"}
+::: fragment
+![Original curves + landmarks](plots/ex1D.4_two_curves_time.png)
+:::
+:::
+
+::: {.column width="33%"}
+:::
+
+
+::: {.column width="33%"}
+::: fragment
+![Registered curves](plots/ex1D.4_two_curves_regtime.png)
+:::
+:::
+:::
+
+## Inside landmark registration
+
+::: columns
+::: {.column width="33%"}
+![Original curves + landmarks](plots/ex1D.4_two_curves_time.png)
+:::
+
+::: {.column width="33%"}
+
+![Time warping curves $h(t)$](plots/ex1D.4_two_curves_h.png)
+:::
+
+
+::: {.column width="33%"}
+![Registered curves](plots/ex1D.4_two_curves_regtime.png)
+:::
+:::
+
+
+## Time warping curves 
+
+![$h(t)$](plots/ex1D.4_two_curves_h.png){height="500"}
+
+## Time warping curves as log rates
+
+![$- log \frac{dh(t)}{dt}$](plots/ex1D.4_two_curves_lograte.png){height="500"}
+
+## Equivalent representations (1)
+
+![Original curves + landmarks](plots/ex1D.4_two_curves_time.png){height="500"}
+
+## Equivalent representations (2)
+
+
+::: columns
+::: {.column width="45%"}
+![Registered curves](plots/ex1D.4_two_curves_regtime.png)
+
+:::
+
+::: {.column width="45%"}
+![$h(t)$](plots/ex1D.4_two_curves_h.png)
+:::
+:::
+
+
+## Procedure {.smaller}
+
+::: incremental
+- Compute landmark registration
+- [Pull out time warping curves $h(t)$]{style="color:red"}
+- [Transform them into log rates $r(t) = - log \frac{dh(t)}{dt}$]{style="color:red"}
+- [Compose 2-dimensional curves from]{style="color:red"}
+  1. [Landmark registered curves]{style="color:red"}
+  2. [Respective log rates]{style="color:red"}
+- Apply multidimensional FPCA
+- Apply linear regression on a PC score
+- [Reverse log rate predicted curves to inter-landmark durations]{style="color:red"}
+:::
+
+
+## Apply Multidimensional FPCA
+
+::: columns
+::: {.column width="45%"}
+![Curve dimension](plots/ex1D.4_land2D_PCcolor_y.png)
+:::
+
+::: {.column width="45%"}
+![Log rate dimension](plots/ex1D.4_land2D_PCcolor_lograte.png)
+:::
+:::
+
+## Apply FPCA
+
+::: columns
+::: {.column width="45%"}
+![Curve dimension](plots/ex1D.4_land2D_PCcolor_y.png)
+:::
+
+::: {.column width="45%"}
+![Duration dimension](plots/ex1D.4_land2D_PCcolor_dur.png)
+:::
+:::
+
+
+## PC scores vs. Category
+
+![](plots/ex1D.4_land2D_PCscores_box.png){height="500"}
+
+
+## Fit a regression model on s~1~
+::: columns
+::: {.column width="45%"}
+![](plots/ex1D.4_land2D_pred_curves.png)
+:::
+::: {.column width="45%"}
+![](plots/ex1D.4_land2D_pred_dur.png)
+:::
+:::
+
+## Fit a regression model on s~1~
+
+![](plots/ex1D.4_land2D_pred_curve_land.png){height="500"}
+
+
+
+
+## Comments
+
+::: incremental
+- [Landmarks preserved]{style="color:green"}
+- [FPCA captures co-variation of shape and inter-landmark durations]{style="color:green"}
+- [Regression model predicts both curve shape and inter-landmark durations]{style="color:green"}
+- [No information loss]{style="color:green"}
+:::
+
+
 
 
 

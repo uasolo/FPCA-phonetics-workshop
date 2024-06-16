@@ -99,7 +99,7 @@ ggplot(operands) +
 
 
 
-ggsave(file.path(plots_dir, str_c("ex1D.4_land_pred_curves", '.png')), # pl,
+ggsave(file.path(plots_dir, str_c("ex1D.4_land2D_pred_curve_land", '.png')), # pl,
        width = 1500, height = 1200, units = "px"
 )
 
@@ -216,3 +216,82 @@ ggplot(predCurves) +
   mytheme +
   theme(legend.position = "bottom")
 
+
+### h, ex1D.4
+
+# pick a short curve
+i_short_long <- c(8, 98)
+
+# with landmark position
+land_y <- land %>%
+  pivot_longer(l1:last_col(), names_to = "landmark", values_to = "time") %>% 
+  filter(curveId %in% i_short_long) %>% 
+  group_by(curveId) %>% 
+  mutate(y = {
+    y <- curves %>%
+      inner_join(cur_group(), by = 'curveId') %>% 
+      pull(y)
+    approx(grid, y, time, rule = 2)$y
+  }) 
+
+ggplot(curves %>% filter(curveId %in% i_short_long)) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  geom_line(linewidth = 0.8) +
+  geom_point(data = land_y,
+             inherit.aes = TRUE,
+             size = 3) +
+  scale_color_manual(values=Category.colors) +
+  mytheme  +
+  theme(legend.position = "none")
+
+ggplot(curvesReg %>% filter(curveId %in% i_short_long)) +
+  aes(time, y, group = curveId, color = Category) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values=Category.colors) +
+  geom_vline(xintercept = reg$landmarks) + 
+  xlab("registered time") +
+  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+                                         breaks = reg$landmarks,
+                                         labels = reg$landmarks %>% names())) +
+  mytheme +
+  theme(legend.position = "none")
+
+
+land %>% 
+  select(curveId, Category) %>% 
+  filter(curveId %in% i_short_long) %>% 
+  group_by(curveId, Category) %>% 
+  reframe(time = seq(0, last(reg$landmarks), length.out = 100),
+          h = eval.fd(time, reg$h[cur_group()$curveId]) %>% as.numeric()) %>% 
+  ggplot() +
+  aes(time, h, group = curveId, color = Category) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values=Category.colors) +
+  geom_vline(xintercept = reg$landmarks) + 
+  xlab("registered time") +
+  ylab("time") +
+  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+                                         breaks = reg$landmarks,
+                                         labels = reg$landmarks %>% names())) +
+  mytheme +
+  theme(legend.position = "none")
+
+  
+land %>% 
+  select(curveId, Category) %>% 
+  filter(curveId %in% i_short_long) %>% 
+  group_by(curveId, Category) %>% 
+  reframe(time = seq(0, last(reg$landmarks), length.out = 100),
+          lograte = eval.fd(time, reg$lograte[cur_group()$curveId]) %>% as.numeric()) %>% 
+  ggplot() +
+  aes(time, lograte, group = curveId, color = Category) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values=Category.colors) +
+  geom_vline(xintercept = reg$landmarks) + 
+  xlab("registered time") +
+  ylab("Log rate") +
+  scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
+                                         breaks = reg$landmarks,
+                                         labels = reg$landmarks %>% names())) +
+  mytheme +
+  theme(legend.position = "none")

@@ -39,12 +39,13 @@ land <- readRDS(file.path(data_dir, str_c("land1D", ex, "rds", sep = '.'))) %>% 
 
 
 # plot a few curves
+set.seed(123)
 subset_curveId <- raw_curves %>%
   ungroup() %>% 
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(curvesReg %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
@@ -58,7 +59,6 @@ land_y <- land %>%
   pivot_longer(l1:last_col(), names_to = "landmark", values_to = "time") %>% 
   inner_join(subset_curveId, by = "curveId") %>% 
   group_by(curveId) %>% 
-  mutate(time = time/max(time)) %>% # lin norm
   mutate(y = {
     y <- curves %>%
       inner_join(cur_group(), by = 'curveId') %>% 
@@ -75,10 +75,7 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
              mapping = aes(time, y, color = landmark, group = curveId),
              inherit.aes = FALSE,
              size = 2) +
-  # facet_wrap(~ curveId) +
   scale_color_brewer(palette = "Dark2") + 
-  # xlab("Linear norm. time") +
-  # scale_color_manual(values=c('blue', 'green', 'magenta', 'black')) +
   mytheme  +
   theme(legend.position = "bottom")
 
@@ -167,7 +164,7 @@ sdFun <- mfpca$values %>% sqrt()
 DimCurves <- c(1)
 DimLograte <- 2 # lograte is the second dimension in mfpca
 PCcurves <- expand_grid(PC = 1:nPC,
-                        Dim = c(DimCurves), # DimLograte),
+                        Dim = DimLograte , #c(DimCurves), # DimLograte),
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, Dim, fractionOfStDev) %>%
   reframe(time = mfpca$meanFunction[[Dim]]@argvals[[1]],
@@ -292,7 +289,7 @@ predCurves_plot <- predCurves %>%
   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
                                          breaks = reg$landmarks,
                                          labels = reg$landmarks %>% names())) +
-  ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
+  # ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
   theme(legend.position = "bottom")
 
@@ -375,6 +372,6 @@ ggplot(predCurves) +
             ) +
   scale_color_manual(values=Category.colors) +
   xlab("time") +
-  ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
+  # ggtitle(str_glue("Reconstructed curves according to regr model: s{s} ~ Category")) +
   mytheme +
   theme(legend.position = "bottom")
