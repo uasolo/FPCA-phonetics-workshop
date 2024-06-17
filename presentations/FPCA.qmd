@@ -83,6 +83,12 @@ tab-cap-location: top
 
 ## Examples
 
+-   [f0 and syllable duration](https://www.sciencedirect.com/science/article/pii/S0167639324000542) and [f0 and intensity](https://www.sciencedirect.com/science/article/pii/S0167639324000542) in @el2024prosody
+-   [Two time-varying acoustic correlates of aspiration](https://www.sciencedirect.com/science/article/pii/S0095447020301078) in @cronenberg2020dynamic
+-   [Formants F1 and F2](https://www.isca-archive.org/interspeech_2019/gubian19_interspeech.pdf) in @gubian_tracking_2019
+-   [EMA sensor trajectory and gesture duration](https://www.isca-archive.org/interspeech_2019/gubian19b_interspeech.pdf) in @gubian2019zooming
+
+
 ## Code
 
 ::: incremental
@@ -341,9 +347,16 @@ $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot
 
 # Alternative workflow
 
-## Clustering
+## Processing PC scores
 
-![](plots/scheme_FPCA_clustering.png)
+![](plots/scheme_FPCA_processing.png)
+
+::: incremental
+
+- CART, Random forest
+- Clustering
+
+:::
 
 # Multi-dimensional curves
 
@@ -399,7 +412,13 @@ $$ y1_B(t) = \mu_{y1}(t) + \color{red}{s_{1, B}} \cdot PC1_{y1}(t)$$ $$ y2_B(t) 
 
 ![](plots/ex2D.1_pred_curves.png)
 
+## Comments
 
+::: incremental
+- Contours are multidimensional
+- PC scores behave as in uni-dimensional case
+- Flexible and computationally cheap 
+:::
 
 ## References
 

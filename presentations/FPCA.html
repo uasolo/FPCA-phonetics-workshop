@@ -522,6 +522,12 @@ Michele Gubian
 </section>
 <section id="examples" class="slide level2">
 <h2>Examples</h2>
+<ul>
+<li><a href="https://www.sciencedirect.com/science/article/pii/S0167639324000542">f0 and syllable duration</a> and <a href="https://www.sciencedirect.com/science/article/pii/S0167639324000542">f0 and intensity</a> in <span class="citation" data-cites="el2024prosody">El Zarka et al. (<a href="#/references" role="doc-biblioref" onclick="">2024</a>)</span></li>
+<li><a href="https://www.sciencedirect.com/science/article/pii/S0095447020301078">Two time-varying acoustic correlates of aspiration</a> in <span class="citation" data-cites="cronenberg2020dynamic">Cronenberg et al. (<a href="#/references" role="doc-biblioref" onclick="">2020</a>)</span></li>
+<li><a href="https://www.isca-archive.org/interspeech_2019/gubian19_interspeech.pdf">Formants F1 and F2</a> in <span class="citation" data-cites="gubian_tracking_2019">Gubian et al. (<a href="#/references" role="doc-biblioref" onclick="">2019</a>)</span></li>
+<li><a href="https://www.isca-archive.org/interspeech_2019/gubian19b_interspeech.pdf">EMA sensor trajectory and gesture duration</a> in <span class="citation" data-cites="gubian2019zooming">Gubian, Pastätter, and Pouplier (<a href="#/references" role="doc-biblioref" onclick="">2019</a>)</span></li>
+</ul>
 </section>
 <section id="code" class="slide level2">
 <h2>Code</h2>
@@ -970,10 +976,16 @@ $contrasts
 <h1>Alternative workflow</h1>
 
 </section>
-<section id="clustering" class="slide level2">
-<h2>Clustering</h2>
+<section id="processing-pc-scores" class="slide level2">
+<h2>Processing PC scores</h2>
 
-<img data-src="plots/scheme_FPCA_clustering.png" class="r-stretch"></section></section>
+<img data-src="plots/scheme_FPCA_processing.png" class="r-stretch"><div>
+<ul>
+<li class="fragment">CART, Random forest</li>
+<li class="fragment">Clustering</li>
+</ul>
+</div>
+</section></section>
 <section>
 <section id="multi-dimensional-curves" class="title-slide slide level1 center">
 <h1>Multi-dimensional curves</h1>
@@ -1054,6 +1066,16 @@ $contrasts
 <h2>Reconstruct predicted curves from s1</h2>
 
 <img data-src="plots/ex2D.1_pred_curves.png" class="r-stretch"></section>
+<section id="comments" class="slide level2">
+<h2>Comments</h2>
+<div>
+<ul>
+<li class="fragment">Contours are multidimensional</li>
+<li class="fragment">PC scores behave as in uni-dimensional case</li>
+<li class="fragment">Flexible and computationally cheap</li>
+</ul>
+</div>
+</section>
 <section id="references" class="slide level2 smaller scrollable">
 <h2>References</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
