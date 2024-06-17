@@ -6,3 +6,56 @@ graph LR
     B --> |PC curves| D
     classDef textbox stroke:null,stroke-width:0px,fill:white
     
+graph LR
+    A["sampled<br>contours"]:::textbox --> B("GA(M)M") 
+    -->E["predicted<br>contours"]:::textbox
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+    
+    
+graph LR
+    A["sampled<br>contours"]:::textbox --> B(FPCA) 
+    -->|scores| C("L(ME)R") 
+    --> D("reconstruct")
+    -->E["predicted<br>contours"]:::textbox
+    B --> |PC curves| D
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+    style B stroke:green,stroke-width:4px,fill:greenyellow
+
+graph LR
+    A1["sampled<br>contours"]:::textbox --> B("<span style="color:red">Landmark<br>Registration<span")
+    A2["<span style="color:red">landmarks<span>"]:::textbox --> B
+    B -->|"<span style="color:red">reg curves<span>"| C("FPCA") 
+    C -->|scores| D("L(ME)R")
+    D --> E("Reconstruct")
+    C -->|PC curves| E
+    E --> F["predicted<br>contours"]:::textbox
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+
+    
+graph LR
+    A1["sampled<br>contours"]:::textbox --> B(Landmark<br>Registration)
+    A2["landmarks"]:::textbox --> B
+    B -->|reg curves| C("FPCA") 
+    C -->|scores| D("L(ME)R")
+    D --> E("Reconstruct")
+    C -->|PC curves| E
+    E --> F["predicted<br>contours"]:::textbox
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+
+graph LR
+    A1["sampled<br>contours"]:::textbox --> B(Landmark<br>Registration)
+    A2["landmarks"]:::textbox --> B
+    B -->|reg curves| C("<span style="color:red">M<span>FPCA")
+    B -->|"<span style="color:red">time warp curves<span>"| C
+    C --> D1["..."]:::textbox
+    C --> D2["..."]:::textbox
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+    
+graph LR
+     C("<span style="color:red">M<span>FPCA") -->|scores| D("L(ME)R")
+    D --> E("Reconstruct")
+    C -->|PC curves| E
+    E --> F("<span style="color:red">Revert to<br>durations<span>")
+    F --> G["predicted contours<br><span style="color:red">and durations<span>"]:::textbox
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+        
