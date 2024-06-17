@@ -83,12 +83,14 @@ tab-cap-location: top
 
 ## Examples
 
-## What's new?
+## Code
 
 ::: incremental
--   recent R libraries (`funData`, `MFPCA`)
--   a (work in progress) library written by me (`landmarkregUtils`)
-
+-   based on R
+-   recent R libraries: `funData`, `MFPCA` 
+  -   based on the older `fda`
+-   a (work in progress) library written by me: [`landmarkregUtils`](https://github.com/uasolo/landmarkregUtils)
+-   all available on [this GitHub repo](https://github.com/uasolo/FPCA-phonetics-workshop)
 :::
 
 # Operations on functions
@@ -167,14 +169,7 @@ tab-cap-location: top
 
 ## Procedure overview
 
-```{mermaid}
-%%| fig-width: 10
-%%| fig-height: 4
-graph LR
-   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
-  classDef textbox stroke:null,stroke-width:0px,fill:white
-```
-
+![](plots/scheme_FPCA_base.png)
 
 
 ## Outcome
@@ -187,23 +182,6 @@ graph LR
 :::
 
 
-## GAM
-
-```{mermaid}
-%%| fig-width: 10
-%%| fig-height: 4
-graph LR
-   A["sampled<br>contours"]:::textbox --> B(GAM) --> D["model"]:::textbox
-  classDef textbox stroke:null,stroke-width:0px,fill:white
-```
-
-
-
-## GAM Outcome
-
-- ~~Compact model of modes of shape variations~~
-- ~~Compact parametrisation of each curve in the dataset~~
-- Regression model predicting curve shapes from factors
 
 
 
@@ -212,15 +190,7 @@ graph LR
 
 ## Procedure overview
 
-```{mermaid}
-%%| fig-width: 10
-%%| fig-height: 4
-graph LR
-   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
-  classDef textbox stroke:null,stroke-width:0px,fill:white
-  style B stroke:green,stroke-width:4px,fill:greenyellow
-```
-
+![](plots/scheme_FPCA_FPCA.png)
 
 ## A curve dataset
 
@@ -312,19 +282,12 @@ PCscores %>%
 
 ## Procedure overview
 
-```{mermaid}
-%%| fig-width: 10
-%%| fig-height: 4
-graph LR
-   A["sampled<br>contours"]:::textbox --> B(FPCA) --> C("L(ME)R") --> D["model"]:::textbox
-  classDef textbox stroke:null,stroke-width:0px,fill:white
-  style C stroke:green,stroke-width:4px,fill:greenyellow
-```
+![](plots/scheme_FPCA_LMER.png)
 
 
 ## Reintroduce factors
 
-![](plots/ex1D.1_PCscores_scatter.png){height="500"}
+![](plots/ex1D.1_PCscores_box.png){height="500"}
 
 
 ## Fit a regression model on s~1~
@@ -344,6 +307,10 @@ library(emmeans)
 emmeans(mod, pairwise ~ Category)
 ```
 
+## Procedure overview
+
+![](plots/scheme_FPCA_reconstruct.png)
+
 ## Reconstruct predicted curves from s~1~
 
 $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot PC1(t)$$
@@ -352,21 +319,31 @@ $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot
 
 ![](plots/ex1D.1_pred_curves.png)
 
-
-## GAM
-
-```{r}
-#| echo: true
-#| eval: false
-library(mgcv)
-mod <- bam(y ~ Category + s(time, by = Category),
-           data = curves)
-```
+# GAM
 
 
-::: fragment
+
+## Procedure overview
+
+![](plots/scheme_GAM.png)
+
+
+
+## GAM Outcome
+
+- ~~Compact model of modes of shape variations~~
+- ~~Compact parametrisation of each curve in the dataset~~
+- Regression model predicting curve shapes from factors
+
+## GAM Outcome
+
 ![](plots/ex1D.1_GAM_smooth.png){height="500"}
-:::
+
+# Alternative workflow
+
+## Clustering
+
+![](plots/scheme_FPCA_clustering.png)
 
 # Multi-dimensional curves
 
@@ -392,7 +369,7 @@ mod <- bam(y ~ Category + s(time, by = Category),
 
 ## PC scores v. Category
 
-![](plots/ex2D.1_PCscores_scatter.png)
+![](plots/ex2D.1_PCscores_box.png)
 
 ## Fit a regression model on s1
 

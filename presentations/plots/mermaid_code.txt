@@ -1,0 +1,8 @@
+graph LR
+    A["sampled<br>contours"]:::textbox --> B(FPCA) 
+    -->|scores| C("L(ME)R") 
+    --> D("reconstruct")
+    -->E["predicted<br>contours"]:::textbox
+    B --> |PC curves| D
+    classDef textbox stroke:null,stroke-width:0px,fill:white
+    
