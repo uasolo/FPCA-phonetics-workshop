@@ -412,7 +412,7 @@ Michele Gubian
 <div>
 <ol type="1">
 <li class="fragment">Pre-process contours’ time axis</li>
-<li class="fragment">Apply FPCA (or GAM)</li>
+<li class="fragment">Apply FPCA + L(ME)R + Reconstruction</li>
 </ol>
 </div>
 </section>
@@ -583,25 +583,8 @@ Michele Gubian
 <ul>
 <li class="fragment">Aligns all curves to the given landmarks</li>
 <li class="fragment">Curves are smoothly distorted</li>
-</ul>
-</div>
-</section>
-<section id="landmark-reg.-does-not" class="slide level2">
-<h2>Landmark reg. does not …</h2>
-<div>
-<ul>
-<li class="fragment">Does not compute landmark positions on the input curves
-<ul>
 <li class="fragment">Depends on landmarks given by the user</li>
-</ul></li>
-<li class="fragment">Does not align curves based on their shapes
-<ul>
-<li class="fragment">It is not DTW</li>
-</ul></li>
-<li class="fragment">Does not depend on the curves at all
-<ul>
-<li class="fragment">It acts on the time axis on the basis of the landmarks</li>
-</ul></li>
+<li class="fragment">Does not align curves based on their shapes (like DTW)</li>
 </ul>
 </div>
 </section>

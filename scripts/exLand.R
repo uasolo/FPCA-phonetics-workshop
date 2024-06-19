@@ -19,7 +19,7 @@ Category.colors <- c("darkslategray", "orangered")
 plots_dir <- "presentations/plots"
 data_dir <- "data"
 
-ex <- 4 # change according to ex number
+ex <- 5 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
@@ -31,8 +31,7 @@ curves <- raw_curves %>%
   group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
   reframe(approx(time, y, grid) %>% as_tibble()) %>% # linear interpolation on grid 
   ungroup() %>% 
-  rename(time = x, y = y) #%>% 
-  # filter(!is.na(y)) # otherwise applyReg fails
+  rename(time = x, y = y)
 
 land <- readRDS(file.path(data_dir, str_c("land1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
@@ -45,7 +44,7 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ggplot(curvesReg %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
@@ -84,7 +83,7 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
 
 
 # plot one curve with labelled landmarks
-id <- 3
+id <- 73
 land_id <- land %>% filter(curveId == id)
 landmarks <- land_id %>% select(l1:last_col()) %>% as.numeric()
 landlabels <- land_id %>% select(l1:last_col()) %>% colnames()
@@ -106,9 +105,11 @@ ggplot(curves %>% filter(curveId == id)) +
 
 
 # Landmark reg
+# 1. compute time warping curves h(t), based on landmarks (not on curves!)
 reg <- landmarkreg_nocurves(inputMarks = land %>% select(starts_with("l")),
                             njobs = 2)
-curvesReg <- applyReg(dat = curves %>% filter(!is.na(y)),
+# 2. apply time warping to curves
+curvesReg <- applyReg(dat = curves %>% filter(!is.na(y)), # remove NAs otherwise applyReg fails
                       reg = reg,
                       grid = seq(0, last(reg$landmarks), length.out = 100),
                       id = "curveId", time = "time", value = "y") %>% 
@@ -164,7 +165,7 @@ sdFun <- mfpca$values %>% sqrt()
 DimCurves <- c(1)
 DimLograte <- 2 # lograte is the second dimension in mfpca
 PCcurves <- expand_grid(PC = 1:nPC,
-                        Dim = DimLograte , #c(DimCurves), # DimLograte),
+                        Dim = DimCurves , #c(DimCurves), # DimLograte),
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, Dim, fractionOfStDev) %>%
   reframe(time = mfpca$meanFunction[[Dim]]@argvals[[1]],

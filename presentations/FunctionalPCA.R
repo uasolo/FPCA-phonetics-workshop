@@ -155,6 +155,11 @@ ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   mytheme
 
 
+# lin time norm
+raw_curves <- raw_curves %>%
+  group_by(curveId) %>%
+  mutate(time = time/max(time))
+
 #### land reg ex1D 4
 
 # lin norm 
@@ -295,3 +300,40 @@ land %>%
                                          labels = reg$landmarks %>% names())) +
   mytheme +
   theme(legend.position = "none")
+
+
+#### TODO: move to function
+maxFixGap <- 4 * sp
+bigGaps <- raw_curves %>% 
+  group_by(curveId, Category) %>%
+  mutate(time_to = lead(time),
+         bigGap = time_to - time > maxFixGap) %>%
+  filter(bigGap) %>% 
+  select(!c(y, bigGap)) %>% 
+  rename(time_from = time) %>%
+  reframe(cond = cur_data() %>%
+            pmap(\(time_from, time_to) str_c("(time < ", time_from, " | time > ", time_to, ")")) %>% 
+            str_c(collapse = " & ")
+  ) %>% 
+  ungroup()
+
+
+
+library(rlang)
+
+curves <- curves %>%
+  # filter(curveId %in% 1:10) %>% 
+  nest(curve = c(time, y)) %>% 
+  left_join(bigGaps, by = c("Category", "curveId")) %>% 
+  group_by(curveId, Category) %>%
+  mutate(curve = case_when(
+    !is.na(cond) ~ str_c("curve[[1]] %>% filter(", cond[[1]], ") %>% list()") %>% 
+      parse_expr() %>% eval(),
+    TRUE ~ curve
+  )) %>% 
+  select(!cond) %>% 
+  unnest(curve) %>% 
+  ungroup()
+
+########
+

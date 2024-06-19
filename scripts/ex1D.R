@@ -19,17 +19,14 @@ Category.colors <- c(A = "darkslategray", B = "orangered")
 plots_dir <- "presentations/plots"
 data_dir <- "data"
 
-ex <- 4 # change according to ex number
+ex <- 3 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
-# lin time norm
-raw_curves <- raw_curves %>%
-  group_by(curveId) %>%
-  mutate(time = time/max(time))
 
-
-sp <- 0.01 # unified sampling period
+# Create a common sampling period (sp) 
+# imporatant to reduce complexity of FPCA computation
+sp <- 0.01 
 maxT <- max(raw_curves$time)
 grid <- seq(0, maxT, by = sp) # unified sampling grid 
 curves <- raw_curves %>% 
@@ -38,40 +35,6 @@ curves <- raw_curves %>%
   ungroup() %>% 
   rename(time = x, y = y)
 
-#### TODO: move to function
-maxFixGap <- 4 * sp
-bigGaps <- raw_curves %>% 
-  group_by(curveId, Category) %>%
-  mutate(time_to = lead(time),
-         bigGap = time_to - time > maxFixGap) %>%
-  filter(bigGap) %>% 
-  select(!c(y, bigGap)) %>% 
-  rename(time_from = time) %>%
-  reframe(cond = cur_data() %>%
-            pmap(\(time_from, time_to) str_c("(time < ", time_from, " | time > ", time_to, ")")) %>% 
-            str_c(collapse = " & ")
-  ) %>% 
-  ungroup()
-
-
-  
-library(rlang)
-
-curves <- curves %>%
-  # filter(curveId %in% 1:10) %>% 
-  nest(curve = c(time, y)) %>% 
-  left_join(bigGaps, by = c("Category", "curveId")) %>% 
-  group_by(curveId, Category) %>%
-  mutate(curve = case_when(
-    !is.na(cond) ~ str_c("curve[[1]] %>% filter(", cond[[1]], ") %>% list()") %>% 
-      parse_expr() %>% eval(),
-    TRUE ~ curve
-  )) %>% 
-  select(!cond) %>% 
-  unnest(curve) %>% 
-  ungroup()
-
-########
 
 
 # plot a few curves
@@ -80,19 +43,14 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ylim <- c(-3.8, 4)
+# ylim <- c(-3.8, 4)
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
-  # geom_point() +
-  # facet_wrap(~ curveId) +
   scale_color_manual(values=Category.colors) +
   # ylim(ylim) +
-  # xlab("Linearly norm. time") +
   mytheme  +
   theme(legend.position = "bottom")
-
-# lin time norm
 
 # build a funData object
 curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
@@ -114,7 +72,8 @@ round(fpca$values  / sum( fpca$values) , digits = 3)
 # scores st. dev.
 sdFun <- fpca$values %>% sqrt()
 # PC curves to be plotted
-PCcurves <- expand_grid(PC = 1:2,
+nPC <- 2
+PCcurves <- expand_grid(PC = 1:nPC,
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, fractionOfStDev) %>%
   reframe(
@@ -131,7 +90,6 @@ ggplot(PCcurves) +
              labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
   labs(color = expression(frac(s[k], sigma[k]))) +
   xlab("registered time") +
-  # labs(color = "Norm. scores") +
   geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
   mytheme +
   theme(legend.position = "bottom")
@@ -154,7 +112,7 @@ ggplot(PCscores) +
 PCscores %>% 
   pivot_longer(cols = s1:all_of(str_glue("s{fpca$npc}")), 
                names_to = "PC", values_to = "score") %>% 
-  filter(PC %in% str_c("s", 1:2)) %>% 
+  filter(PC %in% str_c("s", 1:nPC)) %>% 
   ggplot() +
   aes(x = Category, y = score, color = Category) +
   geom_boxplot() +

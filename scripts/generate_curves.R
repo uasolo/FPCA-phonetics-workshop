@@ -95,7 +95,7 @@ ex1D_land[[5]] <- ex1D_land[[1]]
 ex1D_land[[6]] <- ex1D_land[[4]]
 
 set.seed(123)
-ex <- 6
+ex <- 1
 modelCurves <- ex1D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
@@ -171,8 +171,8 @@ subset_curveId <- curves %>%
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(t1, x1, color = Category, group = curveId) +
-  geom_line() +
-  # geom_point() +
+  # geom_line() +
+  geom_point() +
   scale_color_manual(values=Category.colors) +
   # facet_wrap(~ curveId, nrow = 4) +
   mytheme  +

@@ -430,6 +430,7 @@ Michele Gubian
 <nav role="doc-toc"> 
 <h2 id="toc-title">Outline</h2>
 <ul>
+<li><a href="#/tutorial-overview" id="/toc-tutorial-overview">Tutorial overview</a></li>
 <li><a href="#/motivation" id="/toc-motivation">Motivation</a></li>
 <li><a href="#/operations-on-functions" id="/toc-operations-on-functions">Operations on functions</a></li>
 <li><a href="#/uni-dimensional-curves" id="/toc-uni-dimensional-curves">Uni-dimensional curves</a></li>
@@ -440,6 +441,20 @@ Michele Gubian
 </ul>
 </nav>
 </section>
+<section id="tutorial-overview" class="title-slide slide level1 center">
+<h1>Tutorial overview</h1>
+<div>
+<ul>
+<li class="fragment">Part 1: Functional PCA (1.5 hours)</li>
+<li class="fragment">Break (30 min)</li>
+<li class="fragment">Part 2: Landmark registration (1.5 hours)</li>
+<li class="fragment">Each part: Theory + Code</li>
+<li class="fragment">Questions: after Theory, after Code</li>
+<li class="fragment">All materials available on <a href="https://github.com/uasolo/FPCA-phonetics-workshop">GitHub</a></li>
+</ul>
+</div>
+</section>
+
 <section>
 <section id="motivation" class="title-slide slide level1 center">
 <h1>Motivation</h1>
@@ -469,6 +484,20 @@ Michele Gubian
 <p><img data-src="plots/ex1D.6_curve73.png"></p>
 </div>
 </div>
+</div>
+</section>
+<section id="goals" class="slide level2">
+<h2>Goals</h2>
+<div>
+<ul>
+<li class="fragment">Anchor across-curves variation to meaningful boundaries (landmarks)</li>
+<li class="fragment">Separate variation due to:
+<ol type="1">
+<li class="fragment">boundary misalignment</li>
+<li class="fragment">shape variation anchored to boundaries</li>
+</ol></li>
+<li class="fragment">Analyse both sources of variation jointly</li>
+</ul>
 </div>
 </section>
 <section id="predicted-curves-and-boundary-positions" class="slide level2">
@@ -677,17 +706,7 @@ Michele Gubian
 <section id="procedure-overview" class="slide level2">
 <h2>Procedure overview</h2>
 
-<img data-src="plots/scheme_FPCA_base.png" class="r-stretch"></section>
-<section id="outcome" class="slide level2">
-<h2>Outcome</h2>
-<div>
-<ul>
-<li class="fragment">Compact model of modes of shape variations</li>
-<li class="fragment">Compact parametrisation of each curve in the dataset</li>
-<li class="fragment">Regression model predicting curve shapes from factors</li>
-</ul>
-</div>
-</section></section>
+<img data-src="plots/scheme_FPCA_base.png" class="r-stretch"></section></section>
 <section>
 <section id="functional-pca" class="title-slide slide level1 center">
 <h1>Functional PCA</h1>
@@ -882,6 +901,17 @@ Michele Gubian
 <h2>FPC scores controlling FPC curves</h2>
 <p><img data-src="plots/ex1D.1_PCcolor.png" height="500"></p>
 </section>
+<section id="fpca-summary" class="slide level2">
+<h2>FPCA summary</h2>
+<div>
+<ul>
+<li class="fragment">Input curves can be approximated by composing mean curve and PC curves multiplied by respective PC scores</li>
+<li class="fragment">PC scores are independent, i.e.&nbsp;if we know <span class="math inline">\(s_1\)</span> we cannot guess <span class="math inline">\(s_2\)</span></li>
+<li class="fragment">All this is true also for other methods, e.g.&nbsp;DCT, Legendre polynomials, etc.</li>
+<li class="fragment">But FPCA constructs PC curves <span style="color:red">optimised for your dataset</span>, which makes the composition much more compact</li>
+</ul>
+</div>
+</section>
 <section id="procedure-overview-2" class="slide level2">
 <h2>Procedure overview</h2>
 
@@ -949,7 +979,17 @@ $contrasts
 <section id="reconstruct-predicted-curves-from-s1-1" class="slide level2">
 <h2>Reconstruct predicted curves from s<sub>1</sub></h2>
 
-<img data-src="plots/ex1D.1_pred_curves.png" class="r-stretch"></section></section>
+<img data-src="plots/ex1D.1_pred_curves.png" class="r-stretch"></section>
+<section id="outcome" class="slide level2">
+<h2>Outcome</h2>
+<div>
+<ul>
+<li class="fragment">Compact model of modes of shape variations</li>
+<li class="fragment">Compact parametrisation of each curve in the dataset</li>
+<li class="fragment">Regression model predicting curve shapes from factors</li>
+</ul>
+</div>
+</section></section>
 <section>
 <section id="gam" class="title-slide slide level1 center">
 <h1>GAM</h1>
@@ -981,8 +1021,28 @@ $contrasts
 
 <img data-src="plots/scheme_FPCA_processing.png" class="r-stretch"><div>
 <ul>
-<li class="fragment">CART, Random forest</li>
-<li class="fragment">Clustering</li>
+<li class="fragment">If you have categories:
+<ul>
+<li class="fragment">CART, Random forest, etc.</li>
+</ul></li>
+<li class="fragment">If you don’t have categories:
+<ul>
+<li class="fragment">clustering</li>
+</ul></li>
+</ul>
+</div>
+</section>
+<section id="proportion-of-variance" class="slide level2">
+<h2>Proportion of variance</h2>
+<div>
+<ul>
+<li class="fragment">PCs are ordered by proportion of explained variance in the curve dataset</li>
+<li class="fragment">In our example, PC1 explains 51% of var., PC2 35%, etc.</li>
+<li class="fragment">This variance has nothing to do with the categories</li>
+<li class="fragment">A linear regression model <code>s1 ~ Category</code> explains 94% of the variance</li>
+<li class="fragment">A linear regression model <code>s2 ~ Category</code> explains 1% of the variance</li>
+<li class="fragment">This variance is the capacity of categories to predict a score</li>
+<li class="fragment"><span style="color:red">These two types of variance have nothing to do with each other!</span></li>
 </ul>
 </div>
 </section></section>
@@ -1073,6 +1133,7 @@ $contrasts
 <li class="fragment">Contours are multidimensional</li>
 <li class="fragment">PC scores behave as in uni-dimensional case</li>
 <li class="fragment">Flexible and computationally cheap</li>
+<li class="fragment">Difficult to obtain the same result with GAMs</li>
 </ul>
 </div>
 </section>

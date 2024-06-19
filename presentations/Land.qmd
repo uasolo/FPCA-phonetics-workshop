@@ -54,7 +54,7 @@ tab-cap-location: top
 
 ::: incremental
 1.  Pre-process contours' time axis
-2.  Apply FPCA (or GAM)
+2.  Apply FPCA + L(ME)R + Reconstruction 
 :::
 
 ## Four approaches to time axis pre-processing
@@ -164,17 +164,8 @@ tab-cap-location: top
 ::: incremental
 -   Aligns all curves to the given landmarks
 -   Curves are smoothly distorted
-:::
-
-## Landmark reg. does not ...
-
-::: incremental
--   Does not compute landmark positions on the input curves
-    -   Depends on landmarks given by the user
--   Does not align curves based on their shapes
-    -   It is not DTW
--   Does not depend on the curves at all
-    -   It acts on the time axis on the basis of the landmarks
+-   Depends on landmarks given by the user
+-   Does not align curves based on their shapes (like DTW)
 :::
 
 ## Procedure overview

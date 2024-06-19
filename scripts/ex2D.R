@@ -21,7 +21,8 @@ ex <- 3 # change according to ex number
 curves <- readRDS(file.path(data_dir, str_c("ex2D", ex, "rds", sep = '.'))) %>% ungroup() %>%
   mutate(across(c(curveId, Category), ~ factor(.x)))
 nCurves <- curves %>% distinct(curveId) %>% nrow()
-
+# For simplicity, skipping the construction of common sampling period,
+# as these curves are all sampled on a common grid
 
 # plot a few curves
 subset_curveId <- curves %>%
@@ -169,7 +170,7 @@ predCurves %>%
         axis.title.y = element_blank())
 
 
-# Trajectory representation (mock formants)
+# Trajectory representation (mock formants for ex 3)
 ggplot(predCurves %>% select(-c(yu, yl)) %>% 
                pivot_wider(names_from = "Dim", values_from = "y", names_prefix = "y")) +
   aes(x = y2, y = y1, group = Category, color = Category) +

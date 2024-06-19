@@ -24,6 +24,18 @@ fig-cap-location: top
 tab-cap-location: top
 ---
 
+# Tutorial overview
+
+::: incremental
+- Part 1: Functional PCA (1.5 hours)
+- Break (30 min)
+- Part 2: Landmark registration (1.5 hours)
+- Each part: Theory + Code
+- Questions: after Theory, after Code
+- All materials available on [GitHub](https://github.com/uasolo/FPCA-phonetics-workshop)
+
+:::
+
 # Motivation
 
 ## f0 contours and (syllable) boundaries
@@ -47,6 +59,18 @@ tab-cap-location: top
 ![](plots/ex1D.6_curve73.png)
 
 :::
+
+## Goals
+
+::: incremental
+-   Anchor across-curves variation to meaningful boundaries (landmarks)
+-   Separate variation due to:
+    1.  boundary misalignment
+    2.  shape variation anchored to boundaries
+-   Analyse both sources of variation jointly
+:::
+
+
 
 ## Predicted curves and boundary positions
 
@@ -178,14 +202,6 @@ tab-cap-location: top
 ![](plots/scheme_FPCA_base.png)
 
 
-## Outcome
-
-::: incremental
-- Compact model of modes of shape variations
-- Compact parametrisation of each curve in the dataset
-- Regression model predicting curve shapes from factors
-
-:::
 
 
 
@@ -285,6 +301,14 @@ PCscores %>%
 
 ![](plots/ex1D.1_PCcolor.png){height="500"}
 
+## FPCA summary
+
+::: incremental
+-   Input curves can be approximated by composing mean curve and PC curves multiplied by respective PC scores
+-   PC scores are independent, i.e. if we know $s_1$ we cannot guess $s_2$
+-   All this is true also for other methods, e.g. DCT, Legendre polynomials, etc.
+-   But FPCA constructs PC curves [optimised for your dataset]{style="color:red"}, which makes the composition much more compact
+:::
 
 ## Procedure overview
 
@@ -313,6 +337,7 @@ library(emmeans)
 emmeans(mod, pairwise ~ Category)
 ```
 
+
 ## Procedure overview
 
 ![](plots/scheme_FPCA_reconstruct.png)
@@ -324,6 +349,22 @@ $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot
 ## Reconstruct predicted curves from s~1~
 
 ![](plots/ex1D.1_pred_curves.png)
+
+## Outcome
+
+::: incremental
+- Compact model of modes of shape variations
+- Compact parametrisation of each curve in the dataset
+- Regression model predicting curve shapes from factors
+
+:::
+
+
+
+
+
+
+
 
 # GAM
 
@@ -353,10 +394,26 @@ $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot
 
 ::: incremental
 
-- CART, Random forest
-- Clustering
+- If you have categories:
+  - CART, Random forest, etc. 
+- If you don't have categories:
+  - clustering
 
 :::
+
+
+## Proportion of variance
+
+::: incremental
+-   PCs are ordered by proportion of explained variance in the curve dataset
+-   In our example, PC1 explains 51% of var., PC2 35%, etc. 
+-   This variance has nothing to do with the categories
+-   A linear regression model `s1 ~ Category` explains 94% of the variance
+-   A linear regression model `s2 ~ Category` explains 1% of the variance
+-   This variance is the capacity of categories to predict a score
+-   [These two types of variance have nothing to do with each other!]{style="color:red"}
+:::
+
 
 # Multi-dimensional curves
 
@@ -418,6 +475,8 @@ $$ y1_B(t) = \mu_{y1}(t) + \color{red}{s_{1, B}} \cdot PC1_{y1}(t)$$ $$ y2_B(t) 
 - Contours are multidimensional
 - PC scores behave as in uni-dimensional case
 - Flexible and computationally cheap 
+- Difficult to obtain the same result with GAMs
+
 :::
 
 ## References
