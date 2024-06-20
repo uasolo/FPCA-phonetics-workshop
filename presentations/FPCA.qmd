@@ -308,8 +308,9 @@ PCscores %>%
 ::: incremental
 -   Input curves can be approximated by composing mean curve and PC curves multiplied by respective PC scores
 -   PC scores are independent, i.e. if we know $s_1$ we cannot guess $s_2$
--   All this is true also for other methods, e.g. DCT, Legendre polynomials, etc.
+-   All this is true also for other methods, e.g. DCT, Legendre polynomials, growth curves,  etc.
 -   But FPCA constructs PC curves [optimised for your dataset]{style="color:red"}, which makes the composition much more compact
+-   In depth on inner workings of FPCA and other functional decomposition methods in [Day 1 video](https://youtu.be/vVXhmP3FqqE) of the [previous version of this tutorial](https://www.ling.uni-konstanz.de/forschung/workshops/)
 :::
 
 ## Procedure overview
