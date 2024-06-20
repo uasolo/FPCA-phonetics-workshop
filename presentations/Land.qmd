@@ -235,9 +235,7 @@ tab-cap-location: top
 
 ![$h(t)$](plots/ex1D.4_two_curves_h.png){height="500"}
 
-## Time warping curves as log rates
 
-![$- log \frac{dh(t)}{dt}$](plots/ex1D.4_two_curves_lograte.png){height="500"}
 
 ## Equivalent representations (1)
 
@@ -254,6 +252,10 @@ tab-cap-location: top
 ![$h(t)$](plots/ex1D.4_two_curves_h.png)
 :::
 :::
+
+## Time warping curves as log rates
+
+![$- log \frac{dh(t)}{dt}$](plots/ex1D.4_two_curves_lograte.png){height="500"}
 
 ## Procedure {.smaller}
 
@@ -329,6 +331,7 @@ tab-cap-location: top
 -   [FPCA captures co-variation of shape and inter-landmark durations]{style="color:green"}
 -   [Regression model predicts both curve shape and inter-landmark durations]{style="color:green"}
 -   [No information loss]{style="color:green"}
+-   Maths details in @gubian2011joint and appendix A in @asano2018excuse
 :::
 
 ## References

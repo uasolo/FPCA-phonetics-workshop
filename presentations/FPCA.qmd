@@ -111,6 +111,8 @@ tab-cap-location: top
 -   [Two time-varying acoustic correlates of aspiration](https://www.sciencedirect.com/science/article/pii/S0095447020301078) in @cronenberg2020dynamic
 -   [Formants F1 and F2](https://www.isca-archive.org/interspeech_2019/gubian19_interspeech.pdf) in @gubian_tracking_2019
 -   [EMA sensor trajectory and gesture duration](https://www.isca-archive.org/interspeech_2019/gubian19b_interspeech.pdf) in @gubian2019zooming
+-   [Cutting down on manual f0 annotation](https://www.isca-archive.org/speechprosody_2016/asano16b_speechprosody.pdf) in @asano12cutting
+-   [Automatic f0 and duration manipulation for resythesis](https://sprosig.org/sp2010/papers/100954.pdf) in @gubian2010automatic
 
 
 ## Code
@@ -123,7 +125,7 @@ tab-cap-location: top
 -   all available on [this GitHub repo](https://github.com/uasolo/FPCA-phonetics-workshop)
 :::
 
-# Operations on functions
+# Arithmetic with functions
 
 ## From time samples to functions
 
