@@ -105,7 +105,7 @@ tab-cap-location: top
 -   ... with or without boundary information
 :::
 
-## Examples
+## Examples {.smaller}
 
 -   [f0 and syllable duration](https://www.sciencedirect.com/science/article/pii/S0167639324000542) and [f0 and intensity](https://www.sciencedirect.com/science/article/pii/S0167639324000542) in @el2024prosody
 -   [Two time-varying acoustic correlates of aspiration](https://www.sciencedirect.com/science/article/pii/S0095447020301078) in @cronenberg2020dynamic
@@ -389,7 +389,7 @@ $$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot
 
 ![](plots/ex1D.1_GAM_smooth.png){height="500"}
 
-# Alternative workflow
+# Alternative workflows
 
 ## Processing PC scores
 
