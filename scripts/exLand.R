@@ -161,12 +161,13 @@ mfpca$values  / sum( mfpca$values)
 
 # scores st. dev.
 sdFun <- mfpca$values %>% sqrt()
+fractionOfStDev <-  seq(-1, 1, by=.25)
 # PC curves to be plotted
 DimCurves <- c(1)
 DimLograte <- 2 # lograte is the second dimension in mfpca
 PCcurves <- expand_grid(PC = 1:nPC,
                         Dim = DimCurves , #c(DimCurves), # DimLograte),
-                        fractionOfStDev = seq(-1, 1, by=.25)) %>%
+                        fractionOfStDev = fractionOfStDev) %>%
   group_by(PC, Dim, fractionOfStDev) %>%
   reframe(time = mfpca$meanFunction[[Dim]]@argvals[[1]],
           y = (mfpca$meanFunction[[Dim]] +
@@ -195,7 +196,7 @@ PCcurves_plot
 # PC durations to be plotted
 
 PCdur <- expand_grid(PC = 1:nPC,
-                     fractionOfStDev = seq(-1, 1, by=.5),
+                     fractionOfStDev = fractionOfStDev,
                      landmarks2long(reg$landmarks)
 ) %>%
   group_by(PC, fractionOfStDev, leftBoundary) %>%
@@ -206,7 +207,7 @@ PCdur <- expand_grid(PC = 1:nPC,
   ungroup() %>% 
   select(!c(from, to, id))
 
-PCdur_plot <- ggplot(PCdur) +
+PCdur_plot <- ggplot(PCdur %>% filter(fractionOfStDev %in% seq(-1, 1, by = .5))) +
   aes(x = fractionOfStDev %>% factor(labels = ""),
       y = duration, color = fractionOfStDev) + 
   geom_bar(stat="identity", fill = 'white') +
@@ -237,7 +238,7 @@ PCdur <- PCdur %>%
 
 # compute original time samples from registered time samples
 PCcurves <- PCcurves %>% 
-  inner_join(PCdur %>% distinct(PC, fractionOfStDev), by = c("PC", "fractionOfStDev")) %>% 
+  # inner_join(PCdur %>% distinct(PC, fractionOfStDev), by = c("PC", "fractionOfStDev")) %>% 
   group_by(PC, Dim, fractionOfStDev) %>% 
   mutate(origTime = {
     landmarks <- c(0, # first landmark at time = 0
@@ -249,6 +250,40 @@ PCcurves <- PCcurves %>%
                             targetMarks = landmarks)
   })
 
+# compute (time, y) coordinates of landmark points on predicted curves
+PCland <- PCdur %>% 
+  group_by(PC, fractionOfStDev) %>% 
+  select(PC, fractionOfStDev, land) %>% 
+  reframe(land = list(c(0, land))) %>% 
+  inner_join(PCcurves %>% select(PC, fractionOfStDev, origTime, y),
+             by =  c("PC", "fractionOfStDev"),
+             multiple = "all") %>% 
+  nest(.by = c(PC, fractionOfStDev, land), .key = "curves") %>% 
+  group_by(PC, fractionOfStDev) %>%
+  mutate(y = list(approx(curves[[1]]$origTime, curves[[1]]$y, land[[1]], rule = 2)$y)) %>% 
+  select(!curves) %>% 
+  unnest(cols = c(land, y))
+
+PCcurves_origTime_plot <- ggplot(PCcurves) +
+  aes(x = origTime, y = y, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_line() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered") +
+  facet_grid(Dim ~ PC,
+             scales = "free_y",
+             labeller = labeller(PC = ~ str_glue("PC{.x}"),
+                                 Dim = DimLabels)) +
+  geom_point(data = PCland,
+             mapping = aes(land, y, color = fractionOfStDev),
+             inherit.aes = FALSE,
+             size = 3
+  ) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  xlab("time") + 
+  mytheme +
+  theme(legend.position = "right",
+        axis.title.y = element_blank())
+
+PCcurves_origTime_plot
 
 
 # collect PC scores
@@ -373,7 +408,6 @@ predCurves <- predCurves %>%
 # compute (time, y) coordinates of landmark points on predicted curves
 predLand <- predDur %>% 
   group_by(Category) %>% 
-  mutate(land = cumsum(duration)) %>% 
   select(Category, land) %>% 
   reframe(land = list(c(0, land))) %>% 
   inner_join(predCurves %>% select(Category, origTime, y),

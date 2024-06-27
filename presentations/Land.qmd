@@ -280,7 +280,7 @@ tab-cap-location: top
 ![](plots/scheme_MFPCA_land2.png)
 
 
-## Apply Multidimensional FPCA
+## Apply 2-dim FPCA to curves + log rates
 
 ::: columns
 ::: {.column width="45%"}
@@ -292,7 +292,7 @@ tab-cap-location: top
 :::
 :::
 
-## Apply FPCA
+## Apply 2-dim FPCA to curves + log rates
 
 ::: columns
 ::: {.column width="45%"}
@@ -304,9 +304,16 @@ tab-cap-location: top
 :::
 :::
 
+## Apply 2-dim FPCA to curves + log rates
+![](plots/ex1D.4_land2D_PCcolor_origTime.png)
+
+
 ## PC scores vs. Category
 
 ![](plots/ex1D.4_land2D_PCscores_box.png){height="500"}
+
+
+
 
 ## Fit a regression model on s~1~
 
