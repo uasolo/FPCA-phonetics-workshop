@@ -227,6 +227,30 @@ PCdur_plot
 
 grid.arrange(PCcurves_plot, PCdur_plot, nrow=2)
 
+# Plot PC curves against original time axis + landmark positions
+# (this is an example for 1-dim curves)
+
+# add landmark position (except for the first one at time = 0)
+PCdur <- PCdur %>% 
+  group_by(PC, fractionOfStDev) %>% 
+  mutate(land = cumsum(duration))
+
+# compute original time samples from registered time samples
+PCcurves <- PCcurves %>% 
+  inner_join(PCdur %>% distinct(PC, fractionOfStDev), by = c("PC", "fractionOfStDev")) %>% 
+  group_by(PC, Dim, fractionOfStDev) %>% 
+  mutate(origTime = {
+    landmarks <- c(0, # first landmark at time = 0
+                   PCdur %>% 
+                     inner_join(cur_group(), by = c("PC", "fractionOfStDev")) %>% 
+                     pull(land))
+    landmarkreg_timeSamples(timeSamples = time,
+                            inputMarks = reg$landmarks,
+                            targetMarks = landmarks)
+  })
+
+
+
 # collect PC scores
 PCscores <- mfpca$scores %>%
   `colnames<-`( paste0("s", 1:nPC)) %>%
