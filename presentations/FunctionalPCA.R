@@ -144,8 +144,8 @@ pl <- fpca$functions[1:3] %>%
   mytheme  +
   theme(legend.position = "bottom")
 
-ggsave(file.path(plots_dir, str_c("ex1D.4_land_curves_land", '.png')), #pl,
-       width = 2500, height = 1200, units = "px"
+ggsave(file.path(plots_dir, str_c("ex1D.4_two_curves_lograte", '.png')), #pl,
+       width = 1500, height = 1200, units = "px"
 )
 
 ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
@@ -273,6 +273,8 @@ land %>%
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
   geom_vline(xintercept = reg$landmarks) + 
+  geom_abline(intercept = 0, slope = 1, color = "purple",
+              linetype = "twodash", linewidth = 0.8) +
   xlab("registered time") +
   ylab("time") +
   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
@@ -293,6 +295,8 @@ land %>%
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
   geom_vline(xintercept = reg$landmarks) + 
+  geom_hline(yintercept = 0, color = "purple",
+              linetype = "twodash", linewidth = 0.8) +
   xlab("registered time") +
   ylab("Log rate") +
   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
