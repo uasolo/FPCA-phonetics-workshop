@@ -84,7 +84,7 @@ tab-cap-location: top
 
 ::: incremental
 -   Predicted curves do not show duration variation
--   Landmakrs are missing
+-   Landmarks are missing
 :::
 
 # 2. Linear time normalisation
@@ -130,7 +130,7 @@ tab-cap-location: top
 ::: incremental
 -   Curve shape distorted
 -   Predicted curves do not show duration variation
--   Landmakrs are missing
+-   Landmarks are missing
 :::
 
 # 3. Landmark registration
@@ -189,7 +189,7 @@ tab-cap-location: top
 ::: incremental
 -   Curve shape distorted
 -   Predicted curves do not show duration variation
--   [Landmakrs are preserved]{style="color:green"}
+-   [Landmarks are preserved]{style="color:green"}
     -   [we know where they are]{style="color:green"}
     -   [we interpret curve shapes against landmark position]{style="color:green"}
 :::
