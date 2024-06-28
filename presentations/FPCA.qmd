@@ -1,0 +1,445 @@
+---
+title: "Simultaneous analysis of contours and durations"
+subtitle: "Functional PCA"
+author: "Michele Gubian"
+date: "01 07 2024"
+date-format: long
+bibliography: references.bib
+nocite: |
+  @*
+format:
+  revealjs:
+    mermaid:
+      theme: neutral
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
+    df-print: kable
+    slide-number: true
+    chalkboard: 
+      theme: "whiteboard"
+    theme: [style.scss]
+editor: visual
+fig-cap-location: top
+tab-cap-location: top
+---
+
+# Tutorial overview
+
+::: incremental
+-   Part 1: Functional PCA (1.5 hours)
+-   Break (30 min)
+-   Part 2: Landmark registration (1.5 hours)
+-   Each part: Theory + Code
+-   Questions: after Theory, after Code
+-   All materials available on [GitHub](https://github.com/uasolo/FPCA-phonetics-workshop)
+:::
+
+# Motivation
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+::: fragment
+![](plots/ex1D.6_curves_Cat.png)
+:::
+
+::: fragment
+![](plots/ex1D.6_curves_land.png)
+:::
+:::
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+![](plots/ex1D.6_curve3.png)
+
+![](plots/ex1D.6_curve73.png)
+:::
+
+## Goals
+
+::: incremental
+-   Anchor across-curves variation to meaningful boundaries (landmarks)
+-   Separate variation due to:
+    1.  boundary misalignment
+    2.  shape variation anchored to boundaries
+-   Analyse both sources of variation jointly
+:::
+
+## Predicted curves and boundary positions
+
+![](plots/ex1D.6_pred_curves_lands.png){height="500"}
+
+## Predicted curves and durations
+
+::: {layout-ncol="2"}
+![Time-aligned curves](plots/ex1D.6_pred_curves.png)
+
+![Interval durations](plots/ex1D.6_pred_dur.png)
+:::
+
+## A suite of methods
+
+::: incremental
+-   Functional PCA
+-   Landmark Registration
+-   Linear (Mixed Effects) Regression
+:::
+
+## Applications (beyond f0 contours)
+
+::: incremental
+-   f0 and intensity
+-   formants
+-   multiple articulatory tracks (EMA)
+-   any time-varying (bundle of) measurement ...
+-   ... with or without boundary information
+:::
+
+## Examples {.smaller}
+
+-   [f0 and syllable duration](https://www.sciencedirect.com/science/article/pii/S0167639324000542) and [f0 and intensity](https://www.sciencedirect.com/science/article/pii/S0167639324000542) in @el2024prosody
+-   [Two time-varying acoustic correlates of aspiration](https://www.sciencedirect.com/science/article/pii/S0095447020301078) in @cronenberg2020dynamic
+-   [Formants F1 and F2](https://www.isca-archive.org/interspeech_2019/gubian19_interspeech.pdf) in @gubian_tracking_2019
+-   [EMA sensor trajectory and gesture duration](https://www.isca-archive.org/interspeech_2019/gubian19b_interspeech.pdf) in @gubian2019zooming
+-   [Cutting down on manual f0 annotation](https://www.isca-archive.org/speechprosody_2016/asano16b_speechprosody.pdf) in @asano12cutting
+-   [Automatic f0 and duration manipulation for resythesis](https://sprosig.org/sp2010/papers/100954.pdf) in @gubian2010automatic
+
+## Code
+
+::: incremental
+-   based on R
+-   recent R libraries: `funData`, `MFPCA`
+-   based on the older `fda`
+-   a (work in progress) library written by me: [`landmarkregUtils`](https://github.com/uasolo/landmarkregUtils)
+-   all available on [this GitHub repo](https://github.com/uasolo/FPCA-phonetics-workshop)
+:::
+
+# Arithmetic with functions
+
+## From time samples to functions
+
+::: {layout-ncol="2"}
+![Sampled curve](plots/curve_points.png)
+
+::: fragment
+![Function $f(t)$](plots/arith_curve.png)
+:::
+:::
+
+## Addition
+
+::: columns
+::: {.column width="65%"}
+![$f(t) + \color{red}{g(t)}$](plots/arith_sum.png)
+:::
+:::
+
+## Addition
+
+::: columns
+::: {.column width="65%"}
+![$f(t) + \color{red}{g(t)} = \color{blue}{y(t)}$](plots/arith_sum_res.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{0.5} \cdot f(t)$](plots/arith_curve.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar.png)
+:::
+:::
+
+## Multiplication by a scalar
+
+::: columns
+::: {.column width="65%"}
+![$\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar_neg.png)
+:::
+:::
+
+## Mean curve
+
+::: columns
+::: {.column width="65%"}
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})$](plots/arith_curve2.png)
+:::
+:::
+
+## Mean function
+
+::: columns
+::: {.column width="65%"}
+![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}$](plots/arith_curve2mean.png)
+:::
+:::
+
+# Uni-dimensional curves
+
+## A curve dataset
+
+![100 curves, two categories](plots/ex1D.1_curves.png){height="500"}
+
+## Procedure overview
+
+![](plots/scheme_FPCA_base.png)
+
+# Functional PCA
+
+## Procedure overview
+
+![](plots/scheme_FPCA_FPCA.png)
+
+## A curve dataset
+
+![100 curves, remove factor information](plots/ex1D.1_curves_black.png){height="500"}
+
+## Subtract mean curve
+
+::: columns
+::: {.column width="45%"}
+![Mean $\mu(t)$](plots/ex1D.1_mean.png)
+:::
+
+::: {.column width="45%"}
+![$f_i(t) - \mu(t)$](plots/ex1D.1_curves_demean.png)
+:::
+:::
+
+## FPCA outcome
+
+::: incremental
+-   the mean curve $\mu(t)$
+-   a number of Principal Component curves, $PC1(t), PC2(t), \cdots$
+-   a set of corresponding scores, $s_1, s_2, \cdots$ **different for each curve**
+:::
+
+## FPC curves
+
+![](plots/ex1D.1_PC.png){height="500"}
+
+## FPC scores
+
+::: fragment
+```{r}
+#| echo: false
+library(tidyverse)
+PCscores <- read_csv("data/ex1D.1_PCscores.csv")
+PCscores %>% 
+  filter(curveId %in% c(1,2,3,51, 52, 53)) %>% 
+  mutate(across(starts_with("s"), ~ round(.x, 2))) %>% 
+  select(!(s4:last_col()))
+
+
+```
+:::
+
+## FPC-based curve reconstruction
+
+![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve1_mean.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t)$](plots/ex1D.1_curve1_mean_PC1.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t)$](plots/ex1D.1_curve1_mean_PC12.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{(-0.21)} \cdot PC1(t) + \color{red}{0.21} \cdot PC2(t) + \color{red}{(-0.02)} \cdot PC3(t)$](plots/ex1D.1_curve1_mean_PC123.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t)$](plots/ex1D.1_curve51_mean.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t)$](plots/ex1D.1_curve51_mean_PC1.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t)$](plots/ex1D.1_curve51_mean_PC12.png){height="500"}
+
+## FPC-based curve reconstruction {visibility="uncounted"}
+
+![$\color{blue}{\hat{f}(t)} = \mu(t) + \color{red}{0.21} \cdot PC1(t) + \color{red}{0.04} \cdot PC2(t) + \color{red}{0.05} \cdot PC3(t)$](plots/ex1D.1_curve51_mean_PC123.png){height="500"}
+
+## FPC scores controlling FPC curves
+
+![](plots/ex1D.1_PCcolor.png){height="500"}
+
+## FPCA summary
+
+::: incremental
+-   Input curves can be approximated by composing mean curve and PC curves multiplied by respective PC scores
+-   PC scores are independent, i.e. if we know $s_1$ we cannot guess $s_2$
+-   All this is true also for other methods, e.g. DCT, Legendre polynomials, growth curves, etc.
+-   But FPCA constructs PC curves [optimised for your dataset]{style="color:red"}, which makes the composition much more compact
+-   In depth on inner workings of FPCA and other functional decomposition methods in [Day 1 video](https://youtu.be/vVXhmP3FqqE) of the [previous version of this tutorial](https://www.ling.uni-konstanz.de/forschung/workshops/)
+:::
+
+## Procedure overview
+
+![](plots/scheme_FPCA_LMER.png)
+
+## Reintroduce factors
+
+![](plots/ex1D.1_PCscores_box.png){height="500"}
+
+## Fit a regression model on s~1~
+
+```{r}
+#| echo: true
+#| output-location: fragment
+mod <- lm(s1 ~ Category, data = PCscores)
+summary(mod)
+```
+
+## Model predictions on s~1~
+
+```{r}
+#| echo: true
+library(emmeans)
+emmeans(mod, pairwise ~ Category)
+```
+
+## Procedure overview
+
+![](plots/scheme_FPCA_reconstruct.png)
+
+## Reconstruct predicted curves from s~1~
+
+$$ f_A(t) = \mu(t) + s_{1, A} \cdot PC1(t)$$ $$ f_B(t) = \mu(t) + s_{1, B} \cdot PC1(t)$$
+
+## Reconstruct predicted curves from s~1~
+
+![](plots/ex1D.1_pred_curves.png)
+
+## Outcome
+
+::: incremental
+-   Compact model of modes of shape variations
+-   Compact parametrisation of each curve in the dataset
+-   Regression model predicting curve shapes from factors
+:::
+
+# GAM
+
+## Procedure overview
+
+![](plots/scheme_GAM.png)
+
+## GAM Outcome
+
+-   ~~Compact model of modes of shape variations~~
+-   ~~Compact parametrisation of each curve in the dataset~~
+-   Regression model predicting curve shapes from factors
+
+## GAM Outcome
+
+![](plots/ex1D.1_GAM_smooth.png){height="500"}
+
+# Alternative workflows
+
+## Processing PC scores
+
+![](plots/scheme_FPCA_processing.png)
+
+::: incremental
+-   If you have categories:
+    -   CART, Random forest, etc.
+-   If you don't have categories:
+    -   clustering
+:::
+
+## Proportion of variance
+
+::: incremental
+-   PCs are ordered by proportion of explained variance in the curve dataset
+-   In our example, PC1 explains 51% of var., PC2 35%, etc.
+-   This variance has nothing to do with the categories
+-   A linear regression model `s1 ~ Category` explains 94% of the variance
+-   A linear regression model `s2 ~ Category` explains 1% of the variance
+-   This variance is the capacity of categories to predict a score
+-   [These two types of variance have nothing to do with each other!]{style="color:red"}
+:::
+
+# Multi-dimensional curves
+
+## A 2-dimensional curve dataset
+
+![100 pairs of curves, two categories](plots/ex2D.1_curves_Cat.png){height="500"}
+
+## D-dimensional Principal Components
+
+::: incremental
+-   There are D mean curves
+    -   $\mu_{y1}(t)$ and $\mu_{y2}(t)$
+-   Each PC is composed of D curves
+    -   $PC1_{y1}(t)$ and $PC1_{y2}(t)$, $PC2_{y1}(t)$ and $PC2_{y2}(t)$, etc.
+-   [Scores do not split in D]{style="color:red"}
+-   Each score controls a PC, which is made of D 1-dimensional curves
+    -   $s_1$ controls (i.e. multiplies) $PC1_{y1}(t)$ and $PC1_{y2}(t)$
+:::
+
+## Principal Components (PCs)
+
+![](plots/ex2D.1_PCcolor.png)
+
+## PC scores v. Category
+
+![](plots/ex2D.1_PCscores_box.png)
+
+## Fit a regression model on s1
+
+```{r}
+#| echo: true
+#| eval: false
+mod <- lm(s1 ~ Category, data = PCscores)
+emmeans(mod, pairwise ~ Category)
+```
+
+| Category |  $s_1$ |
+|----------|-------:|
+| A        |  0.134 |
+| B        | -0.134 |
+
+## Reconstruct predicted curves from s1
+
+::: fragment
+$$ y1_A(t) = \mu_{y1}(t) + \color{red}{s_{1, A}} \cdot PC1_{y1}(t)$$ $$ y2_A(t) = \mu_{y2}(t) + \color{red}{s_{1, A}} \cdot PC1_{y2}(t)$$
+:::
+
+::: fragment
+$$ y1_B(t) = \mu_{y1}(t) + \color{red}{s_{1, B}} \cdot PC1_{y1}(t)$$ $$ y2_B(t) = \mu_{y2}(t) + \color{red}{s_{1, B}} \cdot PC1_{y2}(t)$$
+:::
+
+## Reconstruct predicted curves from s1
+
+![](plots/ex2D.1_pred_curves.png)
+
+## Comments
+
+::: incremental
+-   Contours are multidimensional
+-   PC scores behave as in uni-dimensional case
+-   Flexible and computationally cheap
+-   Difficult to obtain the same result with GAMs
+:::
+
+## References
+
+::: {#refs}
+:::

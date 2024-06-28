@@ -3,7 +3,7 @@
 .RData
 .Ruserdata
 .DS_Store
-presentations/*_cache
-presentations/*_files
-presentations/._*
+*_cache
+*_files
+._*
 dev/
