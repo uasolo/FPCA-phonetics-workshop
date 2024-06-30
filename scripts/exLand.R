@@ -125,13 +125,13 @@ reg$landmarks
 ggplot(curvesReg %>% inner_join(subset_curveId, by = "curveId")) +
   aes(time, y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
-  # scale_color_manual(values=Category.colors) +
+  scale_color_manual(values=Category.colors) +
   geom_vline(xintercept = reg$landmarks) + 
   xlab("registered time") +
   scale_x_continuous(sec.axis = dup_axis(name = "landmarks",
                                          breaks = reg$landmarks,
                                          labels = reg$landmarks %>% names())) +
-  # mytheme +
+  mytheme +
   theme(legend.position = "bottom")
 
 # curve dimension
