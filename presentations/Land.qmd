@@ -16,8 +16,9 @@ format:
     toc-title: Outline
     df-print: kable
     slide-number: true
-    chalkboard: 
-      theme: "whiteboard"
+    embed-resources: true
+#    chalkboard: 
+#      theme: "whiteboard"
     theme: [style.scss]
 editor: visual
 fig-cap-location: top
