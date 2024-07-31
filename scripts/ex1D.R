@@ -19,13 +19,13 @@ Category.colors <- c(A = "darkslategray", B = "orangered")
 plots_dir <- "presentations/plots"
 data_dir <- "data"
 
-ex <- 3 # change according to ex number
+ex <- 1 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
 
 # Create a common sampling period (sp) 
-# imporatant to reduce complexity of FPCA computation
+# important to reduce complexity of FPCA computation
 sp <- 0.01 
 maxT <- max(raw_curves$time)
 grid <- seq(0, maxT, by = sp) # unified sampling grid 
