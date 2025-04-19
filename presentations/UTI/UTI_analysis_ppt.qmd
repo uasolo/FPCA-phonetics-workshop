@@ -1,0 +1,252 @@
+---
+title: "UTI analysis"
+author: "Michele Gubian"
+date: "24 04 2025"
+date-format: long
+nocite: |
+  @*
+format:
+  revealjs:
+    mermaid:
+      theme: neutral
+    toc: true
+    toc-depth: 1
+    toc-title: Outline
+    df-print: kable
+    slide-number: true
+    embed-resources: true
+    # chalkboard: 
+      # theme: "whiteboard"
+    theme: [style.scss]
+editor: visual
+fig-cap-location: top
+tab-cap-location: top
+---
+
+# Motivation
+
+## Static analysis {.smaller}
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_example.png)
+:::
+
+::: fragment
+-   Dataset contains many tongue contours like this
+    -   e.g. all contours at gesture mid-time
+-   One "data point" is a whole contour
+-   knots (1-11) are provided by UTI post-processing software
+-   Static analysis = no time involved
+-   **GOAL**: statistical analysis
+    -   e.g. how contour shape varies with respect to conditions A and B
+:::
+:::::
+
+## Dynamic analysis {.smaller}
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_time.png)
+:::
+
+::: fragment
+-   Dataset contains many **sequences** of tongue contours like this
+    -   e.g. contour sequences represent gestures form onset to offset
+-   One "data point" is a sequence of contours, or a clip
+-   Dynamic analysis = time axis should be included in the model
+-   **GOAL**: statistical analysis
+    -   e.g. how dynamic gesture varies with respect to conditions A and B
+:::
+:::::
+
+## Roadmap
+
+::: incremental
+-   Static or dynamic?
+    -   i.e. do we need the time axis?
+-   Choose geometrical parametrisation of contours
+    -   radial coordinates
+    -   2-dim. trajectory
+-   Choose statistical modelling framework
+    -   GAMs
+    -   FPCA + LMER
+:::
+
+# Parametrization <br> - static case
+
+## y \~ x: a bad idea
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_example.png)
+:::
+
+::: fragment
+![](plots/tongue_example_not_f.png)
+:::
+:::::
+
+::: incremental
+-   Non-unicity of y values at a given x!
+:::
+
+## radius \~ angle
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_example.png)
+:::
+
+::: fragment
+![](plots/tongue_example_fan.png)
+:::
+:::::
+
+## radius \~ angle
+
+::::: {layout-ncol="2"}
+::: fragment
+![Flat version](plots/tongue_example_rad_flat.png)
+:::
+
+::: fragment
+![Radial version](plots/tongue_example_rad.png)
+:::
+:::::
+
+## radius \~ angle: PROS
+
+::: incremental
+-   Simplest geometry
+    -   one indep. variable: angle
+    -   one dep. variable: radius
+-   Plugs in to simplest model
+-   Solves most of the non-unicity issues
+:::
+
+## radius \~ angle: CONS
+
+::: incremental
+-   Non-unicity at curled tongue tip
+-   Requires choosing origin
+-   Does not use knots properly
+:::
+
+## Interpolation
+
+::::: {layout-ncol="2"}
+::: column
+![Flat version](plots/tongue_examples_rad_flat.png)
+:::
+
+::: column
+![Radial version](plots/tongue_examples_rad.png)
+:::
+:::::
+
+## Linear angle normalization
+
+::::: {layout-ncol="2"}
+::: column
+![Flat version](plots/tongues_lin_rad_flat.png)
+:::
+
+::: column
+![Radial version](plots/tongues_lin_rad.png)
+:::
+:::::
+
+## Procrustean angle interpolation
+
+::::: {layout-ncol="2"}
+::: column
+![Flat version](plots/tongues_proc_rad_flat.png)
+:::
+
+::: column
+![Radial version](plots/tongues_proc_rad.png)
+:::
+:::::
+
+## (x, y) \~ knot
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_example.png)
+:::
+
+::: fragment
+![](plots/tongue_knots.png)
+:::
+:::::
+
+## (x, y) \~ knot: PROS
+
+::: incremental
+-   Solves all non-unicity problems
+-   Proper use of knots
+:::
+
+## (x, y) \~ knot: CONS
+
+::: incremental
+-   Complex model:
+    -   Two equations, one for x, one for y
+    -   Requires multivariate models
+:::
+
+# Parametrization <br> - dynamic case
+
+## radius \~ angle \* time
+
+::::: {layout-ncol="2"}
+::: column
+![](plots/tongue_time.png)
+:::
+
+::: column
+:::
+:::::
+
+## radius \~ angle \* time
+
+::::: {layout-ncol="2"}
+::: column
+![Flat version](plots/tongue_time_rad_2D.png)
+:::
+
+::: column
+![Radial version](plots/tongue_time_rad.png)
+:::
+:::::
+
+## radius \~ angle \* time
+
+::: incremental
+-   Simplest geometry
+-   Yet requires a **2D support**
+-   Same pros & cons as static counterpart
+:::
+
+## (x, y) \~ knot \* time
+
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/tongue_time_knots.png)
+:::
+
+::: fragment
+![](plots/tongue_time_knots_2D.png)
+:::
+:::::
+
+## (x, y) \~ knot \* time
+
+::: incremental
+-   The most complex geometry
+    -   2D support (knot, time)
+    -   2 response variables (x, y)
+-   Requires most complex models
+-   All pros and cons of static counterpart
+:::

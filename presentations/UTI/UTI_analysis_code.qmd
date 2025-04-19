@@ -1,0 +1,1647 @@
+---
+title: "UTI analysis with GAMs and FPCA"
+author: 
+  - name:
+      given: 'Michele'
+      family: 'Gubian'
+    affiliations:
+      name: 'Institute for Phonetics and Speech Processing, <br> Ludwig Maximilian University, Munich'
+    email: 'mailto:m.gubian@phonetik.uni-muenchen.de'
+date: "24 04 2025"
+format:
+  html:
+    theme: cosmo
+    code-fold: true
+    toc: true
+    toc-location: left
+    reference-location: margin
+    df-print: kable
+    embed-resources: true
+    fig-cap-location: top
+bibliography: references.bib
+csl: journal-of-linguistics.csl
+number-sections: true
+abstract: >
+  Abstract here.
+---
+
+Loading libraries and a few helper scripts.
+```{r libraries, warning=FALSE, message=FALSE}
+# data processing and plotting
+library(tidyverse)
+# GAMs
+library(mgcv)
+library(itsadug)
+# FPCA
+library(funData)
+library(MFPCA)
+# install.packages("devtools")
+# devtools::install_github("uasolo/landmarkregUtils")
+library(landmarkregUtils)
+library(abind)
+# LMER
+library(lme4)
+library(emmeans)
+# plotting
+library(RColorBrewer)
+library(gridExtra)
+source("polar_utils.R")
+# artificial UTI data generator
+source("parab_tongue.R")
+# cosmetics
+Category.colors <- c(A = "black", B = "limegreen")
+theme_set(theme_light())
+```
+
+# Static analysis {#sec-static}
+Static refers to absence of time. The typical scenario is the analysis of UTI where only one representative contour is used for each speech sound, e.g. the onset or the point in time where the articulatory target is reached.
+
+## Data generation {#sec-st_data_gen}
+This tutorial is based on artificial data. The helper function `parab_tongue()` generates curves that vaguely resemble tongue contours. The shape consists of two branches of parabolas joined at the vertex. The shape is parametrised so that it can vary in various ways. The output is a tibble with three columns: `knot`, `x` and `y`, where `knot` simulates the (11) knots obtained with DeepLabCut [@wrench2022beyond].   See the source code `parab_tongue.R` for more detail.
+
+::: {.callout-note collapse="true"}
+## Data generation demo
+```{r demo_parab_tongue}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+curve <- parab_tongue(
+  a_left = 2,
+  a_right = 1,
+  npoints = 11, # knots
+  scale = c(10, 5),
+  centre = c(50,80),
+  theta = pi/12
+)
+print(curve)
+ggplot(curve) +
+  aes(x, y) +
+  geom_path() +
+  ggtitle("Cartesian coordinates")
+
+```
+:::
+
+## Polar coordinates {#sec-st_polar}
+The $(x, y)$ coordinates are usually not suitable for a classic $y = f(x)$ model, as the tongue contour in some regions has more than one $y$ value corresponding to the same $x$, which is incompatible with a standard function, e.g. with a GAM `y ~ s(x)`. The polar coordinate representation mitigates this problem, as most of the time $radius = f(angle)$ is well behaved. 
+
+In order to transform $(x, y)$ coordinates into polar ones we need to specify an origin point. Here the location of the origin will be chosen by eye inspection. The helper function `cart2polar()` performs the transformation, while `radial_plot()` is a plotting helper.
+
+::: {.callout-note collapse="true"}
+## Polar coordinates demo
+
+```{r demo_polar}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+
+# convert to polar
+origin <-  c(70, 30) # eye inspection
+curve <- curve %>% 
+  cart2polar(origin, 'x', 'y')
+
+print(curve)
+# plot raw polar 
+ggplot(curve) +
+  aes(angle, radius) +
+  geom_path() +
+  ggtitle("Raw polar coordinates")
+
+# plot polar 
+ggplot(curve) +
+  aes(angle, radius) +
+  geom_path() +
+  radial_plot(60) +
+  ggtitle("Polar coordinates")
+```
+:::
+
+## Dataset {#sec-st_dataset}
+The dataset for the static analysis consists of 60 artificial tongue contours, 30 for each `Category`, `A` and `B`. This is the simplest possible scenario, with only one categorical predictor with two levels and no random factors. Hints on adaptations for more complex and realistic scenarios will be provided throughout the exposition.
+
+::: {.callout-note collapse="true"}
+## Dataset generation
+
+```{r dataset_static}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+set.seed(123)
+N_curves_per_Category <- 30
+raw_curves <- tibble(
+  Category = c('A', 'B'),
+  a_left_off = c(1, 1),
+  a_right_off = c(1, 1),
+  theta_off = c(-pi/12, 0), 
+  scale_x_off = c(1,1),
+  centre_x_off = c(10,0),
+  centre_y_off = c(0,0)
+) %>% 
+  expand_grid(i = 1:N_curves_per_Category) %>% 
+  rownames_to_column(var = "frame_id") %>% 
+  mutate(frame_id = as.integer(frame_id)) %>% 
+  select(-i) %>% 
+  mutate(across(c(Category, frame_id), ~ factor(.x))) %>% 
+  group_by(Category, frame_id) %>%
+  reframe(parab_tongue(
+    a_left = 1.2 * a_left_off * runif(1, 1/1.1, 1.1),
+    a_right = 0.3 * a_right_off * runif(1, 1/1.4, 1.4),
+    centre = c(50 + centre_x_off + runif(1, 0, 5),
+               80 + centre_y_off + runif(1, 0, 5)),
+    theta = pi/18 + theta_off + runif(1, -pi/12, pi/12),
+    scale =  c(10 * scale_x_off * runif(1, 1/1.1, 1.1), 5)
+  )) 
+
+dataset_xy_plot <- ggplot(raw_curves) +
+  aes(x, y, group = frame_id, color = Category) +
+  geom_path() +
+  scale_color_manual(values=Category.colors) 
+
+# convert to polar
+origin <-  c(70, 30) # eye inspection
+raw_curves  <- raw_curves  %>% 
+  cart2polar(origin, 'x', 'y')
+
+dataset_polar_plot <- ggplot(raw_curves ) +
+  aes(angle, radius, group = frame_id, color = Category) +
+  geom_path() +
+  scale_color_manual(values=Category.colors) +
+  radial_plot(60) +
+  theme(legend.position = "bottom") 
+
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Dataset in (x,y) coordinates"
+#| label: fig-dataset_xy_plot
+
+dataset_polar_plot
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Dataset in polar coordinates"
+#| label: fig-dataset_polar_plot
+
+dataset_polar_plot
+```
+
+
+
+## radius ~ angle: GAM {#sec-st_angle_GAM}
+Here we fit a GAM to the dataset, using the polar representation. This means that we predict `radius` given `angle` and `Category`. As `angle` is a continuous variable, this will be modelled with smooth terms `s()`. 
+
+GAM fitting is carried out with a simple, standard procedure. Essentially, we first fit a minimal model without AR1 (autoregressive) term, from which we estimate an AR1 term that is used for a second fit. The rest of the model parameters are set using default values. A scaled-t residual family is used whenever possible. Model fitting, diagnostics and inference are generally based on @wieling2018analyzing, to which the reader is referred for a general introduction on GAMs. For more complex predictor structure, including random terms, see @wieling2018analyzing and the tutorial materials on [this GitHub](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs).
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: GAM fit
+
+```{r gam_polar}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+
+curves  <- raw_curves  # convenience for code reuse
+gam_formula <- "radius ~ Category + s(angle, by = Category)"
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            data = curves
+)
+AR1.rho <- acf_resid(GAM)[2]
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+angle_grid_plot <- seq(min(curves$angle), max(curves$angle), length.out = 20)
+pred <- get_predictions(GAM,
+                        cond = list(angle = angle_grid_plot, Category = c("A", "B")),
+                        print.summary = FALSE)
+
+gam_polar_plot <- ggplot(pred) +
+  aes(x = angle, y = fit, group = Category ) +
+  geom_line(mapping = aes(color = Category)) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_ribbon(mapping = aes(ymin = fit - CI, ymax = fit + CI, fill = Category), alpha = 0.5) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "GAM predicted contours"
+#| label: fig-gam_polar_plot
+
+gam_polar_plot
+```
+
+The contour shapes capture the characteristics of the original dataset fairly well. A few observations:
+
+* The original data presents high variation at the left (tongue root), which is not visible in the predicted contours. This is because the confidence bands reflect the uncertainty in the estimation of the **mean** contours, not the extra unexplained noise (the same principle applies to ordinary linear regression estimates, e.g. `lm()`)
+* The right extreme of the `B` contour has a wide confidence band. This is because the `B` contours end early at the right (tongue tip) in the original dataset, hence there are not enough data points to perform accurate estimations.
+
+To overcome the second issue,  two simple approaches can be applied:
+
+* linear angle normalization
+* Procrustean fit
+
+where Procrustean means that we establish a fixed angle range for all contours, cut off the points that are beyond that range and extrapolate points for contours that do not have values up to the range limits.
+
+Both approaches are quite simple, yet can introduce problems. Cutting extremes eliminates information, e.g. part of the tongue tip is removed from some contours. Linear angle normalization distorts the shape of the contour. 
+
+### Linear angle normalization {#sec-st_lin_norm}
+A simple way to establish the reference angle range is to take the median angle of the first/last point from all contours. The contours are then reinterpolated on a regular grid within the common angle range. This of course introduces approximations, including the fact that now knots lose their original interpretation. However, a regular grid offers computationally advantages, especially for FPCA (see below).
+
+Below we apply linear angle normalization, then re-fit the GAM in the same way as above.
+
+::: {.callout-note collapse="true"}
+## Linear angle normalization
+
+```{r linear_angle_norm}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+angle_range <- raw_curves  %>% 
+  filter(knot %in% range(knot)) %>% # first and last knot
+  group_by(knot) %>% 
+  summarise(median_angle = median(angle)) %>% 
+  pull(median_angle) %>% 
+  sort()
+
+angle_grid <- seq(angle_range[1], angle_range[2], length.out=11)
+
+curves  <- raw_curves  %>% 
+  group_by(Category, frame_id) %>% 
+  # linear angle normalization on the angle_range interval
+  mutate(angle = (angle - min(angle)) * diff(angle_range) / diff(range(angle)) + angle_range[1]) %>% 
+  # linear interpolation on angle_grid (optional for GAM) 
+  reframe(bind_cols(
+    knot = seq_along(angle_grid), # fake knots, needed for AR1 term in GAM
+    approx(angle, radius, angle_grid) %>% as_tibble()
+    )) %>% 
+  rename(angle = x, radius = y)
+```
+:::
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: GAM fit linear angle normalization
+
+```{r gam_polar_lin}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+
+gam_formula <- "radius ~ Category + s(angle, by = Category)"
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            data = curves
+)
+AR1.rho <- acf_resid(GAM)[2]
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+angle_grid_plot <- angle_grid
+pred <- get_predictions(GAM,
+                        cond = list(angle = angle_grid_plot, Category = c("A", "B")),
+                        print.summary = FALSE)
+
+gam_polar_lin_plot <- ggplot(pred) +
+  aes(x = angle, y = fit, group = Category ) +
+  geom_line(mapping = aes(color = Category)) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_ribbon(mapping = aes(ymin = fit - CI, ymax = fit + CI, fill = Category), alpha = 0.5) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "GAM predicted contours, linear angle normalization"
+#| label: fig-gam_polar_lin_plot
+
+gam_polar_lin_plot
+```
+In this case, Category B's tongue tip reaches the same angle as A, which is not the case in the real data set. This is an artifact introduced by the linear stretching along the angle axis. 
+
+### Procrustean angle range {#sec-st_proc}
+In alternative to linear angle normalization, we apply a Procrustean angle interpolation using the same angle range estimated above. 
+
+::: {.callout-note collapse="true"}
+### Procrustean angle range
+
+```{r proc_angle_norm}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+curves  <- raw_curves  %>% 
+  group_by(Category, frame_id) %>% 
+  # interpolation
+  reframe(bind_cols(
+    knot = seq_along(angle_grid), # fake knots, needed for AR1 term in GAM
+    approx(angle, radius, angle_grid, rule = 2) %>% as_tibble()
+    )) %>% 
+  rename(angle = x,radius = y)
+```
+:::
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: GAM fit Procrustean angle range
+
+```{r gam_polar_proc}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+
+gam_formula <- "radius ~ Category + s(angle, by = Category)"
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            data = curves
+)
+AR1.rho <- acf_resid(GAM)[2]
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+angle_grid_plot <- angle_grid
+pred <- get_predictions(GAM,
+                        cond = list(angle = angle_grid_plot, Category = c("A", "B")),
+                        print.summary = FALSE)
+
+gam_polar_proc_plot <- ggplot(pred) +
+  aes(x = angle, y = fit, group = Category ) +
+  geom_line(mapping = aes(color = Category)) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_ribbon(mapping = aes(ymin = fit - CI, ymax = fit + CI, fill = Category), alpha = 0.5) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "GAM predicted contours, Procrustean fit"
+#| label: fig-gam_polar_proc_plot
+
+gam_polar_proc_plot
+```
+
+Some of the information related to the tongue tip has been lost. Perhaps this is the reason why the GAM's explained deviance is reduced. However, the predicted contours have a closer resemblance to the original dataset as in the linear angle normalization version, which introduced distortions in the contour shape.
+
+In the rest of the tutorial, we will always use the Procrustean method. It is up to the user to choose the method most appropriate for the data at hand. 
+
+### Testing for significance: binary smooths {#sec-st_bin_smooth}
+Here we aim at showing if and where on the angle axis the difference between `Category` `A` and `B` is significant, and in which direction it goes. A graphical command is available for this (`itsadug::plot_diff`). Here instead we use a more general technique based on binary smooths [@wieling2018analyzing], which consists in explicitly defining a curve as the difference between two given factor levels (in our case `B - A`), and then use its confidence interval to determine whether the difference is significantly different from zero. This approach can be applied also in more complex inference situations, e.g. difference of differences, see @wieling2018analyzing and [GAMInteractions](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs) for more detail. 
+
+::: {.callout-note collapse="true"}
+## Binary smooths
+
+```{r bin_smooths}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# define a binary variable to indicate class B (as in Wieling 2018)
+curves <- curves %>% 
+  mutate(IsB = (Category == 'B') * 1)
+# the GAM equation contains a difference smooth representing B - A
+gam_formula <- "radius ~ s(angle) + s(angle, by = IsB)"
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete = TRUE,
+            family = 'scat',
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+diff_plot_GAM_angle <- get_modelterm(GAM, select = 2, print.summary = FALSE) %>% # the second smooth term in the summary
+  ggplot() +
+  aes(x = angle, y = fit) +
+  geom_line() +
+  geom_ribbon(mapping = aes(ymin = fit - se.fit, ymax = fit + se.fit), fill = "grey", alpha = 0.5) +
+  scale_x_reverse() +
+  geom_hline(yintercept=0, linetype="dashed", color = "red", linewidth=1.5) +
+  ylab("Radius difference")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Difference curve B - A"
+#| label: fig-diff_plot_GAM_angle
+
+diff_plot_GAM_angle
+```
+To plot the difference contour `B - A` we have abandoned the radial plot, as differences in radius can be negative, but a negative radius cannot be represented in polar coordinates.
+
+## radius ~ angle: FPCA {#sec-st_angle_FPCA}
+Here we apply FPCA followed by linear regression to the same dataset we use to estimate GAMs. This procedure is an alternative to GAMs. The procedure is in two steps: First a functional PCA model is estimated on the basis of the dataset, then the model parameters, called *scores*, are used as response variable in a linear regression model, i.e. `lm(score ~ Category)`. The FPCA model describes the independent variations in the entire curve dataset without taking into account the categorical predictors. This provides an overview of all the sources of variation in the data. Then it is our task to identify those sources that are correlated to the relevant predictors (here `Category`). For more information, see @gubian2015using and the and the tutorial materials on [this GitHub](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master). 
+
+In the code that follows, we use the the same `curves` as the last `radius ~ angle` GAM example, obtained by Procrustean fit. The code is based on the [ex1D.R](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/scripts) script. 
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: FPCA fit
+
+```{r FPCA_angle}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# build a funData object
+curvesFun <- long2irregFunData(curves, id = "frame_id", time = "angle", value = "radius") %>% 
+  as.funData()
+curvesFun
+
+# Compute FPCA
+fpca <- PACE(curvesFun)
+
+# Prop of explained var
+PropExpVar <- round(fpca$values  / sum( fpca$values) , digits = 3)
+```
+:::
+FPCA is computed by the function `MFPCA::PACE()`. As default, it computes a number of PCs covering 99% of the variance. In this case it computed `r fpca$npc` PCs. 
+
+We will look at the first two PCs, which explain `r PropExpVar[1] * 100`% and `r PropExpVar[2] * 100`% of the variance.
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: FPCA curves
+
+```{r FPCA_angle_curves}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+nPC <- 2
+# scores st. dev.
+sdFun <- fpca$values %>% sqrt()
+# PC curves to be plotted
+PCcurves <- expand_grid(PC = 1:nPC,
+                        fractionOfStDev = seq(-1, 1, by=.25)) %>%
+  group_by(PC, fractionOfStDev) %>%
+  reframe(
+    funData2long1(fpca$mu + fractionOfStDev * sdFun[PC] * fpca$functions[PC],
+                  time = "angle", value = "radius")
+  )
+# Plot
+FPCA_angle_curves_plot <- ggplot(PCcurves) +
+  aes(x = angle, y = radius, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_line() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
+  facet_wrap(~ PC, nrow = 1,
+             labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "First 2 PCs: effect of scores on contour shape"
+#| label: fig-FPCA_angle_curves_plot
+
+FPCA_angle_curves_plot
+```
+Each PC captures a different shape variation in the data set, parametrized by a score, (`s1` on the left, `s2` on the right). The black contour is the mean shape, color-coded contours show the relation between scores (normalized by their respective standard deviation) and the shape modelled by the corresponding PC.
+
+In this case we see that PC1 models the large variation towards the left (tongue root), while PC2 models the smaller variation in the middle (tongue dorsum). The two variations are independent, i.e. knowing the value of `s1` does not help guessing the value of `s2`.
+
+This model is estimated without making use of the `Category` values. When we associate back the values of `Category` to scores, we can determine which score correlates with `Category`.
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: FPCA scores
+
+```{r FPCA_angle_scores}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# collect PC scores
+PCscores <- fpca$scores %>%
+  `colnames<-`( paste0("s", 1:fpca$npc)) %>%
+  as_tibble() %>%
+  bind_cols(curves %>% distinct(frame_id, Category), .)
+
+# boxplots PC scores by Category
+FPCA_angle_scores_plot <- PCscores %>% 
+  pivot_longer(cols = s1:all_of(str_glue("s{fpca$npc}")), 
+               names_to = "PC", values_to = "score") %>% 
+  filter(PC %in% str_c("s", 1:nPC)) %>% 
+  ggplot() +
+  aes(x = Category, y = score, color = Category) +
+  geom_boxplot() +
+  facet_wrap(~ PC) +
+  scale_color_manual(values=Category.colors) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of the first 2 PC scores by Category"
+#| label: fig-FPCA_angle_scores_plot
+
+FPCA_angle_scores_plot
+```
+
+Clearly `s2` is the score that correlates with `Category`. Note that it is `s2` and not `s1` the score that is more interesting to our analysis, although `s1` is associated to PC1, which by definition explains most of the variance. But this variance is largely independent of the variation correlated to `Category`.
+In general, it is not guaranteed that there will be exactly one score correlated with a variable of interest: there could be none, one or more than one.
+
+Let us estimate a simple linear model predicting `s2` from `Category`, i.e. `lm(s2 ~ Category)`. Note that this is the simplest possible model, as we do not have multiple predictor or random terms. In realistic cases where these are present, we have to apply a correspondingly more complex model, e.g. using `lme4::lmer()`, but the idea is the same: predict a score based on predictors not used in the estimation of the FPCA model. 
+
+::: {.callout-note collapse="true"}
+## radius ~ angle: FPCA lm
+
+```{r FPCA_angle_lm}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+s <- 2 # score index
+model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
+mod <- lm(model_eq, data = PCscores)
+mod %>% summary()
+emmeans(mod, pairwise ~ Category)
+
+# reconstruct predicted curves
+predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>%  
+  group_by(Category) %>% 
+  reframe(bind_cols(
+    funData2long1(fpca$mu + emmean * fpca$functions[s], time = 'angle', value = "radius"),
+    funData2long1(fpca$mu + lower.CL * fpca$functions[s], time = 'angle', value = "yl") %>% 
+      select(yl),
+    funData2long1(fpca$mu + upper.CL * fpca$functions[s], time = 'angle', value = "yu") %>% 
+      select(yu)
+  ))
+
+FPCA_angle_pred_plot <- ggplot(predCurves) +
+  aes(angle, radius, color = Category) +
+  geom_line() +
+  geom_ribbon(aes(x = angle, ymin = yl, ymax = yu, fill = Category),
+              alpha = 0.3, inherit.aes = FALSE) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+
+# diff curve B - A 
+diffCurve <- emmeans(mod, pairwise ~ Category)$contrasts %>% 
+  as_tibble() %>% 
+  reframe(bind_cols(
+# emmeans computes A - B, so we need to invert the sign of all curves
+    funData2long1(-estimate * fpca$functions[s], time = "angle", value = "radius"),
+    funData2long1(-(estimate - 1.96 * SE) * fpca$functions[s], time = "angle", value = "radius_l") %>% 
+      select(radius_l),
+    funData2long1(-(estimate + 1.96 * SE) * fpca$functions[s], time = "angle", value = "radius_u") %>% 
+      select(radius_u)
+  ))
+
+FPCA_angle_diff_plot <- ggplot(diffCurve) +
+  aes(angle, radius) +
+  geom_line() +
+  geom_ribbon(aes(x = angle, ymin = radius_l, ymax = radius_u),
+              alpha = 0.3, inherit.aes = FALSE) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = 'red') +
+  scale_x_reverse() +
+  ylab("Radius difference")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Reconstructed contours by Category, based on regression model: s2 ~ Category"
+#| label: fig-FPCA_angle_pred_plot
+
+FPCA_angle_pred_plot
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Difference curve B - A, based on regression model: s2 ~ Category"
+#| label: fig-FPCA_angle_diff_plot
+
+FPCA_angle_diff_plot
+```
+
+The shape of the predicted curves is similar to those obtained with the GAM.
+Comparing the difference curve obtained with FPCA with the one in @fig-diff_plot_GAM_angle obtained with the GAM, we see that the shape is similar, while the confidence intervals are very different. The confidence interval of the GAM-based difference curve reflects local similarities, i.e. measured at the same point on the `angle` axis, while the confidence interval of the FPCA-based difference curve reflects the uncertainty in the estimation of the difference between levels `A` and `B` in the `lm(s2 ~ Category)` model modulated by the shape of the PC2 curve. 
+It is probably not advisable to use the FPCA-based confidence intervals to perform localized inference, i.e. determine whether contours `A` and `B` differ significantly at a specific `angle` location, as these do not reflect local properties directly. Difference curves obtained from FPCA will not be shown further on.
+
+
+## (x, y) ~ knot: GAM {#sec-st_knot_GAM}
+
+Here we consider the alternative geometric parametrization consisting in using the knots as independent axis and setting up a multivariate (or multiresponse) model that predicts two values, `x` and `y`, given `knot`. This approach is also showcased in @coretta2025 on real UTI data, applying both GAMs and FPCA.
+
+
+### Multivariate GAM {#sec-st_knot_GAM_multi}
+The canonical way to construct a multivariate GAM is to set up a system of two parallel models, one predicting `x` and one predicting `y`. This is possible using `mgcv::gam()`. 
+
+::: {.callout-note collapse="true"}
+## Multivariate GAM fit
+
+```{r MGAM}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+GAM <- gam(list(x ~ Category + s(knot, by = Category, k = 5),
+                y ~ Category + s(knot, by = Category, k = 5)
+                ),
+            family=mvn(d = 2),
+            data = raw_curves
+)
+AR1.rho <- acf_resid(GAM)[2]
+GAM <- gam(list(x ~ Category + s(knot, by = Category, k = 5),
+                y ~ Category + s(knot, by = Category, k = 5)
+                ),
+            family=mvn(d = 2),
+            rho = AR1.rho,
+            AR.start = raw_curves %>% pull(knot)  == 1,
+            data = raw_curves
+)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+```
+:::
+
+The model diagnostic shows that the residuals are clearly non-Gaussian. However, there is no remedy to this within the `mgcv` library, as multivariate GAMs are implemented only for the Gaussian case (`family=mvn(d = 2)`). Besides that, there are no clear advantages of setting up this type of model with `mgcv` since there are no functions that allow to estimate any multivariate inference, i.e. taking  `x` and `y` into consideration jointly and not separately. 
+
+There are other R libraries that implement multivariate GAMs: [mvgam](https://cran.r-project.org/web/packages/mvgam/index.html) and [gmfamm](https://cran.r-project.org/web/packages/gmfamm/index.html), both Bayesian. These are not explored here.
+
+### Univariate trick {#sec-st_knot_GAM_trick}
+An alternative approach is to apply the trick used in @wieling2016investigating. The trick consists in creating a factor that encodes the coordinate axis, i.e. factor `Dimension` with two levels: `x` and `y`. Then use a regular, univariate  GAM where the response variable is `Position`, which means `x` or `y` depending on the value of the 'predictor' `Dimension`. The advantage is that the model architecture is simpler, as it avoids the complexity of the double response variable, and that  non-Gaussian models are available (here we will use `scat` as in the previous examples). The downside is that this is a sub-optimal model in that correlation across `x` and `y` dimension is not taken into account, and that adding a factor complicates the model equation (more on how to handle multiple factors in GAMs can be found in @wieling2018analyzing and in [GAMInteractions](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs)).
+
+::: {.callout-note collapse="true"}
+## Univariate trick fit
+
+```{r trick}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# Create a compound factor Cat_Dim for all combos of Category and Dimension
+raw_curves_long <- raw_curves %>% 
+             pivot_longer(c(x, y), names_to = 'Dimension', values_to = 'Position') %>% 
+             unite("Cat_Dim", c(Category, Dimension)) %>% 
+             mutate(Cat_Dim = factor(Cat_Dim)) %>% 
+             # order to capture AR along knots
+             arrange(frame_id, Cat_Dim, knot)
+GAM <- bam(Position ~ Cat_Dim + s(knot, by = Cat_Dim),
+           data = raw_curves_long,
+           family = 'scat',
+           discrete = TRUE)
+AR1.rho <- acf_resid(GAM)[2]
+GAM <- bam(Position ~ Cat_Dim + s(knot, by = Cat_Dim),
+           data = raw_curves_long,
+           rho = AR1.rho,
+            AR.start = raw_curves_long %>% pull(knot)  == 1,
+           family = 'scat',
+           discrete = TRUE)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+pred <- get_predictions(GAM,
+                        cond = list(knot = 1:11,
+                                    Cat_Dim = raw_curves_long$Cat_Dim %>% levels()),
+                        se = FALSE,
+                        print.summary = FALSE) %>% 
+  separate_wider_delim(Cat_Dim, "_", names = c("Category", "Dimension")) %>% 
+  pivot_wider(names_from = Dimension, values_from = "fit")
+gam_trick_pred_plot <- ggplot(pred) +
+  aes(x, y, group = Category, color = Category) +
+  geom_path() +
+  geom_point(color='red') +
+  geom_text(aes(label = knot), check_overlap = TRUE,
+            nudge_x = .9, nudge_y = .9, show.legend = FALSE) +
+  scale_color_manual(values=Category.colors) +
+  theme(legend.position = "bottom")
+
+
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Univariate trick GAM: predictions"
+#| label: fig-gam_trick_pred_plot
+
+gam_trick_pred_plot
+```
+The predictions are faithful to the original dataaset. The advantage of the multivariate parametrization, even when implementing the workaround to avoid fitting an actual multivariate GAM, is that knots (indicated in red) preserve their original position when used to fit the model, while in the polar coordinate approach the knots where re-interpolated and lost their interpretable value.
+
+The difference curves for `Category` `B - A` are computed separately by dimension `x` and `y`:
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Difference curves B - A, separated by dimension x, y"
+#| label: fig-gam_trick_diff_plot
+
+plot_diff(GAM, view = "knot", comp = list(Cat_Dim = c("B_x", "A_x")),
+            print.summary = FALSE, main = "B - A, Dimension x", ylab = "x: B - A")
+plot_diff(GAM, view = "knot", comp = list(Cat_Dim = c("B_y", "A_y")),
+            print.summary = FALSE, main = "B - A, Dimension y", ylab = "y: B - A")
+```
+
+Two considerations for the interpretation of results in this setting.
+
+* For a given knot, if at least one difference curve shows a significant difference, then we can say the contours are different at that knot. For example, the difference between `A` and `B` on the `y` axis is not significant for knots 4 to 7, while it is on the `x` axis. In fact, those corresponding knots are at about the same height (`y`), while `A` knots are clearly more fronted (`x`) than `B` knots, which means they are in a different location.
+* If two knots with a different index are close to each other, this is not revealed by the difference curves. For example, knot 9 `A` and knot 11 `B` are very close to each other, but since they have different index this does not show in the difference curves. Compare this to the difference curve @fig-diff_plot_GAM_angle obtained from the angle-based approach: In the knot-based case  `A` and `B` are indicated as separated towards high values of knot (tongue tip), while in the angle-based case  `A` and `B` are indicated overlapping towards low values of angle (tongue tip).
+
+
+## (x, y) ~ knot: FPCA {#sec-st_knot_FPCA}
+Here we implement the multivariate approach with FPCA. 
+The advantage here is that while the FPCA model is multivariate, PC scores control multiple dimensions jointly, here `x` and `y`. This means that the following linear model `lm(score ~ Category)` is not any more complicated than in the univariate case. 
+The code that follows is based on the [ex2D.R](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/scripts) script. 
+
+::: {.callout-note collapse="true"}
+## (x, y) ~ knot: FPCA fit
+
+```{r FPCA_knot}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# construct a multiFunData object
+curvesFun2D <- lapply(c("x", "y"), function(Pos)
+  long2irregFunData(raw_curves,
+                    id = "frame_id",
+                    time = "knot",
+                    value = {{Pos}}) %>% 
+    as.funData()
+) %>% 
+  multiFunData()
+curvesFun2D
+# Compute FPCA
+mfpca <- MFPCA(curvesFun2D,
+               # computing more PCs than we will use:
+               # a quick way to get a good approx for the % explained var per PC
+               M = 5, 
+               uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
+)
+# Prop of explained var
+PropExpVar <- round(mfpca$values  / sum( mfpca$values) , digits = 3)
+```
+:::
+
+Multivariate FPCA is computed by the function `MFPCA::MFPCA()`. The first two PCs explain `r PropExpVar[1] * 100`% and `r PropExpVar[2] * 100`% of the variance.
+
+::: {.callout-note collapse="true"}
+## (x, y) ~ knot: FPCA curves
+
+```{r FPCA_knot_curves}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+nPC <- 2
+# scores st. dev.
+sdFun <- mfpca$values %>% sqrt()
+# PC curves to be plotted
+PCcurves <- expand_grid(PC = 1:nPC,
+                        Dim = 1:2, 
+                        fractionOfStDev = seq(-1, 1, by=.25)) %>%
+  group_by(PC, Dim, fractionOfStDev) %>%
+  reframe(
+    funData2long1(
+      mfpca$meanFunction[[Dim]] +
+        fractionOfStDev * sdFun[PC] * mfpca$functions[[Dim]][PC],
+      time= "knot", value = "Pos")
+  ) %>% 
+  mutate(Dim = factor(Dim, levels = c(1,2), labels = c('x', 'y')))
+# Plot
+FPCA_knot_curves_plot <- ggplot(PCcurves) +
+  aes(x = knot, y = Pos, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_line() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
+  facet_grid(Dim ~ PC,
+             scales = "free_y",
+             labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  theme(legend.position = "right",
+        axis.title.y = element_blank())
+
+FPCA_knot_traj_plot <- ggplot(PCcurves %>% pivot_wider(names_from = Dim, values_from = Pos)) +
+  aes(x = x, y = y, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_path() +
+  geom_point(color = 'black') +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
+  facet_grid(. ~ PC,
+             # scales = "free_y",
+             labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  theme(legend.position = "right")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "First 2 PCs: effect of scores on contour shape, separated by dimension x, y"
+#| label: fig-FPCA_knot_curves_plot
+
+FPCA_knot_curves_plot
+```
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "First 2 PCs: effect of scores on contour shape, (x,y) trajectory version"
+#| label: fig-FPCA_knot_traj_plot
+
+FPCA_knot_traj_plot
+```
+
+The first plot is an explicit representation of the `(x, y) ~ knot` model, while the second one eliminates the `knot` axis, with knots marked as black points.
+
+Comparing this result with the one obtained with the angle-based approach (@fig-FPCA_angle_curves_plot), we see that the first two PCs are similar but swapped, this time the variation in the middle part of the contour explains more variance than the variation on the left. It is reassuring that both geometrical parametrizations lead to the same qualitative conclusion that these two types of variation are present in the data and that they are independent. The swapping is probably a consequence of the different parametrization, which results in a different computation of variance.
+
+Given what we know from the angle-based analysis, we expect now that PC1 is the component that describes the variation connected to `Category`, which means that `s1` is the score that will be used in the linear regression.
+
+::: {.callout-note collapse="true"}
+## (x, y) ~ knot: FPCA lm and predictions
+
+```{r FPCA_knot_lm_pred}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# collect PC scores
+PCscores <- mfpca$scores[, 1:nPC] %>%
+  `colnames<-`( paste0("s", 1:nPC)) %>%
+  as_tibble() %>%
+  bind_cols(raw_curves %>% distinct(frame_id, Category), .)
+
+# boxplots PC scores by Category
+FPCA_knot_scores_plot <- PCscores %>% 
+  pivot_longer(cols = paste0("s", 1:nPC), 
+               names_to = "PC", values_to = "score") %>% 
+  ggplot() +
+  aes(x = Category, y = score, color = Category) +
+  geom_boxplot() +
+  facet_wrap(~ PC) +
+  scale_color_manual(values=Category.colors) +
+  theme(legend.position = "bottom")
+
+s <- 1 # score index
+model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
+mod <- lm(model_eq, data = PCscores)
+mod %>% summary()
+emmeans(mod, pairwise ~ Category)
+
+# reconstruct predicted curves
+predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>%
+  as_tibble() %>%
+  expand_grid(Dim = 1:2) %>% 
+  group_by(Category, Dim) %>% 
+  reframe(bind_cols(
+    funData2long1(mfpca$meanFunction[[Dim]] +
+                    emmean * mfpca$functions[[Dim]][s], time = "knot", value = "Pos"),
+    funData2long1(mfpca$meanFunction[[Dim]] +
+                    lower.CL * mfpca$functions[[Dim]][s], time = "knot", value = "Pos_l") %>% 
+      select(Pos_l),
+    funData2long1(mfpca$meanFunction[[Dim]] +
+                    upper.CL * mfpca$functions[[Dim]][s], time = "knot", value = "Pos_u") %>% 
+      select(Pos_u)
+  )) %>% 
+  mutate(Dim = factor(Dim, levels = c(1,2), labels = c('x', 'y'))) %>% 
+  pivot_wider(names_from = Dim, values_from = starts_with("Pos"))
+
+
+FPCA_knot_pred_plot <- ggplot(predCurves) +
+  aes(group = Category, color = Category) +
+  geom_path(aes(x = Pos_x, y = Pos_y)) +
+  geom_path(aes(x = Pos_l_x, y = Pos_l_y), linetype = "dotted") +
+  geom_path(aes(x = Pos_u_x, y = Pos_u_y), linetype = "dotted") +
+  scale_color_manual(values=Category.colors) +
+  xlab("x") + ylab("y") +
+  theme(legend.position = "bottom") +
+  ggtitle(str_glue("Predicted contours from lm: s{s} ~ Category"))
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of the first 2 PC scores by Category"
+#| label: fig-FPCA_knot_scores_plot
+
+FPCA_knot_scores_plot
+```
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Reconstructed contours by Category, based on regression model: s1 ~ Category"
+#| label: fig-FPCA_knot_pred_plot
+
+FPCA_knot_pred_plot
+```
+
+# Dynamic analysis {#sec-dynamic}
+With a dynamic analysis, we are adding one extra independent axis to the picture, the `time` axis. All considerations regarding the difference between the angle-based and the knot-based geometrical parametrization remain the same. What changes is that the model **support** becomes two-dimensional: `angle * time` or `knot * time`. This means that data are organized on a two-dimensional grid, while in the static analysis were organized on a uni-dimensional grid along `angle` or `knot`. The response variables are the same as in the static case. In the angle-based case, the response variable is `radius`, while in the knot-based case, the response variables are `x` and `y`, i.e.  a multivariate model. 
+
+In the following, we will focus mainly on the practical aspects concerning the change in the support dimensionality. 
+
+## Dataset {#sec-dyn_dataset}
+The dataset for the dynamic analysis consists of 60 artificial tongue contour sequences, or clips, 30 for each `Category`, `A` and `B`. Each clip is sampled along the normalized time axis `normTime` on a 6-points regular grid : 0, 0.2, 0.4, 0.6, 0.8, 1.0. Below two example clips, one for each `Category`.
+
+::: {.callout-note collapse="true"}
+## Dataset generation
+
+```{r dataset_dynamic}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+set.seed(12)
+normTime_grid <- (0:5)/5
+N_curves_per_Category <- 30
+raw_curves <- tibble(
+  Category = c('A', 'B'),
+  a_left = c(1.2, 1.2),
+  a_right = c(0.2, 0.8),
+  a_left_off = c(0, 0),
+  a_right_off = c(0.6, -0.6),
+  theta_off = c(-pi/12, 0), 
+  scale_x_off = c(1,1),
+  centre_x_off = c(0,0),
+  centre_y_off = c(0,0)
+) %>% 
+  expand_grid(i = 1:N_curves_per_Category) %>% 
+  rownames_to_column(var = "clip_id") %>% 
+  mutate(frame_id = as.integer(clip_id)) %>% 
+  select(-i) %>% 
+  mutate(across(c(Category, clip_id), ~ factor(.x))) %>% 
+  expand_grid(normTime = normTime_grid) %>% 
+  group_by(Category, clip_id, normTime) %>%
+  reframe(parab_tongue(
+    a_left = a_left + a_left_off * cur_group()$normTime + runif(1, 0, 0),
+    a_right = a_right + a_right_off * cur_group()$normTime + runif(1, 0, 0),
+    centre = c(50 + centre_x_off + runif(1, 0, 2),
+               80 + centre_y_off + runif(1, 0, 2)),
+    theta = pi/18 + theta_off,
+    scale =  c(10 * scale_x_off * runif(1, 1/1.1, 1.1), 5)
+  ))
+
+# one sample clip per Category
+set.seed(123)
+dataset_clip_ex <- raw_curves %>%
+  group_by(Category) %>%
+  distinct(clip_id) %>% 
+  slice_sample(n=1) %>% 
+  ungroup() %>% 
+  inner_join(raw_curves, by = c("Category", "clip_id")) %>% 
+  ggplot() +
+  aes(x, y, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(~ Category, labeller = label_both) +
+  theme(legend.position = "bottom")
+
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Dynamic dataset, one example clip per Category"
+#| label: fig-dataset_clip_ex
+
+dataset_clip_ex
+```
+
+The trends are clear: the tongue tip moves downward in `Category A` and upward in `B`, while the tongue root is tilted differently in the two categories but it does not change in time. These easy patterns are useful to get familiar with the complexity of the models that will be built in this section.
+
+## radius ~ angle * time: GAM {#sec-dyn_angle_GAM}
+Like in the static case, we compute polar coordinates and we apply Procrustean interpolation to the `angle` axis. The time axis (`normTime`) is sampled at regular intervals and it does not need any treatment. In a realistic scenario, one may need to carry out some form of normalization or even time warping to the time axis as well, prior to start the analysis. 
+
+Below two example clips, one for each `Category`, after computation of polar coordinates. The first plot is a representation faithful to the data form, i.e. at each location on the two-dimensional grid support (`angle * normTime`) corresponds one response value (`radius`). The second plot (polar coordinates) reflects the geometry of the problem.
+
+```{r dyn_chop_angle}
+# convert to polar
+origin <-  c(70, 30) # eye inspection
+raw_curves  <- raw_curves  %>% 
+  cart2polar(origin, 'x', 'y')
+
+angle_range <- raw_curves  %>% 
+  filter(knot %in% range(knot)) %>% # first and last knot
+  group_by(knot) %>% 
+  summarise(median_angle = median(angle)) %>% 
+  pull(median_angle) %>% 
+  sort()
+
+angle_grid <- seq(angle_range[1], angle_range[2], length.out=11)
+
+curves  <- raw_curves  %>% 
+  group_by(Category, clip_id, normTime) %>% 
+  # interpolation
+  reframe(bind_cols(
+    knot = seq_along(angle_grid), # fake knots, needed for AR1 term in GAM
+    approx(angle, radius, angle_grid, rule = 2) %>% as_tibble()
+    )) %>% 
+  rename(angle = x,radius = y)
+
+set.seed(123)
+dataset_clip_ex_flat <- curves %>%
+  group_by(Category) %>%
+  distinct(clip_id) %>% 
+  slice_sample(n=1) %>% 
+  ungroup() %>% 
+  inner_join(curves, by = c("Category", "clip_id")) %>% 
+  ggplot() +
+  aes(x = angle, y= normTime) +
+  geom_raster(aes(fill = radius)) +
+  facet_grid(~ Category, labeller = label_both) +
+  scale_x_reverse() +
+  scale_fill_gradientn(colours = terrain.colors(10)) 
+  
+set.seed(123)
+dataset_clip_ex_polar <- curves %>%
+  group_by(Category) %>%
+  distinct(clip_id) %>% 
+  slice_sample(n=1) %>% 
+  ungroup() %>% 
+  inner_join(curves, by = c("Category", "clip_id")) %>% 
+  ggplot() +
+  aes(angle, radius, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(~ Category, labeller = label_both) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Dynamic dataset, one example clip per Category, flat version of polar coordinates"
+#| label: fig-dataset_clip_ex_flat
+
+dataset_clip_ex_flat
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Dynamic dataset, one example clip per Category, polar coordinates"
+#| label: fig-dataset_clip_ex_polar
+
+dataset_clip_ex_polar
+```
+
+The GAM we build is similar to the one in @sec-st_angle_GAM, the only difference being that the uni-dimensional support smooth term `s(angle, by  = Category)` is substituted by a two-dimensional support smooth term `te(angle, normTime, by = Category)`. 
+
+::: {.callout-note collapse="true"}
+## radius ~ angle * time: GAM fit
+
+```{r gam2D}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+gam_formula <- "radius ~ Category + te(angle, normTime, by = Category)"
+discrete <- TRUE
+family <- 'scat'
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete=discrete,
+            family=family,
+            rho = 0,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+AR1.rho <- acf_resid(GAM, plot = FALSE)[2]
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete=discrete,
+            family=family,
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+gam.check(GAM)
+acf_resid(GAM)
+angle_grid_plot <- angle_grid
+pred <- get_predictions(GAM,
+                        cond = list(angle = angle_grid_plot,
+                                    normTime = normTime_grid,
+                                    Category = c("A", "B")),
+                        print.summary = FALSE)
+
+gam_polar_time_flat_plot <- ggplot(pred) +
+  aes(x = angle, y= normTime) +
+  geom_raster(aes(fill = fit)) +
+  facet_grid(~ Category, labeller = label_both) +
+  scale_x_reverse() +
+  scale_fill_gradientn(colours = terrain.colors(10))
+
+gam_polar_time_polar_plot <- ggplot(pred) +
+  aes(x = angle, y = fit, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(~ Category, labeller = label_both) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "GAM predictions - flat version"
+#| label: fig-gam_polar_time_flat_plot
+
+gam_polar_time_flat_plot
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "GAM predictions - polar version"
+#| label: fig-gam_polar_time_polar_plot
+
+gam_polar_time_polar_plot
+```
+
+Predictions capture the main trends faithfully.
+
+### Section predictions across time or angle {#sec-dyn_cross_GAM}
+Let us take two sections, one at a fixed angle ($\pi/2$, around tongue tip) along time, another at a fixed time (at 0.5, half way through the gesture) along the angle axis. 
+
+
+::: {.callout-note collapse="true"}
+### Cross-sections
+
+```{r gamCross}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+sec_angle <- pi/2
+pred <- get_predictions(GAM,
+                        cond = list(angle = sec_angle,
+                                    normTime = normTime_grid,
+                                    Category = c("A", "B")),
+                        print.summary = FALSE)
+sec_angle_plot <- ggplot(pred) +
+  aes(x = normTime, y = fit, group = Category ) +
+  geom_line(mapping = aes(color = Category)) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_ribbon(mapping = aes(ymin = fit - CI, ymax = fit + CI, fill = Category), alpha = 0.5) +
+  theme_light() +
+  ylab("Radius") +
+  theme(legend.position = "bottom")
+
+sec_time <- 0.5
+pred <- get_predictions(GAM,
+                        cond = list(angle = angle_grid_plot,
+                                    normTime = sec_time,
+                                    Category = c("A", "B")),
+                        print.summary = FALSE)
+sec_time_plot <- ggplot(pred) +
+  aes(x = angle, y = fit, group = Category ) +
+  geom_line(mapping = aes(color = Category)) +
+  scale_color_manual(values=Category.colors) +
+  scale_fill_manual(values=Category.colors) +
+  geom_ribbon(mapping = aes(ymin = fit - CI, ymax = fit + CI, fill = Category), alpha = 0.5) +
+  theme_light() +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Cross-section of GAM predictions at angle $\\pi/2$"
+#| label: fig-sec_angle_plot
+
+sec_angle_plot
+```
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Cross-section of GAM predictions at normalized time 0.5"
+#| label: fig-sec_time_plot
+
+sec_time_plot
+```
+
+### Testing for significance: binary surfaces {#sec-dyn_bin_smooth}
+Similarly to the static case (@sec-st_bin_smooth), we use binary smooths, in this case a  binary surface, to quantify statistical significance between `Category` `A` and `B`.
+Below we plot the difference surface, where the dashed contours indicate where the difference is significant.
+
+::: {.callout-note collapse="true"}
+## Binary surfaces
+
+```{r bin_surfaces}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+curves <- curves %>% 
+  mutate(IsB = (Category == 'B') * 1)
+gam_formula <- "radius ~ te(angle, normTime) + te(angle, normTime, by = IsB)"
+GAM <- bam(gam_formula %>% as.formula(),
+            discrete=discrete,
+            family=family,
+            rho = AR1.rho,
+            AR.start = curves %>% pull(knot)  == 1,
+            data = curves
+)
+summary(GAM)
+
+pred_diff <-get_modelterm(GAM, 2, se = TRUE,
+                          as.data.frame = TRUE, print.summary = FALSE) %>%
+  mutate(signif = 1 * (fit + 1.96 * se.fit < 0 | fit - 1.96 * se.fit > 0))
+
+max_diff <- max(abs(range(pred_diff$fit)))
+diff_plot_GAM_angle_time <- ggplot(pred_diff) +
+  aes(x = angle, y= normTime) +
+  geom_raster(aes(fill = fit)) +
+  scale_x_reverse() +
+  scale_fill_gradient2(low = "blue", mid = "white", high = "orangered",
+                        breaks = c(-1 * round(max_diff), 0 , round(max_diff)),
+                       name = "Radius difference") +
+  geom_contour(mapping = aes(x = angle, y= normTime, z = signif), breaks = 1, color = "black", linetype = "dashed") 
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Difference surface B - A"
+#| label: fig-diff_plot_GAM_angle_time
+
+
+diff_plot_GAM_angle_time
+```
+
+The plot shows that `B` is always lower than `A` on the left, i.e. tongue root has a smaller radius for `B` than for `A`, while on the right (tongue tip) the radius difference varies along time, according to the patterns in @fig-gam_polar_time_flat_plot and @fig-gam_polar_time_polar_plot.
+
+## radius ~ angle * time: FPCA {#sec-dyn_angle_FPCA}
+The same geometrical setup of @sec-dyn_angle_GAM is applied here to  PCA followed by linear regression. As it is always the case, the FPCA model changes with the geometrical setup, while linear regression remains in the geometry-agnostic form `lm(score ~ Category)`. 
+
+The FPCA code consists in first organising the dataset into a two-dimensional support `funData` object, then computing FPCA with `MFPCA::MFPCA()`. The twist here is that while this is a univariate model, we have to use `MFPCA()` and not `PACE()`. The reason is that `PACE()` does not accept multidimensional supports. The model is then a 'multi'variate one with only one response. 
+
+::: {.callout-note collapse="true"}
+## radius ~ angle * time: FPCA fit
+
+```{r FPCA_2D}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# build a funData object
+nClips <- curves$clip_id %>% n_distinct()
+argvals <- list(normTime=normTime_grid, angle=angle_grid)
+# X: array of dim c(nClips, length(normTime_grid), length(angle_grid))
+X <- curves %>%
+  pivot_wider(id_cols = c(clip_id, normTime), names_from = angle, values_from = radius) %>% 
+  select(-normTime) %>% 
+  nest(.by = clip_id) %>% 
+  pull(data) %>% 
+  lapply(as.matrix) %>% 
+  abind(along = 0)
+curvesFun <- funData(argvals, X)
+curvesFun
+
+# FCP_TPA
+fpca <- MFPCA(curvesFun %>% multiFunData(),
+              M = 5,
+              # FCP_TPA is one of the possible multidim. support parametrizations
+              uniExpansions = list(list(type = "FCP_TPA",
+                                        npc = 5,
+                                        alphaRange = list(v = c(10^-2, 10^2), w = c(10^-3, 10^3))))
+)
+
+# Prop of explained var
+PropExpVar <- round(fpca$values  / sum( fpca$values) , digits = 3)
+
+nPC <- 2
+
+# scores st. dev.
+sdFun <- fpca$values %>% sqrt()
+
+# PC curves to be plotted
+PCcurves <- expand_grid(PC = 1:nPC,
+                        fractionOfStDev = c(-1, 0, 1)) %>%
+  group_by(PC, fractionOfStDev) %>%
+  reframe(
+    (fpca$meanFunction[[1]]@X[1,,] + fractionOfStDev * sdFun[PC] * fpca$functions[[1]]@X[PC,,]) %>% 
+      `colnames<-`(angle_grid) %>% 
+      as_tibble() %>% 
+      bind_cols(normTime = normTime_grid)
+  ) %>% 
+  pivot_longer(cols = -c(PC, fractionOfStDev, normTime), names_to = "angle", values_to = "radius") %>% 
+  mutate(angle = as.numeric(angle))
+  
+# Plot
+FPCA_angle_time_curves_plot <- ggplot(PCcurves %>% rename(`score/std` = fractionOfStDev)) +
+  aes(x = angle, y = radius, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(PC ~ `score/std`, 
+             labeller = labeller(PC = ~ str_glue("PC{.x}"), `score/std` = label_both),
+             ) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+
+
+```
+:::
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "First 2 PCs: effect of scores on contour evolution in time"
+#| label: fig-FPCA_angle_time_curves_plot
+
+FPCA_angle_time_curves_plot
+```
+
+PC1 explains `r PropExpVar[1] * 100`% of the variance, PC2 explains `r PropExpVar[2] * 100`% of the variance. To avoid cluttering, the variability modulated by the scores is represented only by three values of st. dev.-normalized scores: -1, 0 and 1. For example, the top left quadrant shows the clip reconstructed by taking the mean clip and subtracting the first PC multiplied by one st. dev. of `s1`. 
+
+Clearly, PC1 is capturing the variability in the right part of the contour (tongue tip), which is the one correlated with `Category`. This is confirmed by the PC scores boxplots below. 
+
+::: {.callout-note collapse="true"}
+## radius ~ angle * time: FPCA predictions
+
+```{r FPCA_2D_pred}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# collect PC scores
+PCscores <- fpca$scores[, 1:nPC] %>%
+  `colnames<-`(paste0("s", 1:nPC)) %>%
+  as_tibble() %>%
+  bind_cols(curves %>% distinct(clip_id, Category), .)
+
+# boxplots PC scores by Category
+FPCA_angle_time_scores_plot <- PCscores %>% 
+  pivot_longer(cols = paste0("s", 1:nPC), 
+               names_to = "PC", values_to = "score") %>% 
+  filter(PC %in% str_c("s", 1:nPC)) %>% 
+  ggplot() +
+  aes(x = Category, y = score, color = Category) +
+  geom_boxplot() +
+  facet_wrap(~ PC) +
+  scale_color_manual(values=Category.colors) +
+  theme(legend.position = "bottom")
+
+s <- 1 # score index
+model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
+mod <- lm(model_eq, data = PCscores)
+mod %>% summary()
+emmeans(mod, pairwise ~ Category)
+
+predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>% 
+  as_tibble() %>% 
+  group_by(Category) %>% 
+reframe(
+    (fpca$meanFunction[[1]]@X[1,,] + emmean * fpca$functions[[1]]@X[s,,]) %>% 
+      `colnames<-`(angle_grid) %>% 
+      as_tibble() %>% 
+      bind_cols(normTime = normTime_grid)
+  ) %>% 
+  pivot_longer(cols = -c(Category, normTime), names_to = "angle", values_to = "radius") %>% 
+  mutate(angle = as.numeric(angle))
+
+FPCA_angle_time_pred_plot <- ggplot(predCurves) +
+  aes(x = angle, y = radius, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(~ Category, labeller = label_both) +
+  radial_plot(60) +
+  theme(legend.position = "bottom")
+```
+:::
+
+
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of the first 2 PC scores by Category"
+#| label: fig-FPCA_angle_time_scores_plot
+
+FPCA_angle_time_scores_plot
+```
+A linear regression model predicting `s1` from `Category` is then fitted, which provides the predicted clips below.
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Reconstructed clips by Category, based on regression model: s1 ~ Category"
+#| label: fig-FPCA_angle_time_pred_plot
+
+FPCA_angle_time_pred_plot
+```
+
+## (x, y) ~ knot * time: GAM {#sec-dyn_knot_GAM}
+Left as exercise. In short, any term that in @sec-st_knot_GAM looks like `s(knot, by = Category)` should be turned into `te(knot, normTime, by = Category)`.
+
+## (x, y) ~ knot * time: FPCA {#sec-dyn_knot_FPCA}
+This is the most complex model in this tutorial. Data objects have a two-dimensional support, (`knot` by `normTime`), the FPCA model is multivariate, as it takes values in `x` and `y`. The linear model following FPCA remains simple and geometry-agnostic. 
+
+::: {.callout-note collapse="true"}
+## (x, y) ~ knot * time: FPCA fit and predict
+
+```{r FPCA_2D_knot}
+#| code-fold: false
+#| message: false
+#| warning: false
+
+# build a funData object
+nClips <- raw_curves$clip_id %>% n_distinct()
+argvals <- list(normTime=normTime_grid, knot=1:11)
+# curvesFun is a multiFunData with two response outcomes (x, y), 
+# each of which is an array of dim c(nClips, length(normTime_grid), number of knots)
+curvesFun <- multiFunData( 
+                     lapply(c('x', 'y'), function(Dim) {
+                       funData(argvals,
+                       raw_curves %>%
+                         pivot_wider(id_cols = c(clip_id, normTime), names_from = knot, values_from = {{Dim}}) %>% 
+                         select(-normTime) %>% 
+                         nest(.by = clip_id) %>% 
+                         pull(data) %>% 
+                         lapply(as.matrix) %>% 
+                         abind(along = 0)
+                     )}))
+curvesFun
+
+# FCP_TPA
+# the same base expansion applied to x and y 
+uniExpansion <- list(type = "FCP_TPA",
+                                        npc = 5,
+                                        alphaRange = list(v = c(10^-2, 10^2), w = c(10^-3, 10^3)))
+fpca <- MFPCA(curvesFun,
+              M = 5,
+              uniExpansions = list(uniExpansion, uniExpansion)
+)
+
+# Prop of explained var
+PropExpVar <- round(fpca$values  / sum( fpca$values) , digits = 3)
+
+
+nPC <- 2
+# scores st. dev.
+sdFun <- fpca$values %>% sqrt()
+
+# PC curves to be plotted
+PCcurves <- expand_grid(PC = 1:nPC,
+                        fractionOfStDev = c(-1, 0, 1),
+                        Dim = 1:2) %>%
+  group_by(PC, fractionOfStDev, Dim) %>%
+  reframe(
+    (fpca$meanFunction[[Dim]]@X[1,,] + fractionOfStDev * sdFun[PC] * fpca$functions[[Dim]]@X[PC,,]) %>% 
+      `colnames<-`(1:11) %>% 
+      as_tibble() %>% 
+      bind_cols(normTime = normTime_grid)
+  ) %>% 
+  pivot_longer(cols = -c(PC, fractionOfStDev, normTime, Dim), names_to = "knot", values_to = "Pos") %>% 
+  mutate(knot = as.integer(knot),
+         Dim = factor(Dim, levels = 1:2, labels = c('x','y'))) %>% 
+  pivot_wider(names_from = Dim, values_from = Pos)
+  
+# Plot
+FPCA_knot_time_curves_plot <- ggplot(PCcurves %>% rename(`score/std` = fractionOfStDev)) +
+  aes(x = x, y = y, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(PC ~ `score/std`, 
+             labeller = labeller(PC = ~ str_glue("PC{.x}"), `score/std` = label_both),
+             ) +
+  theme(legend.position = "bottom")
+
+# collect PC scores
+PCscores <- fpca$scores[, 1:nPC] %>%
+  `colnames<-`(paste0("s", 1:nPC)) %>%
+  as_tibble() %>%
+  bind_cols(raw_curves %>% distinct(clip_id, Category), .)
+
+# boxplots PC scores by Category
+FPCA_knot_time_scores_plot <- PCscores %>% 
+  pivot_longer(cols = paste0("s", 1:nPC), 
+               names_to = "PC", values_to = "score") %>% 
+  filter(PC %in% str_c("s", 1:nPC)) %>% 
+  ggplot() +
+  aes(x = Category, y = score, color = Category) +
+  geom_boxplot() +
+  facet_wrap(~ PC) +
+  scale_color_manual(values=Category.colors) +
+  theme(legend.position = "bottom")
+
+s <- 1 # score index
+model_eq <- str_glue("s{s} ~ Category") %>% as.formula()
+mod <- lm(model_eq, data = PCscores)
+mod %>% summary()
+emmeans(mod, pairwise ~ Category)
+
+predCurves <- emmeans(mod, pairwise ~ Category)$emmeans %>% 
+  as_tibble() %>% 
+  expand_grid(Dim = 1:2) %>% 
+  group_by(Category, Dim) %>% 
+reframe(
+    (fpca$meanFunction[[Dim]]@X[1,,] + emmean * fpca$functions[[Dim]]@X[s,,]) %>% 
+      `colnames<-`(1:11) %>% # knots
+      as_tibble() %>% 
+      bind_cols(normTime = normTime_grid)
+  ) %>% 
+  pivot_longer(cols = -c(Category, normTime, Dim), names_to = "knot", values_to = "Pos") %>% 
+  mutate(knot = as.integer(knot),
+         Dim = factor(Dim, levels = 1:2, labels = c('x','y'))) %>% 
+  pivot_wider(names_from = Dim, values_from = Pos)
+
+FPCA_knot_time_pred_plot <- ggplot(predCurves) +
+  aes(x = x, y = y, group = normTime, color = normTime) +
+  geom_path() +
+  facet_grid(~ Category, labeller = label_both) +
+  theme(legend.position = "bottom")
+```
+:::
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "First 2 PCs: effect of scores on contour evolution in time"
+#| label: fig-FPCA_knot_time_curves_plot
+
+FPCA_knot_time_curves_plot
+```
+
+
+
+PC1 explains `r PropExpVar[1] * 100`% of the variance, PC2 explains `r PropExpVar[2] * 100`% of the variance. 
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Distribution of the first 2 PC scores by Category"
+#| label: fig-FPCA_knot_time_scores_plot
+
+FPCA_knot_time_scores_plot
+```
+A linear regression model predicting `s1` from `Category` is then fitted, which provides the predicted clips below.
+
+```{r}
+#| message: false
+#| warning: false
+#| fig-cap: "Reconstructed clips by Category, based on regression model: s1 ~ Category"
+#| label: fig-FPCA_knot_time_pred_plot
+
+FPCA_knot_time_pred_plot
+```
+
+
+
+# References {.unnumbered}
+
+
