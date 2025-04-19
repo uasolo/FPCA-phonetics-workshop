@@ -31,7 +31,7 @@ maxT <- max(raw_curves$time)
 grid <- seq(0, maxT, by = sp) # unified sampling grid 
 curves <- raw_curves %>% 
   group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
-  reframe(approx(time, y, grid) %>% as_tibble()) %>% # linear interpolation on grid 
+  reframe(approx(time, y, grid, rule = 2) %>% as_tibble()) %>% # linear interpolation on grid 
   ungroup() %>% 
   rename(time = x, y = y)
 
