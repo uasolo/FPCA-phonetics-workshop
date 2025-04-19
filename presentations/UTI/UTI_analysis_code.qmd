@@ -181,7 +181,7 @@ dataset_polar_plot <- ggplot(raw_curves ) +
 #| fig-cap: "Dataset in (x,y) coordinates"
 #| label: fig-dataset_xy_plot
 
-dataset_polar_plot
+dataset_xy_plot
 ```
 
 ```{r}
@@ -966,8 +966,7 @@ FPCA_knot_pred_plot <- ggplot(predCurves) +
   geom_path(aes(x = Pos_u_x, y = Pos_u_y), linetype = "dotted") +
   scale_color_manual(values=Category.colors) +
   xlab("x") + ylab("y") +
-  theme(legend.position = "bottom") +
-  ggtitle(str_glue("Predicted contours from lm: s{s} ~ Category"))
+  theme(legend.position = "bottom")
 ```
 :::
 
