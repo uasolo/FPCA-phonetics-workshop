@@ -1,5 +1,5 @@
 ---
-title: "UTI analysis with GAMs and FPCA"
+title: "Analysis of Uni- and Multi-Dimensional Contours with GAMs and Functional PCA: an Application to Ultrasound Tongue Imaging"
 author: 
   - name:
       given: 'Michele'
@@ -57,7 +57,7 @@ theme_set(theme_light())
 Static refers to absence of time. The typical scenario is the analysis of UTI where only one representative contour is used for each speech sound, e.g. the onset or the point in time where the articulatory target is reached.
 
 ## Data generation {#sec-st_data_gen}
-This tutorial is based on artificial data. The helper function `parab_tongue()` generates curves that vaguely resemble tongue contours. The shape consists of two branches of parabolas joined at the vertex. The shape is parametrised so that it can vary in various ways. The output is a tibble with three columns: `knot`, `x` and `y`, where `knot` simulates the (11) knots obtained with DeepLabCut [@wrench2022beyond].   See the source code `parab_tongue.R` for more detail.
+This tutorial is based on artificial data. The helper function `parab_tongue()` generates curves that resemble tongue contours. The shape consists of two branches of parabolas joined at the vertex. The shape is parametrised so that it can vary in various ways. The output is a tibble with three columns: `knot`, `x` and `y`, where `knot` simulates the (11) knots obtained with DeepLabCut [@wrench2022beyond].   See the source code `parab_tongue.R` for more detail.
 
 ::: {.callout-note collapse="true"}
 ## Data generation demo
@@ -267,7 +267,7 @@ where Procrustean means that we establish a fixed angle range for all contours, 
 Both approaches are quite simple, yet can introduce problems. Cutting extremes eliminates information, e.g. part of the tongue tip is removed from some contours. Linear angle normalization distorts the shape of the contour. 
 
 ### Linear angle normalization {#sec-st_lin_norm}
-A simple way to establish the reference angle range is to take the median angle of the first/last point from all contours. The contours are then reinterpolated on a regular grid within the common angle range. This of course introduces approximations, including the fact that now knots lose their original interpretation. However, a regular grid offers computationally advantages, especially for FPCA (see below).
+A simple way to establish the reference angle range is to take the median angle of the first/last point from all contours. The contours are then reinterpolated on a regular grid within the common angle range. This of course introduces approximations, including the fact that now knots lose their original interpretation. However, a regular grid offers computational advantages, especially for FPCA (see below).
 
 Below we apply linear angle normalization, then re-fit the GAM in the same way as above.
 
@@ -351,10 +351,10 @@ gam_polar_lin_plot <- ggplot(pred) +
 
 gam_polar_lin_plot
 ```
-In this case, Category B's tongue tip reaches the same angle as A, which is not the case in the real data set. This is an artifact introduced by the linear stretching along the angle axis. 
+In this case, Category B's tongue tip reaches the same angle as A, which is not the case in the real data set. This is an artefact introduced by the linear stretching along the angle axis. 
 
 ### Procrustean angle range {#sec-st_proc}
-In alternative to linear angle normalization, we apply a Procrustean angle interpolation using the same angle range estimated above. 
+As an alternative to linear angle normalization, we apply a Procrustean angle interpolation using the same angle range estimated above. 
 
 ::: {.callout-note collapse="true"}
 ### Procrustean angle range
@@ -426,7 +426,7 @@ gam_polar_proc_plot <- ggplot(pred) +
 gam_polar_proc_plot
 ```
 
-Some of the information related to the tongue tip has been lost. Perhaps this is the reason why the GAM's explained deviance is reduced. However, the predicted contours have a closer resemblance to the original dataset as in the linear angle normalization version, which introduced distortions in the contour shape.
+Some of the information related to the tongue tip has been lost. Perhaps this is the reason why the GAM's explained deviance is reduced. However, the predicted contours have a closer resemblance to the original dataset than in the linear angle normalization version, which introduced distortions in the contour shape.
 
 In the rest of the tutorial, we will always use the Procrustean method. It is up to the user to choose the method most appropriate for the data at hand. 
 
@@ -476,7 +476,7 @@ diff_plot_GAM_angle
 To plot the difference contour `B - A` we have abandoned the radial plot, as differences in radius can be negative, but a negative radius cannot be represented in polar coordinates.
 
 ## radius ~ angle: FPCA {#sec-st_angle_FPCA}
-Here we apply FPCA followed by linear regression to the same dataset we use to estimate GAMs. This procedure is an alternative to GAMs. The procedure is in two steps: First a functional PCA model is estimated on the basis of the dataset, then the model parameters, called *scores*, are used as response variable in a linear regression model, i.e. `lm(score ~ Category)`. The FPCA model describes the independent variations in the entire curve dataset without taking into account the categorical predictors. This provides an overview of all the sources of variation in the data. Then it is our task to identify those sources that are correlated to the relevant predictors (here `Category`). For more information, see @gubian2015using and the and the tutorial materials on [this GitHub](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master). 
+Here we apply FPCA followed by linear regression to the same dataset we use to estimate GAMs. This procedure is an alternative to GAMs. The procedure is in two steps: First a functional PCA model is estimated on the basis of the dataset, then the model parameters, called *scores*, are used as response variable in a linear regression model, i.e. `lm(score ~ Category)`. The FPCA model describes the independent variations in the entire curve dataset without taking into account the categorical predictors. This provides an overview of all the sources of variation in the data. Then it is our task to identify those sources that are correlated to the relevant predictors (here `Category`). For more information, see @gubian2015using and the tutorial materials on [this GitHub](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master). 
 
 In the code that follows, we use the the same `curves` as the last `radius ~ angle` GAM example, obtained by Procrustean fit. The code is based on the [ex1D.R](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/scripts) script. 
 
@@ -718,7 +718,7 @@ The model diagnostic shows that the residuals are clearly non-Gaussian. However,
 There are other R libraries that implement multivariate GAMs: [mvgam](https://cran.r-project.org/web/packages/mvgam/index.html) and [gmfamm](https://cran.r-project.org/web/packages/gmfamm/index.html), both Bayesian. These are not explored here.
 
 ### Univariate trick {#sec-st_knot_GAM_trick}
-An alternative approach is to apply the trick used in @wieling2016investigating. The trick consists in creating a factor that encodes the coordinate axis, i.e. factor `Dimension` with two levels: `x` and `y`. Then use a regular, univariate  GAM where the response variable is `Position`, which means `x` or `y` depending on the value of the 'predictor' `Dimension`. The advantage is that the model architecture is simpler, as it avoids the complexity of the double response variable, and that  non-Gaussian models are available (here we will use `scat` as in the previous examples). The downside is that this is a sub-optimal model in that correlation across `x` and `y` dimension is not taken into account, and that adding a factor complicates the model equation (more on how to handle multiple factors in GAMs can be found in @wieling2018analyzing and in [GAMInteractions](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs)).
+An alternative approach is to apply the trick used in @wieling2016investigating. The trick consists in creating a factor that encodes the coordinate axis, i.e. factor `Dimension` with two levels: `x` and `y`. Then use a regular, univariate  GAM where the response variable is `Position`, which means `x` or `y` depending on the value of the 'predictor' `Dimension`. The advantage is that the model architecture is simpler, as it avoids the complexity of the double response variable, and that  non-Gaussian models are available (here we will use `scat` as in the previous examples). The downside is that this is a sub-optimal model in that correlations across `x` and `y` dimension are not taken into account, and that adding a factor complicates the model equation (more on how to handle multiple factors in GAMs can be found in @wieling2018analyzing and in [GAMInteractions](https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs)).
 
 ::: {.callout-note collapse="true"}
 ## Univariate trick fit
@@ -777,7 +777,7 @@ gam_trick_pred_plot <- ggplot(pred) +
 
 gam_trick_pred_plot
 ```
-The predictions are faithful to the original dataaset. The advantage of the multivariate parametrization, even when implementing the workaround to avoid fitting an actual multivariate GAM, is that knots (indicated in red) preserve their original position when used to fit the model, while in the polar coordinate approach the knots where re-interpolated and lost their interpretable value.
+The predictions are faithful to the original dataset. The advantage of the multivariate parametrization, even when implementing the workaround to avoid fitting an actual multivariate GAM, is that knots (indicated in red) preserve their original position when used to fit the model, while in the polar coordinate approach the knots were re-interpolated and lost their interpretable value.
 
 The difference curves for `Category` `B - A` are computed separately by dimension `x` and `y`:
 
@@ -796,7 +796,7 @@ plot_diff(GAM, view = "knot", comp = list(Cat_Dim = c("B_y", "A_y")),
 Two considerations for the interpretation of results in this setting.
 
 * For a given knot, if at least one difference curve shows a significant difference, then we can say the contours are different at that knot. For example, the difference between `A` and `B` on the `y` axis is not significant for knots 4 to 7, while it is on the `x` axis. In fact, those corresponding knots are at about the same height (`y`), while `A` knots are clearly more fronted (`x`) than `B` knots, which means they are in a different location.
-* If two knots with a different index are close to each other, this is not revealed by the difference curves. For example, knot 9 `A` and knot 11 `B` are very close to each other, but since they have different index this does not show in the difference curves. Compare this to the difference curve @fig-diff_plot_GAM_angle obtained from the angle-based approach: In the knot-based case  `A` and `B` are indicated as separated towards high values of knot (tongue tip), while in the angle-based case  `A` and `B` are indicated overlapping towards low values of angle (tongue tip).
+* If two knots with a different index are close to each other, this is not revealed by the difference curves. For example, knot 9 `A` and knot 11 `B` are very close to each other, but since they have different indices this does not show in the difference curves. Compare this to the difference curve @fig-diff_plot_GAM_angle obtained from the angle-based approach: In the knot-based case  `A` and `B` are indicated as separated towards high values of knot (tongue tip), while in the angle-based case  `A` and `B` are indicated overlapping towards low values of angle (tongue tip).
 
 
 ## (x, y) ~ knot: FPCA {#sec-st_knot_FPCA}
@@ -988,7 +988,7 @@ FPCA_knot_pred_plot
 ```
 
 # Dynamic analysis {#sec-dynamic}
-With a dynamic analysis, we are adding one extra independent axis to the picture, the `time` axis. All considerations regarding the difference between the angle-based and the knot-based geometrical parametrization remain the same. What changes is that the model **support** becomes two-dimensional: `angle * time` or `knot * time`. This means that data are organized on a two-dimensional grid, while in the static analysis were organized on a uni-dimensional grid along `angle` or `knot`. The response variables are the same as in the static case. In the angle-based case, the response variable is `radius`, while in the knot-based case, the response variables are `x` and `y`, i.e.  a multivariate model. 
+With a dynamic analysis, we are adding one extra independent axis to the picture, the `time` axis. All considerations regarding the difference between the angle-based and the knot-based geometrical parametrization remain the same. What changes is that the model **support** becomes two-dimensional: `angle * time` or `knot * time`. This means that data are organized on a two-dimensional grid, while in the static analysis data were organized on a uni-dimensional grid along `angle` or `knot`. The response variables are the same as in the static case. In the angle-based case, the response variable is `radius`, while in the knot-based case, the response variables are `x` and `y`, i.e.  a multivariate model. 
 
 In the following, we will focus mainly on the practical aspects concerning the change in the support dimensionality. 
 
@@ -1062,7 +1062,7 @@ dataset_clip_ex
 The trends are clear: the tongue tip moves downward in `Category A` and upward in `B`, while the tongue root is tilted differently in the two categories but it does not change in time. These easy patterns are useful to get familiar with the complexity of the models that will be built in this section.
 
 ## radius ~ angle * time: GAM {#sec-dyn_angle_GAM}
-Like in the static case, we compute polar coordinates and we apply Procrustean interpolation to the `angle` axis. The time axis (`normTime`) is sampled at regular intervals and it does not need any treatment. In a realistic scenario, one may need to carry out some form of normalization or even time warping to the time axis as well, prior to start the analysis. 
+Like in the static case, we compute polar coordinates and we apply Procrustean interpolation to the `angle` axis. The time axis (`normTime`) is sampled at regular intervals and it does not need any treatment. In a realistic scenario, one may need to carry out some form of normalization or even time warping to the time axis as well, prior starting the analysis. 
 
 Below two example clips, one for each `Category`, after computation of polar coordinates. The first plot is a representation faithful to the data form, i.e. at each location on the two-dimensional grid support (`angle * normTime`) corresponds one response value (`radius`). The second plot (polar coordinates) reflects the geometry of the problem.
 
@@ -1329,9 +1329,9 @@ diff_plot_GAM_angle_time
 The plot shows that `B` is always lower than `A` on the left, i.e. tongue root has a smaller radius for `B` than for `A`, while on the right (tongue tip) the radius difference varies along time, according to the patterns in @fig-gam_polar_time_flat_plot and @fig-gam_polar_time_polar_plot.
 
 ## radius ~ angle * time: FPCA {#sec-dyn_angle_FPCA}
-The same geometrical setup of @sec-dyn_angle_GAM is applied here to  PCA followed by linear regression. As it is always the case, the FPCA model changes with the geometrical setup, while linear regression remains in the geometry-agnostic form `lm(score ~ Category)`. 
+The same geometrical setup as in @sec-dyn_angle_GAM is applied here to  PCA followed by linear regression. As it is always the case, the FPCA model changes with the geometrical setup, while linear regression remains in the geometry-agnostic form `lm(score ~ Category)`. 
 
-The FPCA code consists in first organising the dataset into a two-dimensional support `funData` object, then computing FPCA with `MFPCA::MFPCA()`. The twist here is that while this is a univariate model, we have to use `MFPCA()` and not `PACE()`. The reason is that `PACE()` does not accept multidimensional supports. The model is then a 'multi'variate one with only one response. 
+The FPCA code consists in first organising the dataset into a two-dimensional support `funData` object, then computing FPCA with `MFPCA::MFPCA()`. The twist here is that while this is a univariate model, we have to use `MFPCA()` and not `PACE()`. The reason is that `PACE()` does not accept multidimensional supports. The model is then a 'multi'-variate one with only one response. 
 
 ::: {.callout-note collapse="true"}
 ## radius ~ angle * time: FPCA fit
@@ -1408,7 +1408,7 @@ FPCA_angle_time_curves_plot <- ggplot(PCcurves %>% rename(`score/std` = fraction
 FPCA_angle_time_curves_plot
 ```
 
-PC1 explains `r PropExpVar[1] * 100`% of the variance, PC2 explains `r PropExpVar[2] * 100`% of the variance. To avoid cluttering, the variability modulated by the scores is represented only by three values of st. dev.-normalized scores: -1, 0 and 1. For example, the top left quadrant shows the clip reconstructed by taking the mean clip and subtracting the first PC multiplied by one st. dev. of `s1`. 
+PC1 explains `r PropExpVar[1] * 100`% of the variance, PC2 explains `r PropExpVar[2] * 100`% of the variance. To avoid cluttering, the variability modulated by the scores is represented only by three values of standard deviation-normalized scores: -1, 0 and 1. For example, the top left quadrant shows the clip reconstructed by taking the mean clip and subtracting the first PC multiplied by one standard deviation of `s1`. 
 
 Clearly, PC1 is capturing the variability in the right part of the contour (tongue tip), which is the one correlated with `Category`. This is confirmed by the PC scores boxplots below. 
 

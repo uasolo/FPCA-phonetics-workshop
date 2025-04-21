@@ -1,5 +1,5 @@
 ---
-title: "UTI analysis"
+title: "Geometry of Ultrasound Tongue Imaging analysis"
 author: "Michele Gubian"
 date: "24 04 2025"
 date-format: long
@@ -34,7 +34,7 @@ tab-cap-location: top
 
 ::: fragment
 -   Dataset contains many tongue contours like this
-    -   e.g. all contours at gesture mid-time
+    -   e.g. all contours at gesture temporal mid-point
 -   One "data point" is a whole contour
 -   knots (1-11) are provided by UTI post-processing software
 -   Static analysis = no time involved
@@ -52,7 +52,7 @@ tab-cap-location: top
 
 ::: fragment
 -   Dataset contains many **sequences** of tongue contours like this
-    -   e.g. contour sequences represent gestures form onset to offset
+    -   e.g. contour sequences represent gestures from onset to offset
 -   One "data point" is a sequence of contours, or a clip
 -   Dynamic analysis = time axis should be included in the model
 -   **GOAL**: statistical analysis
@@ -67,7 +67,7 @@ tab-cap-location: top
     -   i.e. do we need the time axis?
 -   Choose geometrical parametrisation of contours
     -   radial coordinates
-    -   2-dim. trajectory
+    -   2-dimensional trajectory
 -   Choose statistical modelling framework
     -   GAMs
     -   FPCA + LMER
@@ -119,8 +119,8 @@ tab-cap-location: top
 
 ::: incremental
 -   Simplest geometry
-    -   one indep. variable: angle
-    -   one dep. variable: radius
+    -   one independent variable: angle
+    -   one dependent variable: radius
 -   Plugs in to simplest model
 -   Solves most of the non-unicity issues
 :::

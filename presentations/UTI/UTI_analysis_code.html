@@ -8,7 +8,7 @@
 
 <meta name="dcterms.date" content="2025-04-24">
 
-<title>UTI analysis with GAMs and FPCA</title>
+<title>Analysis of Uni- and Multi-Dimensional Contours with GAMs and Functional PCA: an Application to Ultrasound Tongue Imaging</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -3095,7 +3095,7 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">UTI analysis with GAMs and FPCA</h1>
+<h1 class="title">Analysis of Uni- and Multi-Dimensional Contours with GAMs and Functional PCA: an Application to Ultrasound Tongue Imaging</h1>
 </div>
 
 
@@ -3170,7 +3170,7 @@ vertical-align: -.125em;
 <p>Static refers to absence of time. The typical scenario is the analysis of UTI where only one representative contour is used for each speech sound, e.g. the onset or the point in time where the articulatory target is reached.</p>
 <section id="sec-st_data_gen" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="sec-st_data_gen"><span class="header-section-number">1.1</span> Data generation</h2>
-<p>This tutorial is based on artificial data. The helper function <code>parab_tongue()</code> generates curves that vaguely resemble tongue contours. The shape consists of two branches of parabolas joined at the vertex. The shape is parametrised so that it can vary in various ways. The output is a tibble with three columns: <code>knot</code>, <code>x</code> and <code>y</code>, where <code>knot</code> simulates the (11) knots obtained with DeepLabCut <span class="citation" data-cites="wrench2022beyond">(<a href="#ref-wrench2022beyond" role="doc-biblioref">Wrench &amp; Balch-Tomes 2022</a>)</span>. See the source code <code>parab_tongue.R</code> for more detail.</p>
+<p>This tutorial is based on artificial data. The helper function <code>parab_tongue()</code> generates curves that resemble tongue contours. The shape consists of two branches of parabolas joined at the vertex. The shape is parametrised so that it can vary in various ways. The output is a tibble with three columns: <code>knot</code>, <code>x</code> and <code>y</code>, where <code>knot</code> simulates the (11) knots obtained with DeepLabCut <span class="citation" data-cites="wrench2022beyond">(<a href="#ref-wrench2022beyond" role="doc-biblioref">Wrench &amp; Balch-Tomes 2022</a>)</span>. See the source code <code>parab_tongue.R</code> for more detail.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-1-contents" aria-controls="callout-1" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -3509,7 +3509,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 <p>Both approaches are quite simple, yet can introduce problems. Cutting extremes eliminates information, e.g. part of the tongue tip is removed from some contours. Linear angle normalization distorts the shape of the contour.</p>
 <section id="sec-st_lin_norm" class="level3" data-number="1.4.1">
 <h3 data-number="1.4.1" class="anchored" data-anchor-id="sec-st_lin_norm"><span class="header-section-number">1.4.1</span> Linear angle normalization</h3>
-<p>A simple way to establish the reference angle range is to take the median angle of the first/last point from all contours. The contours are then reinterpolated on a regular grid within the common angle range. This of course introduces approximations, including the fact that now knots lose their original interpretation. However, a regular grid offers computationally advantages, especially for FPCA (see below).</p>
+<p>A simple way to establish the reference angle range is to take the median angle of the first/last point from all contours. The contours are then reinterpolated on a regular grid within the common angle range. This of course introduces approximations, including the fact that now knots lose their original interpretation. However, a regular grid offers computational advantages, especially for FPCA (see below).</p>
 <p>Below we apply linear angle normalization, then re-fit the GAM in the same way as above.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-5-contents" aria-controls="callout-5" aria-expanded="false" aria-label="Toggle callout">
@@ -3662,11 +3662,11 @@ s(angle):CategoryB 9.00 7.82    0.95    0.15</code></pre>
 </div>
 </div>
 </div>
-<p>In this case, Category B’s tongue tip reaches the same angle as A, which is not the case in the real data set. This is an artifact introduced by the linear stretching along the angle axis.</p>
+<p>In this case, Category B’s tongue tip reaches the same angle as A, which is not the case in the real data set. This is an artefact introduced by the linear stretching along the angle axis.</p>
 </section>
 <section id="sec-st_proc" class="level3" data-number="1.4.2">
 <h3 data-number="1.4.2" class="anchored" data-anchor-id="sec-st_proc"><span class="header-section-number">1.4.2</span> Procrustean angle range</h3>
-<p>In alternative to linear angle normalization, we apply a Procrustean angle interpolation using the same angle range estimated above.</p>
+<p>As an alternative to linear angle normalization, we apply a Procrustean angle interpolation using the same angle range estimated above.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-7-contents" aria-controls="callout-7" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -3809,7 +3809,7 @@ Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&
 </div>
 </div>
 </div>
-<p>Some of the information related to the tongue tip has been lost. Perhaps this is the reason why the GAM’s explained deviance is reduced. However, the predicted contours have a closer resemblance to the original dataset as in the linear angle normalization version, which introduced distortions in the contour shape.</p>
+<p>Some of the information related to the tongue tip has been lost. Perhaps this is the reason why the GAM’s explained deviance is reduced. However, the predicted contours have a closer resemblance to the original dataset than in the linear angle normalization version, which introduced distortions in the contour shape.</p>
 <p>In the rest of the tutorial, we will always use the Procrustean method. It is up to the user to choose the method most appropriate for the data at hand.</p>
 </section>
 <section id="sec-st_bin_smooth" class="level3" data-number="1.4.3">
@@ -3896,7 +3896,7 @@ fREML = 852.97  Scale est. = 1         n = 660</code></pre>
 </section>
 <section id="sec-st_angle_FPCA" class="level2" data-number="1.5">
 <h2 data-number="1.5" class="anchored" data-anchor-id="sec-st_angle_FPCA"><span class="header-section-number">1.5</span> radius ~ angle: FPCA</h2>
-<p>Here we apply FPCA followed by linear regression to the same dataset we use to estimate GAMs. This procedure is an alternative to GAMs. The procedure is in two steps: First a functional PCA model is estimated on the basis of the dataset, then the model parameters, called <em>scores</em>, are used as response variable in a linear regression model, i.e. <code>lm(score ~ Category)</code>. The FPCA model describes the independent variations in the entire curve dataset without taking into account the categorical predictors. This provides an overview of all the sources of variation in the data. Then it is our task to identify those sources that are correlated to the relevant predictors (here <code>Category</code>). For more information, see <span class="citation" data-cites="gubian2015using">Gubian, Torreira &amp; Boves (<a href="#ref-gubian2015using" role="doc-biblioref">2015</a>)</span> and the and the tutorial materials on <a href="https://github.com/uasolo/FPCA-phonetics-workshop/tree/master">this GitHub</a>.</p>
+<p>Here we apply FPCA followed by linear regression to the same dataset we use to estimate GAMs. This procedure is an alternative to GAMs. The procedure is in two steps: First a functional PCA model is estimated on the basis of the dataset, then the model parameters, called <em>scores</em>, are used as response variable in a linear regression model, i.e. <code>lm(score ~ Category)</code>. The FPCA model describes the independent variations in the entire curve dataset without taking into account the categorical predictors. This provides an overview of all the sources of variation in the data. Then it is our task to identify those sources that are correlated to the relevant predictors (here <code>Category</code>). For more information, see <span class="citation" data-cites="gubian2015using">Gubian, Torreira &amp; Boves (<a href="#ref-gubian2015using" role="doc-biblioref">2015</a>)</span> and the tutorial materials on <a href="https://github.com/uasolo/FPCA-phonetics-workshop/tree/master">this GitHub</a>.</p>
 <p>In the code that follows, we use the the same <code>curves</code> as the last <code>radius ~ angle</code> GAM example, obtained by Procrustean fit. The code is based on the <a href="https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/scripts">ex1D.R</a> script.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
@@ -4269,7 +4269,7 @@ s.1(knot):CategoryB 4.00 3.97    0.99    0.29</code></pre>
 </section>
 <section id="sec-st_knot_GAM_trick" class="level3" data-number="1.6.2">
 <h3 data-number="1.6.2" class="anchored" data-anchor-id="sec-st_knot_GAM_trick"><span class="header-section-number">1.6.2</span> Univariate trick</h3>
-<p>An alternative approach is to apply the trick used in <span class="citation" data-cites="wieling2016investigating">Wieling et al. (<a href="#ref-wieling2016investigating" role="doc-biblioref">2016</a>)</span>. The trick consists in creating a factor that encodes the coordinate axis, i.e. factor <code>Dimension</code> with two levels: <code>x</code> and <code>y</code>. Then use a regular, univariate GAM where the response variable is <code>Position</code>, which means <code>x</code> or <code>y</code> depending on the value of the ‘predictor’ <code>Dimension</code>. The advantage is that the model architecture is simpler, as it avoids the complexity of the double response variable, and that non-Gaussian models are available (here we will use <code>scat</code> as in the previous examples). The downside is that this is a sub-optimal model in that correlation across <code>x</code> and <code>y</code> dimension is not taken into account, and that adding a factor complicates the model equation (more on how to handle multiple factors in GAMs can be found in <span class="citation" data-cites="wieling2018analyzing">Wieling (<a href="#ref-wieling2018analyzing" role="doc-biblioref">2018</a>)</span> and in <a href="https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs">GAMInteractions</a>).</p>
+<p>An alternative approach is to apply the trick used in <span class="citation" data-cites="wieling2016investigating">Wieling et al. (<a href="#ref-wieling2016investigating" role="doc-biblioref">2016</a>)</span>. The trick consists in creating a factor that encodes the coordinate axis, i.e. factor <code>Dimension</code> with two levels: <code>x</code> and <code>y</code>. Then use a regular, univariate GAM where the response variable is <code>Position</code>, which means <code>x</code> or <code>y</code> depending on the value of the ‘predictor’ <code>Dimension</code>. The advantage is that the model architecture is simpler, as it avoids the complexity of the double response variable, and that non-Gaussian models are available (here we will use <code>scat</code> as in the previous examples). The downside is that this is a sub-optimal model in that correlations across <code>x</code> and <code>y</code> dimension are not taken into account, and that adding a factor complicates the model equation (more on how to handle multiple factors in GAMs can be found in <span class="citation" data-cites="wieling2018analyzing">Wieling (<a href="#ref-wieling2018analyzing" role="doc-biblioref">2018</a>)</span> and in <a href="https://github.com/uasolo/FPCA-phonetics-workshop/tree/master/presentations/GAMs">GAMInteractions</a>).</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -4399,7 +4399,7 @@ s(knot):Cat_DimB_y 9.00 8.29    1.03    0.88</code></pre>
 </div>
 </div>
 </div>
-<p>The predictions are faithful to the original dataaset. The advantage of the multivariate parametrization, even when implementing the workaround to avoid fitting an actual multivariate GAM, is that knots (indicated in red) preserve their original position when used to fit the model, while in the polar coordinate approach the knots where re-interpolated and lost their interpretable value.</p>
+<p>The predictions are faithful to the original dataset. The advantage of the multivariate parametrization, even when implementing the workaround to avoid fitting an actual multivariate GAM, is that knots (indicated in red) preserve their original position when used to fit the model, while in the polar coordinate approach the knots were re-interpolated and lost their interpretable value.</p>
 <p>The difference curves for <code>Category</code> <code>B - A</code> are computed separately by dimension <code>x</code> and <code>y</code>:</p>
 <div class="cell">
 <details>
@@ -4429,7 +4429,7 @@ s(knot):Cat_DimB_y 9.00 8.29    1.03    0.88</code></pre>
 <p>Two considerations for the interpretation of results in this setting.</p>
 <ul>
 <li>For a given knot, if at least one difference curve shows a significant difference, then we can say the contours are different at that knot. For example, the difference between <code>A</code> and <code>B</code> on the <code>y</code> axis is not significant for knots 4 to 7, while it is on the <code>x</code> axis. In fact, those corresponding knots are at about the same height (<code>y</code>), while <code>A</code> knots are clearly more fronted (<code>x</code>) than <code>B</code> knots, which means they are in a different location.</li>
-<li>If two knots with a different index are close to each other, this is not revealed by the difference curves. For example, knot 9 <code>A</code> and knot 11 <code>B</code> are very close to each other, but since they have different index this does not show in the difference curves. Compare this to the difference curve <a href="#fig-diff_plot_GAM_angle">Figure 6</a> obtained from the angle-based approach: In the knot-based case <code>A</code> and <code>B</code> are indicated as separated towards high values of knot (tongue tip), while in the angle-based case <code>A</code> and <code>B</code> are indicated overlapping towards low values of angle (tongue tip).</li>
+<li>If two knots with a different index are close to each other, this is not revealed by the difference curves. For example, knot 9 <code>A</code> and knot 11 <code>B</code> are very close to each other, but since they have different indices this does not show in the difference curves. Compare this to the difference curve <a href="#fig-diff_plot_GAM_angle">Figure 6</a> obtained from the angle-based approach: In the knot-based case <code>A</code> and <code>B</code> are indicated as separated towards high values of knot (tongue tip), while in the angle-based case <code>A</code> and <code>B</code> are indicated overlapping towards low values of angle (tongue tip).</li>
 </ul>
 </section>
 </section>
@@ -4706,7 +4706,7 @@ $contrasts
 </section>
 <section id="sec-dynamic" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Dynamic analysis</h1>
-<p>With a dynamic analysis, we are adding one extra independent axis to the picture, the <code>time</code> axis. All considerations regarding the difference between the angle-based and the knot-based geometrical parametrization remain the same. What changes is that the model <strong>support</strong> becomes two-dimensional: <code>angle * time</code> or <code>knot * time</code>. This means that data are organized on a two-dimensional grid, while in the static analysis were organized on a uni-dimensional grid along <code>angle</code> or <code>knot</code>. The response variables are the same as in the static case. In the angle-based case, the response variable is <code>radius</code>, while in the knot-based case, the response variables are <code>x</code> and <code>y</code>, i.e. a multivariate model.</p>
+<p>With a dynamic analysis, we are adding one extra independent axis to the picture, the <code>time</code> axis. All considerations regarding the difference between the angle-based and the knot-based geometrical parametrization remain the same. What changes is that the model <strong>support</strong> becomes two-dimensional: <code>angle * time</code> or <code>knot * time</code>. This means that data are organized on a two-dimensional grid, while in the static analysis data were organized on a uni-dimensional grid along <code>angle</code> or <code>knot</code>. The response variables are the same as in the static case. In the angle-based case, the response variable is <code>radius</code>, while in the knot-based case, the response variables are <code>x</code> and <code>y</code>, i.e. a multivariate model.</p>
 <p>In the following, we will focus mainly on the practical aspects concerning the change in the support dimensionality.</p>
 <section id="sec-dyn_dataset" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="sec-dyn_dataset"><span class="header-section-number">2.1</span> Dataset</h2>
@@ -4789,7 +4789,7 @@ Dataset generation
 </section>
 <section id="sec-dyn_angle_GAM" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="sec-dyn_angle_GAM"><span class="header-section-number">2.2</span> radius ~ angle * time: GAM</h2>
-<p>Like in the static case, we compute polar coordinates and we apply Procrustean interpolation to the <code>angle</code> axis. The time axis (<code>normTime</code>) is sampled at regular intervals and it does not need any treatment. In a realistic scenario, one may need to carry out some form of normalization or even time warping to the time axis as well, prior to start the analysis.</p>
+<p>Like in the static case, we compute polar coordinates and we apply Procrustean interpolation to the <code>angle</code> axis. The time axis (<code>normTime</code>) is sampled at regular intervals and it does not need any treatment. In a realistic scenario, one may need to carry out some form of normalization or even time warping to the time axis as well, prior starting the analysis.</p>
 <p>Below two example clips, one for each <code>Category</code>, after computation of polar coordinates. The first plot is a representation faithful to the data form, i.e. at each location on the two-dimensional grid support (<code>angle * normTime</code>) corresponds one response value (<code>radius</code>). The second plot (polar coordinates) reflects the geometry of the problem.</p>
 <div class="cell">
 <details>
@@ -5184,8 +5184,8 @@ fREML = 5182.2  Scale est. = 1         n = 3960</code></pre>
 </section>
 <section id="sec-dyn_angle_FPCA" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="sec-dyn_angle_FPCA"><span class="header-section-number">2.3</span> radius ~ angle * time: FPCA</h2>
-<p>The same geometrical setup of <a href="#sec-dyn_angle_GAM">Section 2.2</a> is applied here to PCA followed by linear regression. As it is always the case, the FPCA model changes with the geometrical setup, while linear regression remains in the geometry-agnostic form <code>lm(score ~ Category)</code>.</p>
-<p>The FPCA code consists in first organising the dataset into a two-dimensional support <code>funData</code> object, then computing FPCA with <code>MFPCA::MFPCA()</code>. The twist here is that while this is a univariate model, we have to use <code>MFPCA()</code> and not <code>PACE()</code>. The reason is that <code>PACE()</code> does not accept multidimensional supports. The model is then a ’multi’variate one with only one response.</p>
+<p>The same geometrical setup as in <a href="#sec-dyn_angle_GAM">Section 2.2</a> is applied here to PCA followed by linear regression. As it is always the case, the FPCA model changes with the geometrical setup, while linear regression remains in the geometry-agnostic form <code>lm(score ~ Category)</code>.</p>
+<p>The FPCA code consists in first organising the dataset into a two-dimensional support <code>funData</code> object, then computing FPCA with <code>MFPCA::MFPCA()</code>. The twist here is that while this is a univariate model, we have to use <code>MFPCA()</code> and not <code>PACE()</code>. The reason is that <code>PACE()</code> does not accept multidimensional supports. The model is then a ‘multi’-variate one with only one response.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-23-contents" aria-controls="callout-23" aria-expanded="false" aria-label="Toggle callout">
 <div class="callout-icon-container">
@@ -5277,7 +5277,7 @@ X:
 </div>
 </div>
 </div>
-<p>PC1 explains 98.4% of the variance, PC2 explains 0.7% of the variance. To avoid cluttering, the variability modulated by the scores is represented only by three values of st. dev.-normalized scores: -1, 0 and 1. For example, the top left quadrant shows the clip reconstructed by taking the mean clip and subtracting the first PC multiplied by one st. dev. of <code>s1</code>.</p>
+<p>PC1 explains 98.4% of the variance, PC2 explains 0.7% of the variance. To avoid cluttering, the variability modulated by the scores is represented only by three values of standard deviation-normalized scores: -1, 0 and 1. For example, the top left quadrant shows the clip reconstructed by taking the mean clip and subtracting the first PC multiplied by one standard deviation of <code>s1</code>.</p>
 <p>Clearly, PC1 is capturing the variability in the right part of the contour (tongue tip), which is the one correlated with <code>Category</code>. This is confirmed by the PC scores boxplots below.</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center" data-bs-toggle="collapse" data-bs-target=".callout-24-contents" aria-controls="callout-24" aria-expanded="false" aria-label="Toggle callout">
