@@ -21,8 +21,7 @@ format:
 bibliography: references.bib
 csl: journal-of-linguistics.csl
 number-sections: true
-abstract: >
-  Abstract here.
+
 ---
 
 Loading libraries and a few helper scripts.
