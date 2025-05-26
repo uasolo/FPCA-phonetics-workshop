@@ -1638,7 +1638,12 @@ A linear regression model predicting `s1` from `Category` is then fitted, which 
 FPCA_knot_time_pred_plot
 ```
 
+# Citation information {.unnumbered}
 
+For attribution, please cite this work as:
+
+Michele Gubian (2025) *Analysis of Uni- and Multi-Dimensional Contours with GAMs and Functional PCA: an Application to Ultrasound Tongue Imaging* Version 1.0.0. Available from GitHub: 
+[download page](https://github.com/uasolo/FPCA-phonetics-workshop/blob/master/presentations/UTI/UTI_analysis_code.html)
 
 # References {.unnumbered}
 
