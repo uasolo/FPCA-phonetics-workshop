@@ -144,9 +144,9 @@ yRegMult <- multiFunData(list(
 yRegMult[61] %>% plot()
 
 # multidim FPCA
-nPC <- 2
+nPC <- 2 # we will look at the first nPC components
 mfpca <- MFPCA(yRegMult,
-               M = nPC,
+               M = 5, # set M > nPC only to get a good approx of explained var below
                uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
 )
 # Prop of explained var
@@ -280,7 +280,7 @@ PCcurves_origTime_plot
 
 
 # collect PC scores
-PCscores <- mfpca$scores %>%
+PCscores <- mfpca$scores[, 1:nPC, drop=FALSE] %>%
   `colnames<-`( paste0("s", 1:nPC)) %>%
   as_tibble() %>%
   bind_cols(raw_curves %>% distinct(curveId, Category), .)
