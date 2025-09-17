@@ -23,15 +23,8 @@ ex <- 4 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
-
-sp <- 0.01 # unified sampling period
-maxT <- max(raw_curves$time)
-grid <- seq(0, maxT, by = sp) # unified sampling grid 
-curves <- raw_curves %>% 
-  group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
-  reframe(approx(time, y, grid, rule = 2) %>% as_tibble()) %>% # linear interpolation on grid 
-  ungroup() %>% 
-  rename(time = x, y = y)
+# NOTE: here we do not need to create a unified grid for the raw_curves.
+# A common grid will be created while applying registration.
 
 land <- readRDS(file.path(data_dir, str_c("land1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
@@ -44,7 +37,7 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
@@ -59,15 +52,14 @@ land_y <- land %>%
   inner_join(subset_curveId, by = "curveId") %>% 
   group_by(curveId) %>% 
   mutate(y = {
-    y <- curves %>%
-      inner_join(cur_group(), by = 'curveId') %>% 
-      pull(y)
-    approx(grid, y, time, rule = 2)$y
+    curve <- raw_curves %>%
+      inner_join(cur_group(), by = 'curveId') 
+    approx(curve$time, curve$y, time, rule = 2)$y
   }) 
            
 
 
-ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId) +
   geom_line(linewidth = 0.6, color = 'slategray4') +
   geom_point(data = land_y,
@@ -89,7 +81,7 @@ landmarks <- land_id %>% select(l1:last_col()) %>% as.numeric()
 landlabels <- land_id %>% select(l1:last_col()) %>% colnames()
 Cat_id <- land_id %>% pull(Category)
 
-ggplot(curves %>% filter(curveId == id)) +
+ggplot(raw_curves %>% filter(curveId == id)) +
   aes(time, y) +
   geom_line(linewidth = 0.8) +
   geom_vline(xintercept = landmarks 
@@ -109,11 +101,12 @@ ggplot(curves %>% filter(curveId == id)) +
 reg <- landmarkreg_nocurves(inputMarks = land %>% select(starts_with("l")),
                             njobs = 2)
 # 2. apply time warping to curves
-curvesReg <- applyReg(dat = curves %>% filter(!is.na(y)), # remove NAs otherwise applyReg fails
+curvesReg <- applyReg(dat = raw_curves %>% filter(!is.na(y)), # remove NAs otherwise applyReg fails
                       reg = reg,
                       grid = seq(0, last(reg$landmarks), length.out = 100),
                       id = "curveId", time = "time", value = "y") %>% 
-  left_join(curves %>% distinct(curveId, Category), by = "curveId")
+  # to get back Category
+  left_join(raw_curves %>% distinct(curveId, Category), by = "curveId")
 
 # Explore reg
 reg$h %>% plot()
@@ -290,7 +283,7 @@ PCcurves_origTime_plot
 PCscores <- mfpca$scores %>%
   `colnames<-`( paste0("s", 1:nPC)) %>%
   as_tibble() %>%
-  bind_cols(curves %>% distinct(curveId, Category), .)
+  bind_cols(raw_curves %>% distinct(curveId, Category), .)
 
 # scatterplot PC scores s1 and s2 by Category
 ggplot(PCscores) +

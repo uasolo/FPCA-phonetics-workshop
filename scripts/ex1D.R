@@ -26,6 +26,13 @@ raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) 
 
 # Create a common sampling period (sp) 
 # important to reduce complexity of FPCA computation
+# NOTE: The code below is based on the assumption that all raw_curves have 
+# (almost) the same duration.
+# All curves start from 0, the end is at maxT, 
+# the possibly missing samples towards the end are extrapolated
+# thanks to setting rule = 2 in approx().
+# If duration varies sensibly across curves, a different strategy is more appropriate,
+# e.g. linear or procrustean time normalization.
 sp <- 0.01 
 maxT <- max(raw_curves$time)
 grid <- seq(0, maxT, by = sp) # unified sampling grid 
@@ -44,7 +51,7 @@ subset_curveId <- raw_curves %>%
   slice_sample(n = 20)
 
 # ylim <- c(-3.8, 4)
-ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
