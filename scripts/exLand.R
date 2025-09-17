@@ -136,18 +136,24 @@ curvesFun <- long2irregFunData(curvesReg, id = "curveId", time = "time", value =
 # .. or continue below for joint curve/duration FPCA
 
 # put together a 2D fd object: curve and lograte
-yRegMult <- multiFunData(list(
-  curvesFun,
-  fd2funData(reg$lograte, argvals = curvesFun@argvals[[1]])
-))
+lograteFun <- fd2funData(reg$lograte, argvals = curvesFun@argvals[[1]])
+yRegMult <- multiFunData(list(curvesFun, lograteFun))
 
 yRegMult[61] %>% plot()
+
+# compute integral of uni-dim variances, will be used to weight dimensions.
+uniDvars <- sapply(c(curvesFun, lograteFun), \(f) {
+  f %>% PACE() %>% `$`("estVar") %>% integrate()
+}, simplify = TRUE)
+
 
 # multidim FPCA
 nPC <- 2 # we will look at the first nPC components
 mfpca <- MFPCA(yRegMult,
                M = 5, # set M > nPC only to get a good approx of explained var below
-               uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
+               uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA")),
+               weights = 1/uniDvars # each dim divided by its variance,
+               # see Happ & Greven 2018, section 5
 )
 # Prop of explained var
 mfpca$values  / sum( mfpca$values)
