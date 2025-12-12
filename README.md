@@ -15,6 +15,6 @@ The package `landmarkregUtils` is available on GitHub [here](https://github.com/
 FPCA and landmark registration have been introduced in tutorials that were video-recorded:
 
 * [Sept 2023 at University of Konstanz](https://www.ling.uni-konstanz.de/forschung/workshops/): [part 1](https://youtu.be/vVXhmP3FqqE) [part 2](https://youtu.be/qUitXDi5XZs)
-* [July 2024 at Speech Prosody Conference](
+* [July 2024 at Speech Prosody Conference, Leiden, the Netherlands](
 https://clarin.phonetik.uni-muenchen.de/lehrvideos/Gubian_SpeechProsody2024_Tutorial_FPCA/Simultaneous_analysis_of_contours_and_durations.mp4)
 
