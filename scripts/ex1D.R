@@ -23,26 +23,20 @@ ex <- 1 # change according to ex number
 raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
   mutate(across(c(curveId, Category), ~ factor(.x)))
 
-
-# Create a common sampling period (sp) 
-# important to reduce complexity of FPCA computation
-# NOTE: The code below is based on the assumption that all raw_curves have 
-# (almost) the same duration.
-# All curves start from 0, the end is at maxT, 
-# the possibly missing samples towards the end are extrapolated
-# thanks to setting rule = 2 in approx().
-# If duration varies sensibly across curves, a different strategy is more appropriate,
-# e.g. linear or procrustean time normalization.
-sp <- 0.01 
-maxT <- max(raw_curves$time)
-grid <- seq(0, maxT, by = sp) # unified sampling grid 
+# Linear time normalization:
+# resample all curves on the same regular grid, 
+# grid is conventionally between 0 and 1.
+nSamples <- 40
+grid <- seq(0, 1, length.out = nSamples)
 curves <- raw_curves %>% 
-  group_by(curveId, Category) %>% # all the factors at the level of curveId or higher (e.g. speaker)
-  reframe(approx(time, y, grid, rule = 2) %>% as_tibble()) %>% # linear interpolation on grid 
-  ungroup() %>% 
-  rename(time = x, y = y)
-
-
+  # group by all the factors at the level of curveId or higher (e.g. speaker)
+  group_by(curveId, Category) %>% 
+  # shift all curves to start from 0
+  mutate(time = time - min(time)) %>%
+  reframe(tibble(
+    y = approx(time, y, n = nSamples)$y,
+    time = grid
+  ))
 
 # plot a few curves
 subset_curveId <- raw_curves %>%
@@ -50,12 +44,10 @@ subset_curveId <- raw_curves %>%
   distinct(curveId) %>%
   slice_sample(n = 20)
 
-# ylim <- c(-3.8, 4)
-ggplot(raw_curves %>% inner_join(subset_curveId, by = "curveId")) +
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
   aes(x = time, y = y, group = curveId, color = Category) +
   geom_line(linewidth = 0.8) +
   scale_color_manual(values=Category.colors) +
-  # ylim(ylim) +
   mytheme  +
   theme(legend.position = "bottom")
 
@@ -79,7 +71,7 @@ round(fpca$values  / sum( fpca$values) , digits = 3)
 # scores st. dev.
 sdFun <- fpca$values %>% sqrt()
 # PC curves to be plotted
-nPC <- 2
+nPC <- 3
 PCcurves <- expand_grid(PC = 1:nPC,
                         fractionOfStDev = seq(-1, 1, by=.25)) %>%
   group_by(PC, fractionOfStDev) %>%
