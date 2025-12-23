@@ -53,7 +53,6 @@ curvesFun2D <- lapply(c("y1", "y2"), function(y)
   multiFunData()
 
 # Compute FPCA
-nPC <- 2 # we will look at the first nPC components
 mfpca <- MFPCA(curvesFun2D,
                M = 5, # set M > nPC only to get a good approx of explained var below
                uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA"))
@@ -62,6 +61,7 @@ mfpca <- MFPCA(curvesFun2D,
 # Prop of explained var
 mfpca$values  / sum( mfpca$values)
 
+nPC <- 2 # we will look at the first nPC components
 # scores st. dev.
 sdFun <- mfpca$values %>% sqrt()
 # PC curves to be plotted

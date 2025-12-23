@@ -148,7 +148,6 @@ uniDvars <- sapply(c(curvesFun, lograteFun), \(f) {
 
 
 # multidim FPCA
-nPC <- 2 # we will look at the first nPC components
 mfpca <- MFPCA(yRegMult,
                M = 5, # set M > nPC only to get a good approx of explained var below
                uniExpansions = list(list(type = "uFPCA"),list(type = "uFPCA")),
@@ -158,6 +157,7 @@ mfpca <- MFPCA(yRegMult,
 # Prop of explained var
 mfpca$values  / sum( mfpca$values)
 
+nPC <- 2 # we will look at the first nPC components
 # scores st. dev.
 sdFun <- mfpca$values %>% sqrt()
 fractionOfStDev <-  seq(-1, 1, by=.25)
