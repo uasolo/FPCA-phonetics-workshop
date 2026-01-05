@@ -89,7 +89,7 @@ ex2D_land[[2]] <- function(Category, Dim, u, role) {
   nLand <- length(inputLand)
   targetLand <- inputLand
   if (Dim == 'y1') {
-    shift <- 0.05 * rnorm(1, 0, 1) * RefT # indep of u and Category
+    shift <- 0.03 * rnorm(1, 0, 1) * RefT # indep of u and Category
     # truncate shift such that landmarks do not cross
     shift <- shift %>% max(-.18 * RefT) %>% min(.18 * RefT)
     targetLand[4:6] <- targetLand[4:6] + shift
@@ -115,7 +115,7 @@ ex2D_land[[3]] <- function(Category, Dim, u, role) {
 
 
 set.seed(123)
-ex <- 3
+ex <- 2
 modelCurves <- ex2D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
