@@ -38,6 +38,13 @@ ex1D_curves[[4]] <- bind_rows(
 )
 ex1D_curves[[5]] <- ex1D_curves[[4]]
 ex1D_curves[[6]] <- ex1D_curves[[1]]
+ex1D_curves[[7]] <- bind_rows(
+  tibble(Category = "A",
+         y = c(2.5, 3, 2.5, 0, 0, 2, 0, 0, 0, -1.5, -2.5)),
+  tibble(Category = "B",
+         y = c(2.5, 3, 2.5, 0, 0, 0, 2, 0, 0, -1.5, -2.5))
+)
+
 
 shift_y <- list()
 shift_y[[1]] <- function(y, Category, u) {return (y)}
@@ -53,6 +60,7 @@ shift_y[[3]] <- function(y, Category, u) {
 shift_y[[4]] <- shift_y[[1]]
 shift_y[[5]] <- shift_y[[1]]
 shift_y[[6]] <- shift_y[[1]]
+shift_y[[7]] <- shift_y[[1]]
 
 ex1D_land <- list() 
 ex1D_land[[1]] <- function(Category, u, role) {
@@ -93,9 +101,10 @@ ex1D_land[[4]] <- function(Category, u, role) {
 }
 ex1D_land[[5]] <- ex1D_land[[1]]
 ex1D_land[[6]] <- ex1D_land[[4]]
+ex1D_land[[7]] <- ex1D_land[[1]]
 
 set.seed(123)
-ex <- 3
+ex <- 7
 modelCurves <- ex1D_curves[[ex]] %>% 
   group_by(Category) %>% 
   mutate(t0 = seq(0, RefT, length.out = n())) %>% 
