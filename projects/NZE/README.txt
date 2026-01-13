@@ -42,6 +42,10 @@ techniques, i.e. FPCA + LMER.
 The results reported in Sec. 2 can be reproduced by following the description
 in the paper (please ignore Sec. 3, for which no data are provided) and using the script ex2D.R as template.
 
+1a. First run two separate uni-dimensional FPCA, one on each formant, followed by a corresponding LMER.
+
+1b. Then run a two-dimensional FPCA like in the paper. Compare the results with the separate 1-dim analyses.
+
 Question: Table 1 in the paper reports which random slope terms where included
 in the full LMER model. The remaining terms, e.g. (Diphthong|Word), were not
 included because they don't make sense. Why? 
@@ -73,9 +77,8 @@ There are two suggested approaches to this task
 a) Using a 'trick'. Predict a generic formant track and add a factor to the
 RHS of the model controlling for the formant. In other words, just
 like you add a factor for Sex (M,F) or AgeGroup (Young,Old), you add
-another one for Formant (F1,F2). This approach has been used e.g. in:
-https://icphs2019.org/icphs2019-fullpapers/pdf/full-paper_56.pdf
-
+another one for Formant (F1,F2). This approach has been used in:
+http://martijnwieling.nl/files/WielingEtAl-art.pdf
 Why is this a sort of trick or shortcut? What information is missing and how
 could you recover it? (if possible}
 
