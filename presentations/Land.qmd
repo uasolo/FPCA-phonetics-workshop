@@ -1,8 +1,7 @@
 ---
-title: "Simultaneous analysis of contours and durations"
-subtitle: "Landmark Registration"
+title: "Landmark Registration"
 author: "Michele Gubian"
-date: "01 07 2024"
+date: ""
 date-format: long
 bibliography: references.bib
 nocite: |
@@ -29,14 +28,22 @@ tab-cap-location: top
 
 ## f0 contours and (syllable) boundaries
 
-::: {layout-ncol="2"}
-::: {.column width="45%"}
-![](plots/ex1D.4_curves_Cat.png)
+::::: {layout-ncol="2"}
+::: fragment
+![](plots/ex1D.6_curves_Cat.png)
 :::
 
-::: {.column width="45%"}
-![](plots/ex1D.4_curves_land.png)
+::: fragment
+![](plots/ex1D.6_curves_land.png)
 :::
+:::::
+
+## f0 contours and (syllable) boundaries
+
+::: {layout-ncol="2"}
+![](plots/ex1D.6_curve3.png)
+
+![](plots/ex1D.6_curve73.png)
 :::
 
 ## Modelling misaligned contours
@@ -51,11 +58,37 @@ tab-cap-location: top
 -   [Analyse both sources of variation jointly]{style="color:red"}
 :::
 
+
+## Predicted curves and boundary positions
+
+![](plots/ex1D.6_pred_curves_lands.png){height="500"}
+
+## Predicted curves and durations
+
+::: {layout-ncol="2"}
+![Time-aligned curves](plots/ex1D.6_pred_curves.png)
+
+![Interval durations](plots/ex1D.6_pred_dur.png)
+:::
+
+## f0 contours and (syllable) boundaries
+
+::::: {layout-ncol="2"}
+::: {.column width="45%"}
+![](plots/ex1D.4_curves_Cat.png)
+:::
+
+::: {.column width="45%"}
+![](plots/ex1D.4_curves_land.png)
+:::
+:::::
+
+
 ## General strategy
 
 ::: incremental
 1.  Pre-process contours' time axis
-2.  Apply FPCA + L(ME)R + Reconstruction 
+2.  Apply FPCA + L(ME)R + Reconstruction
 :::
 
 ## Four approaches to time axis pre-processing
@@ -92,7 +125,7 @@ tab-cap-location: top
 
 ## Linear time normalisation
 
-::: {layout-ncol="2"}
+::::: {layout-ncol="2"}
 ::: {.column width="45%"}
 ![Before](plots/ex1D.4_curves_Cat.png)
 :::
@@ -100,11 +133,11 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![After](plots/ex1D.4_lin_curves_Cat.png)
 :::
-:::
+:::::
 
 ## Linear time normalisation
 
-::: {layout-ncol="2"}
+::::: {layout-ncol="2"}
 ::: {.column width="45%"}
 ![Before](plots/ex1D.4_curves_land.png)
 :::
@@ -112,7 +145,7 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![After](plots/ex1D.4_lin_curves_land.png)
 :::
-:::
+:::::
 
 ## Apply FPCA to linearly time-normalised curves
 
@@ -138,7 +171,7 @@ tab-cap-location: top
 
 ## Landmark registration
 
-::: {layout-ncol="2"}
+::::: {layout-ncol="2"}
 ::: {.column width="45%"}
 ![Before](plots/ex1D.4_curves_Cat.png)
 :::
@@ -146,11 +179,11 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![After](plots/ex1D.4_land_curves_Cat.png)
 :::
-:::
+:::::
 
 ## Landmark registration
 
-::: {layout-ncol="2"}
+::::: {layout-ncol="2"}
 ::: {.column width="45%"}
 ![Before](plots/ex1D.4_curves_land.png)
 :::
@@ -158,7 +191,7 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![After](plots/ex1D.4_land_curves_land.png)
 :::
-:::
+:::::
 
 ## Landmark registration
 
@@ -199,26 +232,26 @@ tab-cap-location: top
 
 ## Inside landmark registration
 
-::: columns
-::: {.column width="33%"}
+:::::::: columns
+:::: {.column width="33%"}
 ::: fragment
 ![Original curves + landmarks](plots/ex1D.4_two_curves_time.png)
 :::
-:::
+::::
 
 ::: {.column width="33%"}
 :::
 
-::: {.column width="33%"}
+:::: {.column width="33%"}
 ::: fragment
 ![Registered curves](plots/ex1D.4_two_curves_regtime.png)
 :::
-:::
-:::
+::::
+::::::::
 
 ## Inside landmark registration
 
-::: columns
+:::::: columns
 ::: {.column width="33%"}
 ![Original curves + landmarks](plots/ex1D.4_two_curves_time.png)
 :::
@@ -230,13 +263,11 @@ tab-cap-location: top
 ::: {.column width="33%"}
 ![Registered curves](plots/ex1D.4_two_curves_regtime.png)
 :::
-:::
+::::::
 
 ## Time warping curves
 
 ![$h(t)$](plots/ex1D.4_two_curves_h.png){height="500"}
-
-
 
 ## Equivalent representations (1)
 
@@ -244,7 +275,7 @@ tab-cap-location: top
 
 ## Equivalent representations (2)
 
-::: columns
+::::: columns
 ::: {.column width="45%"}
 ![Registered curves](plots/ex1D.4_two_curves_regtime.png)
 :::
@@ -252,7 +283,7 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![$h(t)$](plots/ex1D.4_two_curves_h.png)
 :::
-:::
+:::::
 
 ## Time warping curves as log rates
 
@@ -280,10 +311,9 @@ tab-cap-location: top
 
 ![](plots/scheme_MFPCA_land2.png)
 
-
 ## Apply 2-dim FPCA to curves + log rates
 
-::: columns
+::::: columns
 ::: {.column width="45%"}
 ![Curve dimension](plots/ex1D.4_land2D_PCcolor_y.png)
 :::
@@ -291,11 +321,11 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![Log rate dimension](plots/ex1D.4_land2D_PCcolor_lograte.png)
 :::
-:::
+:::::
 
 ## Apply 2-dim FPCA to curves + log rates
 
-::: columns
+::::: columns
 ::: {.column width="45%"}
 ![Curve dimension](plots/ex1D.4_land2D_PCcolor_y.png)
 :::
@@ -303,22 +333,19 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![Duration dimension](plots/ex1D.4_land2D_PCcolor_dur.png)
 :::
-:::
+:::::
 
 ## Apply 2-dim FPCA to curves + log rates
-![](plots/ex1D.4_land2D_PCcolor_origTime.png)
 
+![](plots/ex1D.4_land2D_PCcolor_origTime.png)
 
 ## PC scores vs. Category
 
 ![](plots/ex1D.4_land2D_PCscores_box.png){height="500"}
 
-
-
-
 ## Fit a regression model on s~1~
 
-::: columns
+::::: columns
 ::: {.column width="45%"}
 ![](plots/ex1D.4_land2D_pred_curves.png)
 :::
@@ -326,7 +353,7 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![](plots/ex1D.4_land2D_pred_dur.png)
 :::
-:::
+:::::
 
 ## Fit a regression model on s~1~
 

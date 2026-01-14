@@ -1,8 +1,7 @@
 ---
-title: "Simultaneous analysis of contours and durations"
-subtitle: "Functional PCA"
+title: "Functional PCA"
 author: "Michele Gubian"
-date: "01 07 2024"
+date: ""
 date-format: long
 bibliography: references.bib
 nocite: |
@@ -24,74 +23,40 @@ editor: visual
 fig-cap-location: top
 tab-cap-location: top
 ---
+# Overview
 
-# Tutorial overview
+## Course overview
 
-::: incremental
--   Part 1: Functional PCA (1.5 hours)
--   Break (30 min)
--   Part 2: Landmark registration (1.5 hours)
--   Each part: Theory + Code
--   Questions: after Theory, after Code
--   All materials available on [GitHub](https://github.com/uasolo/FPCA-phonetics-workshop)
-:::
+-   Day 1, 2: uni-dimensional FPCA
+-   Day 3: multi-dimensional FPCA
+-   Day 4: landmark registration
+-   Day 5: UTI? more exercises and examples
 
-# Motivation
 
-## f0 contours and (syllable) boundaries
 
-::: {layout-ncol="2"}
-::: fragment
-![](plots/ex1D.6_curves_Cat.png)
-:::
-
-::: fragment
-![](plots/ex1D.6_curves_land.png)
-:::
-:::
-
-## f0 contours and (syllable) boundaries
-
-::: {layout-ncol="2"}
-![](plots/ex1D.6_curve3.png)
-
-![](plots/ex1D.6_curve73.png)
-:::
-
-## Goals
+## Topics
 
 ::: incremental
--   Anchor across-curves variation to meaningful boundaries (landmarks)
--   Separate variation due to:
-    1.  boundary misalignment
-    2.  shape variation anchored to boundaries
--   Analyse both sources of variation jointly
+-   Functional PCA (from scratch)
+-   Landmark Registration (from scratch)
+-   Linear (Mixed Effects) Regression (assumed)
+-   GAMMs (optional, for comparison)
 :::
 
-## Predicted curves and boundary positions
-
-![](plots/ex1D.6_pred_curves_lands.png){height="500"}
-
-## Predicted curves and durations
-
-::: {layout-ncol="2"}
-![Time-aligned curves](plots/ex1D.6_pred_curves.png)
-
-![Interval durations](plots/ex1D.6_pred_dur.png)
-:::
-
-## A suite of methods
+## Code
 
 ::: incremental
--   Functional PCA
--   Landmark Registration
--   Linear (Mixed Effects) Regression
+-   based on R, `tidyverse`
+-   recent R libraries: `funData`, `MFPCA`
+-   based on the older `fda`
+-   a (work in progress) library written by me: [`landmarkregUtils`](https://github.com/uasolo/landmarkregUtils)
+-   all available on [this GitHub repo](https://github.com/uasolo/FPCA-phonetics-workshop)
 :::
 
-## Applications (beyond f0 contours)
+## Applications 
 
 ::: incremental
--   f0 and intensity
+-   f0 and/or intensity contours
 -   formants
 -   multiple articulatory tracks (EMA)
 -   any time-varying (bundle of) measurement ...
@@ -100,6 +65,9 @@ tab-cap-location: top
 
 ## Examples {.smaller}
 
+-   [f0](https://www.prosodylab.linguistics.northwestern.edu/files/2024/06/Cole_Steffman_Awwad_Speech-Prosody_2024.pdf) in @cole2024functional
+-   [f0 and syllable duration](https://repository.ubn.ru.nl/bitstream/handle/2066/303654/303654pub.pdf) in @arvaniti2024variability
+-   [f0, F1, F2, CPP, HNR, OQ](https://www.degruyterbrill.com/document/doi/10.1515/phon-2024-0047/html) in @maspong2025voice
 -   [f0 and syllable duration](https://www.sciencedirect.com/science/article/pii/S0167639324000542) and [f0 and intensity](https://www.sciencedirect.com/science/article/pii/S0167639324000542) in @el2024prosody
 -   [Two time-varying acoustic correlates of aspiration](https://www.sciencedirect.com/science/article/pii/S0095447020301078) in @cronenberg2020dynamic
 -   [Formants F1 and F2](https://www.isca-archive.org/interspeech_2019/gubian19_interspeech.pdf) in @gubian_tracking_2019
@@ -107,83 +75,75 @@ tab-cap-location: top
 -   [Cutting down on manual f0 annotation](https://www.isca-archive.org/speechprosody_2016/asano16b_speechprosody.pdf) in @asano12cutting
 -   [Automatic f0 and duration manipulation for resythesis](https://sprosig.org/sp2010/papers/100954.pdf) in @gubian2010automatic
 
-## Code
 
-::: incremental
--   based on R
--   recent R libraries: `funData`, `MFPCA`
--   based on the older `fda`
--   a (work in progress) library written by me: [`landmarkregUtils`](https://github.com/uasolo/landmarkregUtils)
--   all available on [this GitHub repo](https://github.com/uasolo/FPCA-phonetics-workshop)
-:::
 
 # Arithmetic with functions
 
 ## From time samples to functions
 
-::: {layout-ncol="2"}
+:::: {layout-ncol="2"}
 ![Sampled curve](plots/curve_points.png)
 
 ::: fragment
 ![Function $f(t)$](plots/arith_curve.png)
 :::
-:::
+::::
 
 ## Addition
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$f(t) + \color{red}{g(t)}$](plots/arith_sum.png)
 :::
-:::
+::::
 
 ## Addition
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$f(t) + \color{red}{g(t)} = \color{blue}{y(t)}$](plots/arith_sum_res.png)
 :::
-:::
+::::
 
 ## Multiplication by a scalar
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$\color{red}{0.5} \cdot f(t)$](plots/arith_curve.png)
 :::
-:::
+::::
 
 ## Multiplication by a scalar
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$\color{red}{0.5} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar.png)
 :::
-:::
+::::
 
 ## Multiplication by a scalar
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$\color{red}{(-0.5)} \cdot f(t) = \color{blue}{y(t)}$](plots/arith_scalar_neg.png)
 :::
-:::
+::::
 
 ## Mean curve
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)})$](plots/arith_curve2.png)
 :::
-:::
+::::
 
 ## Mean function
 
-::: columns
+:::: columns
 ::: {.column width="65%"}
 ![$\frac{1}{2} \cdot (f(t) + \color{red}{g(t)}) = \color{blue}{y(t)}$](plots/arith_curve2mean.png)
 :::
-:::
+::::
 
 # Uni-dimensional curves
 
@@ -207,7 +167,7 @@ tab-cap-location: top
 
 ## Subtract mean curve
 
-::: columns
+::::: columns
 ::: {.column width="45%"}
 ![Mean $\mu(t)$](plots/ex1D.1_mean.png)
 :::
@@ -215,7 +175,7 @@ tab-cap-location: top
 ::: {.column width="45%"}
 ![$f_i(t) - \mu(t)$](plots/ex1D.1_curves_demean.png)
 :::
-:::
+:::::
 
 ## FPCA outcome
 
