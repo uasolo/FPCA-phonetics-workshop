@@ -1,0 +1,197 @@
+---
+title: "Notes on ex1D"
+author: "Michele Gubian"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+Load relevant libraries and set up.
+```{r}
+library(fda)
+library(funData)
+library(MFPCA)
+library(tidyverse)
+library(landmarkregUtils)
+
+mytheme <- theme_light() +
+  theme(text = element_text(size = 16))
+Category.colors <- c(A = "darkslategray", B = "orangered")
+data_dir <- "data"
+
+```
+Load an example (`ex`), apply linear time normalization.
+```{r}
+ex <- 1 # change according to ex number
+raw_curves <- readRDS(file.path(data_dir, str_c("ex1D", ex, "rds", sep = '.'))) %>% ungroup() %>% 
+  mutate(across(c(curveId, Category), ~ factor(.x)))
+
+# Linear time normalization:
+# resample all curves on the same regular grid, 
+# grid is conventionally between 0 and 1.
+nSamples <- 40
+grid <- seq(0, 1, length.out = nSamples)
+curves <- raw_curves %>% 
+  # group by all the factors at the level of curveId or higher (e.g. speaker)
+  group_by(curveId, Category) %>% 
+  # shift all curves to start from 0
+  mutate(time = time - min(time)) %>%
+  reframe(tibble(
+    y = approx(time, y, n = nSamples)$y,
+    time = grid
+  ))
+```
+Plot a few curves
+```{r}
+# plot a few curves
+subset_curveId <- raw_curves %>%
+  ungroup() %>% 
+  distinct(curveId) %>%
+  slice_sample(n = 20)
+
+ggplot(curves %>% inner_join(subset_curveId, by = "curveId")) +
+  aes(x = time, y = y, group = curveId, color = Category) +
+  geom_line(linewidth = 0.8) +
+  scale_color_manual(values=Category.colors) +
+  mytheme  +
+  theme(legend.position = "bottom")
+
+```
+
+
+Compute FPCA
+```{r}
+# build a funData object
+curvesFun <- long2irregFunData(curves, id = "curveId", time = "time", value = "y") %>% 
+    as.funData()
+
+# Compute FPCA
+fpca <- PACE(curvesFun)
+
+```
+Plot PC curves
+```{r}
+# scores st. dev.
+sdFun <- fpca$values %>% sqrt()
+# PC curves to be plotted
+nPC <- 2
+PCcurves <- expand_grid(PC = 1:nPC,
+                        fractionOfStDev = seq(-1, 1, by=.25)) %>%
+  group_by(PC, fractionOfStDev) %>%
+  reframe(
+    funData2long1(fpca$mu + fractionOfStDev * sdFun[PC] * fpca$functions[PC],
+                  time = "time", value = "y")
+  )
+# Plot
+ggplot(PCcurves) +
+  aes(x = time, y = y, group = fractionOfStDev, color = fractionOfStDev) +
+  geom_line() +
+  scale_color_gradient2(low = "blue", mid = "grey", high = "orangered",
+                        breaks = c(-1, 0 , 1)) +
+  facet_wrap(~ PC, nrow = 1,
+             labeller = labeller(PC = ~ str_glue("PC{.x}"))) +
+  labs(color = expression(frac(s[k], sigma[k]))) +
+  xlab("registered time") +
+  geom_line(data = PCcurves %>% filter(fractionOfStDev == 0), color = 'black', linewidth = 1.2) +
+  mytheme +
+  theme(legend.position = "bottom")
+
+```
+
+Plot the mean curve
+```{r}
+# quick way (not ggplot)
+fpca$mu %>% plot()
+# nicer way
+fpca$mu %>% funData2long1(time = "time", value = "y") %>% ggplot() +
+  aes(x = time, y = y) +
+  geom_line()
+```
+
+Plot PC1
+```{r}
+fpca$functions[1] %>% funData2long1(time = "time", value = "y") %>% ggplot() +
+  aes(x = time, y = y) +
+  geom_line()
+```
+
+Print the PC scores of the first few curves
+```{r}
+fpca$scores %>% head()
+```
+Reconstruct the first curve (first row of scores matrix) up to the first two PC scores (first two columns of scores matrix). Compare to original curve.
+```{r}
+orig_curve <- curvesFun[1] %>% funData2long1(value = "y")
+rec_curve <- (fpca$mu + fpca$scores[1,1] * fpca$functions[1] + 
+                fpca$scores[1,2] * fpca$functions[2]) %>% funData2long1(value = "y")
+# join the curves into one long format tibble and plot
+bind_rows(orig_curve %>% mutate(curve = "original"),
+          rec_curve %>% mutate(curve = "reconstructed")) %>% 
+  ggplot(aes(time, y, color = curve)) +
+  geom_line()
+```
+
+Plot PC scores scatterplot
+```{r}
+PCscores <- fpca$scores %>%
+  `colnames<-`( paste0("s", 1:fpca$npc)) %>%
+  as_tibble() %>%
+  bind_cols(curves %>% distinct(curveId, Category), .)
+
+# scatterplot PC scores s1 and s2 by Category
+ggplot(PCscores) +
+  aes(x = s1, y = s2, color = Category) +
+  geom_point() +
+  scale_color_manual(values=Category.colors) +
+  mytheme +
+  theme(legend.position = "right")
+```
+
+Pick two random curves from the dataset, call them  `curve1` and `curve2`. Plot the curves. Then mark the corresponding points on the scatterplot.
+```{r}
+id1 <- 1
+id2 <- 55
+curve1 <- curves %>% filter(curveId==id1)
+curve2 <- curves %>% filter(curveId==id2)
+ggplot(mapping = aes(time, y)) +
+  geom_line(data = curve1, color = "magenta") +
+  geom_line(data = curve2, color = "chartreuse") 
+
+ggplot(PCscores) +
+  aes(x = s1, y = s2) +
+  geom_point() +
+  geom_point(data = PCscores %>% filter(curveId==id1), color = "magenta", size = 3, shape = 18) +
+  geom_point(data = PCscores %>% filter(curveId==id2), color = "chartreuse", size = 3, shape = 18) +
+  mytheme +
+  theme(legend.position = "right")
+```
+
+Construct a new curve based on  `curve1` and `curve2`, call it `curveX`. The new curve is obtained by averaging the PC scores of  `curve1` and `curve2`. Consider the first two PC scores. Plot `curveX`'s PC scores on the scatterplot. Plot `curveX` together with  `curve1` and `curve2`.
+```{r}
+scoresX <- PCscores %>% filter(curveId %in% c(id1, id2)) %>% summarise(across(c(s1, s2), mean))
+ggplot(PCscores) +
+  aes(x = s1, y = s2) +
+  geom_point() +
+  geom_point(data = PCscores %>% filter(curveId==id1), color = "magenta", size = 3, shape = 18) +
+  geom_point(data = PCscores %>% filter(curveId==id2), color = "chartreuse", size = 3, shape = 18) +
+  geom_point(data = scoresX, color = "blue", size = 3, shape = 18) +
+  geom_segment(x = PCscores %>% filter(curveId==id1) %>% pull(s1),
+               xend = PCscores %>% filter(curveId==id2) %>% pull(s1),
+               y = PCscores %>% filter(curveId==id1) %>% pull(s2),
+               yend = PCscores %>% filter(curveId==id2) %>% pull(s2),
+               linetype = "dashed") +
+  mytheme +
+  theme(legend.position = "right")
+
+curveX <- (
+  fpca$mu + (scoresX %>% pull(s1)) * fpca$functions[1] +
+    (scoresX %>% pull(s2)) * fpca$functions[2]
+) %>% funData2long1(value = "y")
+ggplot(mapping = aes(time, y)) +
+  geom_line(data = curve1, color = "magenta") +
+  geom_line(data = curve2, color = "chartreuse") +
+  geom_line(data = curveX, color = "blue")
+```
+
