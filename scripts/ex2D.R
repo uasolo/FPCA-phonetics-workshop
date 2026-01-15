@@ -18,7 +18,7 @@ Category.colors <- c("darkslategray", "orangered")
 plots_dir <- "presentations/plots/"
 data_dir <- "data/"
 
-ex <- 3 # change according to ex number
+ex <- 1 # change according to ex number
 curves <- readRDS(file.path(data_dir, str_c("ex2D", ex, "rds", sep = '.'))) %>% ungroup() %>%
   mutate(across(c(curveId, Category), ~ factor(.x)))
 nCurves <- curves %>% distinct(curveId) %>% nrow()
