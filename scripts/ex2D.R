@@ -5,8 +5,9 @@ library(tidyverse)
 library(emmeans)
 
 # install.packages("devtools")
-# devtools::install_github("uasolo/landmarkregUtils")
+# devtools::install_github("uasolo/landmarkregUtils", build_vignettes = TRUE)
 library(landmarkregUtils)
+# vignette("examples_registration", package = "landmarkregUtils")
 
 mytheme <- theme_light() +
   theme(text = element_text(size = 16))
